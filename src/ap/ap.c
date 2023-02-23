@@ -9,13 +9,8 @@
 
 #define BASE_TEMP 10000
 #define _DEF_OPTIME 15
-#define TRIAC_TOP			((*(RB_BTF*)&P3OUT).p1)
-#define TRIAC_BOTTOM		((*(RB_BTF*)&P3OUT).p2)
 void pTriacCheck(void);
 void adcISR(void *arg);
-_Status Status;
-_AD gADC;
-static uint16_t pVar = 0;
 void apInit(void)
 {
   
@@ -23,9 +18,8 @@ void apInit(void)
 //  uartOpen(_DEF_UART2, 115200); // ESP8266
 	cliOpen(_DEF_SERIAL1, 115200);
 	P3DIR |= 0x06;
-	TRIAC_TOP = 0;
-	TRIAC_BOTTOM = 0;
-	
+	P5DIR |= 0x02;
+	relay(OFF);
 }
 void pHeaterCheck(void)
 {
@@ -43,16 +37,21 @@ void pHeaterCheck(void)
 			p1 = gStatus.Comp1 + 6000;
 			p2 = gStatus.Comp2 + 6000;
 			if((p1 < gADC.Temp1) || (p2 < gADC.Temp2)){
-				gStatus.status = STATUS_ERR;
+				/*gStatus.status = STATUS_ERR;
+				relay(OFF);*/
 			}
 			break;
 		case STATUS_ERR:
 			
-			p1 = gStatus.Comp1 + 6000;
+		/*	p1 = gStatus.Comp1 + 6000;
 			p2 = gStatus.Comp2 + 6000;
 			if((p1 > gADC.Temp1) && (p2 > gADC.Temp2)){
 				gStatus.status = STATUS_READY;
-			}
+				TRIAC_TOP = 0;
+				TRIAC_BOTTOM = 0;
+				delay(200);
+				RELAY_OUT = 1;
+			}*/
 			break;
 		case STATUS_READY:
 		case STATUS_ON:
@@ -60,7 +59,8 @@ void pHeaterCheck(void)
 			p1 = gStatus.Comp1 + 6000;
 			p2 = gStatus.Comp2 + 6000;
 			if((p1 < gADC.Temp1) || (p2 < gADC.Temp2)){
-				gStatus.status = STATUS_ERR;
+				/*gStatus.status = STATUS_ERR;
+				relay(OFF);*/
 			}
 			p1 = gADC.Temp1 * 100 / gStatus.Comp1;
 			p2 = gADC.Temp2 * 100 / gStatus.Comp2;
@@ -77,9 +77,10 @@ void apMain(void)
 	pre_time2 = millis();
 	uartPrintf(_DEF_SERIAL1, "Welcome to Waffle machine \n");
 	delay(300);
-	adcRead(&gADC);
-	pVar = gADC.Temp1;
-	gStatus.status = adcCheck(&gADC);
+	adcRead();
+	gStatus.status = STATUS_IDLE;//adcCheck();
+	if(gStatus.status == STATUS_IDLE)relay(ON);
+	else relay(OFF);
 	while(1)
 	{
 	    /* WDT reset */
@@ -91,7 +92,7 @@ void apMain(void)
 		if(millis() - pre_time2 >= 170)
 		{
 			pre_time2 = millis();
-			adcRead(&gADC);
+			adcRead();
 			uartPrintf(_DEF_SERIAL1, "%d\t%d\n",gADC.Temp1, gADC.Temp2);
 		}
 		FND_Update();
@@ -108,16 +109,7 @@ void apMain(void)
 		pHeaterCheck();
 		pn_EEP_SaveCheck();
 //		gModeKeyReleaseCheck();
-		if(gAllKeyReleaseCheck() == 1)
-		{
-			gStatus.Temp1 = gADC.Temp1;
-			gStatus.Temp2 = gADC.Temp2;			
 		
-		}
-		else{
-			gStatus.Temp1 = gStatus.Comp1;
-			gStatus.Temp2 = gStatus.Comp2;
-		}
 		ledStatus();
 		cliMain();
 	}

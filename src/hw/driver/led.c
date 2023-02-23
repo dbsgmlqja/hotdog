@@ -1,8 +1,8 @@
 #include "global.h"
 #include "led.h"
 #include "FND.h"
-#define	LED1	((*(RB_BTF*)&P4OUT).p7)
-#define	LED2	((*(RB_BTF*)&P5OUT).p0)
+#define	LED1	((*(RB_BTF*)&P8OUT).p5)	//READY LED
+#define	LED2	((*(RB_BTF*)&P2OUT).p2)	//START LED
 //#define	LED3	((*(RB_BTF*)&PDOUT).p7)
 typedef struct
 {
@@ -17,8 +17,8 @@ led_tbl_t led_tbl[LED_MAX_CH] =
 uint8_t ledInit(void)
 {
 	uint8_t ret = 1;
-	P4DIR |= 0x80;
-	P5DIR |= 0x01;
+	P2DIR |= 0x04;
+	P8DIR |= 0x20;
 	ledOff(0);
 	ledOn(1);
 	return ret;

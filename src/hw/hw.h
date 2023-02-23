@@ -1,7 +1,6 @@
 #ifndef SRC_HW_HW_H_
 #define SRC_HW_HW_H_
 
-#define	RELAY_INRUSH	((*(RB_BTF*)&P5OUT).p0)
 #include "hw_def.h"
 
 #include "minit.h"
@@ -18,6 +17,7 @@
 #include "i2c.h"
 #include "eeprom.h"
 #include "key.h"
+#include "gpio.h"
 #include "swtimer.h"
 void hwInit(void);
 

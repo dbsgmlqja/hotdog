@@ -3,10 +3,10 @@
 	ProjSeries="103S"
 	ProjName="DF05_WAFFLE"
 	ProjDir="D:\Firmware\DF05K\WAFFLE\DF\"
-	MaxFileId="91"
+	MaxFileId="93"
 	ProjectInitializing="1"
 	ProjId="1"
-	TimeStamp="0x63db0758"
+	TimeStamp="0x63eb4757"
 	BuiltInCCName="CC103S.EXE"
 	BuiltInAsmName="AS103S.EXE"
 	BuiltInLinkName="LD103S.EXE"
@@ -539,11 +539,31 @@ ODB_OCD_TYPE     : 1;"
 				LineEnd=""
 				FileType="c"
 			/>
+			<92
+				FolderID="26"
+				BldTarget="false"
+				ViewFlag=""
+				FileName="gpio.h"
+				FilePath="..\..\WAFFLE_temp\src\common\hw\include\"
+				Encode=""
+				LineEnd=""
+				FileType="h"
+			/>
+			<93
+				FolderID="28"
+				BldTarget="true"
+				ViewFlag=""
+				FileName="gpio.c"
+				FilePath="..\..\WAFFLE_temp\src\hw\driver\"
+				Encode=""
+				LineEnd=""
+				FileType="c"
+			/>
 		</SrcFileList>
 		<MakeFileList
 			MaxId="1"
 			CurMakefileId="1"
-			CurMakefileKey="46021538"
+			CurMakefileKey="116796856"
 			TargetType="ODB"
 			CpuType="103DF05K"
 			CoreType="103S"
@@ -590,6 +610,7 @@ FND.c
 eeprom.c
 swtimer.c
 buzzer.c
+gpio.c
 "
 				FlagAutoBuild="True"
 				FlagSrcTimeStampCheck="False"
@@ -600,11 +621,11 @@ buzzer.c
 				DisableLibraryAutoSet="False"
 				StdPath="C:\Program Files (x86)\Nuvoton\DFBuilder5\BuiltInCC\CC103S\5_4R4"
 				LIBFILES="C:\Program Files (x86)\Nuvoton\DFBuilder5\BuiltInCC\CC103S\5_4R4\LIB\CC103S.L"
-				CINC="..\src;..\src\ap;..\src\hw;..\src\common;C:\Program Files (x86)\Nuvoton\DFBuilder5\BuiltInCC\CC103S\5_4R4\INCLUDE;..\src\bsp;..\src\bsp\cmsis;..\src\common\hw\include;..\src\hw\driver"
+				CINC="..\src;..\src\ap;..\src\hw;..\src\common;C:\Program Files (x86)\Nuvoton\DFBuilder5\BuiltInCC\CC103S\5_4R4\INCLUDE;..\src\bsp;..\src\bsp\cmsis;..\src\common\hw\include;..\src\hw\driver;..\..\WAFFLE_temp\src\common\hw\include"
 				MakeFileBackup=""
 				OptGroup_CC103S=""
 				OptGroup_AS103S=""
-				AINC="..\src;..\src\ap;..\src\hw;..\src\common;..\src\bsp;..\src\bsp\cmsis;..\src\common\hw\include;..\src\bsp\startup"
+				AINC="..\src;..\src\ap;..\src\hw;..\src\common;..\src\bsp;..\src\bsp\cmsis;..\src\common\hw\include;..\src\bsp\startup;..\..\WAFFLE_temp\src\common\hw\include"
 				UserMakeEnable="False"
 				MakefileType="DFMake"
 				FlagCreateFinalListFile="False"

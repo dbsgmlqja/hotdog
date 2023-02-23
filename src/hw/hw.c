@@ -12,9 +12,10 @@ void hwInit(void)
 	
 	disable_irq();
 //	set_imask(0);
-	buzzerInit();
+	
 	
 	regInit();
+	buzzerInit();
 	init_WDT();
 	tm16set();
 	FND_Init();

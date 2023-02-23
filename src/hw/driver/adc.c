@@ -23,7 +23,7 @@ extern uint32_t uartPrintf(uint8_t ch, uint8_t *fmt, ...);
 #endif
 void adcInit(void)
 {
-	PCMD = 0x11110000;
+	PCMD = 0x00000011;
 	PDMD = 0x11000000;
 	adc_ch = swTimerGetHandle();
 	swtimerSet(adc_ch, 10, 1, adcISR, NULL);
@@ -45,40 +45,42 @@ void pTempSampling(void)
 }
 void int_AD0(void)
 {	
-	uint16_t pTemp,pTemp2;
-	AN0CTR1A = 0x7605;
+	uint16_t pTemp;
+	AN0CTR1A = 0x1005;
 	AN0CTR0 = 0x473;
 	
 	while(AN0CTR1A & 0x0001);
-	pTemp = AN0BUF01;
+	pTemp = AN0BUF00;// + AN0BUF01;
 //	if(pTemp >= 50){
 	pAD[0].Temp = (pTemp + 258) * 1000 / 115;
+	if(pAD[0].Temp < 10000)pAD[0].Temp = 10000;
 /*	}
 	else if(pTemp > 8){
 		pAD[0].AD.Temp1 = pTemp *1000 / 25;
 	}
 	else pAD[0].AD.Temp1 = 0*/;
-	AN1CTR1A = 0x4505;
+	AN1CTR1A = 0x5405;
 //	AN1CUTA = 0x10;
 	AN1CTR0 = 0x473;
 	
 	while(AN1CTR1A & 0x0001);
 	
-	pTemp2 = AN1BUF05 + pTemp;
-	pAD[1].Temp = (pTemp2 + 203) * 1000 / 113;
+	pTemp = /*AN1BUF04 + */AN1BUF05;
+	pAD[1].Temp = (pTemp + 800) * 1000 / 126;
+	if(pAD[1].Temp < 10000)pAD[1].Temp = 10000;
 	pTempSampling();
 }
-void adcRead(_AD *p_adc)
+void adcRead(void)
 {
 	uint32_t pVar= 0;
 	uint8_t i;
 	
 	for(i=0;i!=16;i++)pVar += gTemperature1[i];
-	p_adc->Temp1 = pVar >> 4;
+	gADC.Temp1 = pVar >> 4;
 	pAD[0].Cnt = 0;
 	pVar = 0;
 	for(i=0;i!=16;i++)pVar += gTemperature2[i];
-	p_adc->Temp2 = pVar >> 4;
+	gADC.Temp2 = pVar >> 4;
 	pAD[1].Cnt = 0;
 }
 
@@ -95,7 +97,7 @@ uint16_t adcReadCH(uint8_t ch)
 			ret = AN0BUF01;
 			break;
 		case 2:
-			ret = AN0BUF02;
+			ret = AN1BUF04;
 			break;
 		case 3:
 			ret = AN1BUF05;
@@ -125,18 +127,19 @@ short adcReadVoltage(uint8_t ch)
 void adcISR(void *arg)
 {
 	int_AD0();
-	
 }
-uint8_t adcCheck(_AD *p_obj)
+uint8_t sss;
+uint8_t adcCheck(void)
 {
 	uint16_t data;
 	uint8_t status = 0;
 	
-	data = p_obj->Temp1;
-	if(data > 28000)status = STATUS_ERR;
-	data = p_obj->Temp2;
-	if(data > 28000)status = STATUS_ERR;
+	data = gADC.Temp1;
+	if(data > 23600)status = STATUS_ERR;
+	data = gADC.Temp2;
+	if(data > 23600)status = STATUS_ERR;
 	if(status == STATUS_INIT)status = STATUS_IDLE;
+	sss = status;
 	return status;
 }
 #ifdef _USE_HW_CLI

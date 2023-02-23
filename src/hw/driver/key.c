@@ -2,10 +2,11 @@
 #include "key.h"
 #include "eeprom.h"
 #include "led.h"
+#include "adc.h"
 #define MODE_KEY_IN 	((*(RB_BTF*)&P6IN).p4)
 #define DEC_KEY_IN ((*(RB_BTF*)&P6IN).p5)
-#define INC_KEY_IN ((*(RB_BTF*)&PCIN).p0)
-#define START_KEY_IN	((*(RB_BTF*)&P5IN).p1)
+#define INC_KEY_IN ((*(RB_BTF*)&PCIN).p2)
+#define START_KEY_IN	((*(RB_BTF*)&35IN).p0)
 
 extern void pBeep(uint8_t Cnt, uint8_t sl);
 //extern uint16_t EEP_ParaTBL[][3];
@@ -25,8 +26,8 @@ key_obj_t btn_start_stop;
 const key_tbl_t key_TBL[4] = {
 	{&P6IN, 0x10, 0x00}, 	//mode
 	{&P6IN, 0x20, 0x00},	//dec
-	{&PCIN, 0x01, 0x00},	//inc
-	{&P5IN, 0x02, 0x00},	//start_stop
+	{&PCIN, 0x04, 0x00},	//inc
+	{&P3IN, 0x01, 0x00},	//start_stop
 };
 void keyInit(void)
 {
@@ -34,9 +35,9 @@ void keyInit(void)
 	keyObjCreate(&btn_dec, _DEF_DEC_KEY, 100);
 	keyObjCreate(&btn_inc, _DEF_INC_KEY, 100);
 	keyObjCreate(&btn_start_stop, _DEF_START_KEY, 1500);
-	PCIE |= 0x01;
-	P6IE |= 0x03;
-	P5IE |= 0x02;
+	PCIE |= 0x04;
+	P6IE |= 0x30;
+	P3IE |= 0x01;
 }
 
 void keyObjCreate(key_obj_t *p_obj, uint8_t ch, uint32_t repeat_time)
@@ -140,15 +141,17 @@ void pDecKeyScan(void)
 		case 2:
 			if(gStatus.Comp2 > gDispParameter.Min)gStatus.Comp2 -= 100;
 			break;
-		case 3:
+		case 5:
 			if(gRoast_No > 0)gRoast_No--;
 			else gRoast_No = 5;
 			pn_EEP_Write_Parameter();
 			pn_Load_Parameters();
 			break;
 	}
-	gEEP_save = 1;
-	gEEP_time = millis();
+	if((gStatus.Mode < 3) || (gStatus.Mode == 5)){
+		gEEP_save = 1;
+		gEEP_time = millis();
+	}
 }
 void pIncKeyScan(void)
 {
@@ -171,7 +174,7 @@ void pIncKeyScan(void)
 					case 2:
 						if(gStatus.Comp2 < gDispParameter.Max)gStatus.Comp2 += 100;
 						break;
-					case 3:
+					case 5:
 						if(gRoast_No < 5)gRoast_No++;
 						else gRoast_No = 0;
 						pn_EEP_Read_Parameters();
@@ -179,8 +182,10 @@ void pIncKeyScan(void)
 						break;
 				}
 			}
-			gEEP_save = 1;
-			gEEP_time = millis();
+			if((gStatus.Mode < 3) || (gStatus.Mode == 5)){
+				gEEP_save = 1;
+				gEEP_time = millis();
+			}
 		}
 	}
 	else
@@ -209,6 +214,17 @@ void gStartKeyScan(void)
 						pBeep(3, 0);
 					}
 				}
+				else if(gStatus.status == STATUS_ERR)
+				{
+					gStatus.status = adcCheck();
+					if(gStatus.status == STATUS_IDLE){
+						TRIAC_TOP = 0;
+						TRIAC_BOTTOM = 0;
+						delay(200);
+						RELAY_OUT = 1;
+						pBeep(3, 0);
+					}
+				}
 				else{
 					pBeep(5, 0);
 				}
@@ -230,7 +246,7 @@ void gModeKeyScan(void)
 		if(ModeKeyOn == 0)
 		{
 			if(btn_mode.state == 2){
-				if(gStatus.Mode < 2)gStatus.Mode++;
+				if(gStatus.Mode < 4)gStatus.Mode++;
 				else       gStatus.Mode = 0;
 				ModeKeyOn = 1;
 				Ptr = (uint16_t *)&gParameter[gRoast_No];
@@ -243,7 +259,7 @@ void gModeKeyScan(void)
 		}
 		else{
 			if(millis() - btn_mode.pre_time > 3000){
-				gStatus.Mode = 3;
+				gStatus.Mode = 5;
 				btn_mode.pre_time = millis();
 			}
 		}

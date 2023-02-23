@@ -7,6 +7,9 @@
 	#define EXT extern volatile
 #endif
 
+#define TRIAC_TOP			((*(RB_BTF*)&P3OUT).p1)
+#define TRIAC_BOTTOM		((*(RB_BTF*)&P3OUT).p2)
+#define RELAY_OUT			((*(RB_BTF*)&P5OUT).p1)
 /**************************************************************/
 /*  Fixed Parameter List                                      */
 /**************************************************************/
@@ -31,7 +34,10 @@ typedef struct{
 	uint16_t Temp1;
 	uint16_t Temp2;
 }_Parameter;
-
+typedef struct{
+	uint16_t Temp1;
+	uint16_t Temp2;
+}_AD;
 typedef struct{
 	uint16_t Comp1;
 	uint16_t Comp2;
@@ -50,9 +56,11 @@ typedef struct{
 	uint16_t Max;
 	uint16_t Min;
 }_Para;
+EXT _Status Status;
 EXT _Status gStatus;
 EXT _Parameter gParameter[6];
 EXT _Para gDispParameter;
+EXT _AD gADC;
 //EXT _Status Status;
 /*===================================================================*/
 /* uint8_t Variable													 */
