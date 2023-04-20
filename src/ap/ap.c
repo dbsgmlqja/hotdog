@@ -10,7 +10,8 @@
 #define BASE_TEMP 10000
 #define _DEF_OPTIME 15
 void pTriacCheck(void);
-void adcISR(void *arg);
+void spiISR(void *arg);
+uint8_t spi_ch;
 void apInit(void)
 {
   
@@ -20,6 +21,9 @@ void apInit(void)
 	P3DIR |= 0x06;
 	P5DIR |= 0x02;
 	relay(OFF);
+	spi_ch = swTimerGetHandle();
+	swtimerSet(spi_ch, 250, 1, spiISR, NULL);
+	swtimerStart(spi_ch);
 }
 void pHeaterCheck(void)
 {
@@ -28,47 +32,47 @@ void pHeaterCheck(void)
 	
 	switch(gStatus.status){
 		case STATUS_IDLE:
-			p1 = gADC.Temp1 * 100 / gStatus.Comp1;
-			p2 = gADC.Temp2 * 100 / gStatus.Comp2;
+			p1 = gStatus.Heater_Top.Temp * 100 / gStatus.Heater_Top.Comp;
+			p2 = gStatus.Heater_Bottom.Temp * 100 / gStatus.Heater_Bottom.Comp;
 			if((p1 > 95) && (p2 > 95)){
 				gStatus.status = STATUS_READY;
 				pBeep(2, 1);
 			}
-			p1 = gStatus.Comp1 + 6000;
-			p2 = gStatus.Comp2 + 6000;
-			if((p1 < gADC.Temp1) || (p2 < gADC.Temp2)){
-				/*gStatus.status = STATUS_ERR;
-				relay(OFF);*/
+			p1 = gStatus.Heater_Top.Comp + 6000;
+			p2 = gStatus.Heater_Bottom.Comp + 6000;
+			if((p1 < gStatus.Heater_Top.Temp) || (p2 < gStatus.Heater_Bottom.Temp)){
+				gStatus.status = STATUS_ERR;
+				relay(OFF);
 			}
 			break;
 		case STATUS_ERR:
-			
-		/*	p1 = gStatus.Comp1 + 6000;
-			p2 = gStatus.Comp2 + 6000;
-			if((p1 > gADC.Temp1) && (p2 > gADC.Temp2)){
+			if(gStatus.oldstatus != gStatus.status){
+				relay(OFF);
+			}
+		/*	p1 = gStatus.Heater_Top.Comp + 6000;
+			p2 = gStatus.Heater_Bottom.Comp + 6000;
+			if((p1 > gStatus.Heater_Top.Temp) && (p2 > gStatus.Heater_Bottom.Temp)){
 				gStatus.status = STATUS_READY;
-				TRIAC_TOP = 0;
-				TRIAC_BOTTOM = 0;
-				delay(200);
-				RELAY_OUT = 1;
+				relay(ON);
 			}*/
 			break;
 		case STATUS_READY:
 		case STATUS_ON:
 		default:
-			p1 = gStatus.Comp1 + 6000;
-			p2 = gStatus.Comp2 + 6000;
-			if((p1 < gADC.Temp1) || (p2 < gADC.Temp2)){
-				/*gStatus.status = STATUS_ERR;
-				relay(OFF);*/
+			p1 = gStatus.Heater_Top.Comp + 6000;
+			p2 = gStatus.Heater_Bottom.Comp + 6000;
+			if((p1 < gStatus.Heater_Top.Temp) || (p2 < gStatus.Heater_Top.Temp)){
+				gStatus.status = STATUS_ERR;
+				relay(OFF);
 			}
-			p1 = gADC.Temp1 * 100 / gStatus.Comp1;
-			p2 = gADC.Temp2 * 100 / gStatus.Comp2;
+			p1 = gStatus.Heater_Top.Temp * 100 / gStatus.Heater_Top.Comp;
+			p2 = gStatus.Heater_Bottom.Temp * 100 / gStatus.Heater_Bottom.Comp;
 			if((p1 < 95) || (p2 < 95)){
 				pBeep(5, 0);
 				gStatus.status = STATUS_IDLE;
 			}
 	}
+	gStatus.oldstatus = gStatus.status;
 }
 void apMain(void)
 {
@@ -77,10 +81,11 @@ void apMain(void)
 	pre_time2 = millis();
 	uartPrintf(_DEF_SERIAL1, "Welcome to Waffle machine \n");
 	delay(300);
-	adcRead();
-	gStatus.status = STATUS_IDLE;//adcCheck();
+//	adcRead();
+	gStatus.status = adcCheck();
 	if(gStatus.status == STATUS_IDLE)relay(ON);
 	else relay(OFF);
+	gStatus.oldstatus = gStatus.status;
 	while(1)
 	{
 	    /* WDT reset */
@@ -89,11 +94,11 @@ void apMain(void)
 			pre_time = millis();
 			pTriacCheck();
 		}
-		if(millis() - pre_time2 >= 170)
+		if(millis() - pre_time2 >= 250)
 		{
 			pre_time2 = millis();
-			adcRead();
-			uartPrintf(_DEF_SERIAL1, "%d\t%d\n",gADC.Temp1, gADC.Temp2);
+//			adcRead();
+			uartPrintf(_DEF_SERIAL1, "%d\t%d\n",gStatus.Heater_Top.Temp, gStatus.Heater_Bottom.Temp);
 		}
 		FND_Update();
 		gModeKeyScan();
@@ -133,9 +138,9 @@ void pTriacCheck(void)
 	else{
 		gStatus.RunTime = gStatus.OpTime;
 	}
-	if(gStatus.Comp1 < gADC.Temp1)TRIAC_TOP = 0;
+	if(gStatus.Heater_Top.Comp <= gStatus.Heater_Top.Temp)TRIAC_TOP = 0;
 	else TRIAC_TOP = 1;
-	if(gStatus.Comp2 < gADC.Temp2)TRIAC_BOTTOM = 0;
+	if(gStatus.Heater_Bottom.Comp <= gStatus.Heater_Bottom.Temp)TRIAC_BOTTOM = 0;
 	else TRIAC_BOTTOM = 1;
 	if(gStatus.status > STATUS_IDLE){
 		if(TRIAC_TOP && TRIAC_BOTTOM)
@@ -144,4 +149,8 @@ void pTriacCheck(void)
 		}
 		else gStatus.status = STATUS_READY;
 	}
+}
+void spiISR(void *arg)
+{
+	readTemperature();
 }

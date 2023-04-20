@@ -8,7 +8,6 @@
 #include "timer.h"
 #include "uart.h"
 #include "display.h"
-#include "adc.h"
 #include "key.h"
 #include "FlashOption.h"
 #include "cli.h"
@@ -18,7 +17,9 @@
 #include "eeprom.h"
 #include "key.h"
 #include "gpio.h"
+#include "adc.h"
 #include "swtimer.h"
+#include "MAX6675.h"
 void hwInit(void);
 
 

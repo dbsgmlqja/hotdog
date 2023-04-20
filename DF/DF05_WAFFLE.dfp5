@@ -3,10 +3,10 @@
 	ProjSeries="103S"
 	ProjName="DF05_WAFFLE"
 	ProjDir="D:\Firmware\DF05K\WAFFLE\DF\"
-	MaxFileId="93"
+	MaxFileId="95"
 	ProjectInitializing="1"
 	ProjId="1"
-	TimeStamp="0x63eb4757"
+	TimeStamp="0x63ef5929"
 	BuiltInCCName="CC103S.EXE"
 	BuiltInAsmName="AS103S.EXE"
 	BuiltInLinkName="LD103S.EXE"
@@ -559,11 +559,30 @@ ODB_OCD_TYPE     : 1;"
 				LineEnd=""
 				FileType="c"
 			/>
+			<94
+				FolderID="28"
+				BldTarget="true"
+				ViewFlag=""
+				FileName="MAX6675.c"
+				FilePath="..\src\hw\driver\"
+				Encode=""
+				LineEnd=""
+				FileType="c"
+			/>
+			<95
+				FolderID="26"
+				BldTarget=""
+				ViewFlag=""
+				FileName="MAX6675.h"
+				FilePath="..\src\common\hw\include\"
+				Encode=""
+				LineEnd=""
+			/>
 		</SrcFileList>
 		<MakeFileList
 			MaxId="1"
 			CurMakefileId="1"
-			CurMakefileKey="116796856"
+			CurMakefileKey="112301004"
 			TargetType="ODB"
 			CpuType="103DF05K"
 			CoreType="103S"
@@ -611,6 +630,7 @@ eeprom.c
 swtimer.c
 buzzer.c
 gpio.c
+MAX6675.c
 "
 				FlagAutoBuild="True"
 				FlagSrcTimeStampCheck="False"

@@ -39,8 +39,16 @@ typedef struct{
 	uint16_t Temp2;
 }_AD;
 typedef struct{
-	uint16_t Comp1;
-	uint16_t Comp2;
+	uint8_t Triac 		: 1;
+	uint8_t SensorErr 	: 1;
+	uint16_t RunTime;
+	uint16_t Comp;
+	uint16_t Temp;	
+	uint32_t pre_time;
+}_Heater;
+typedef struct{
+	_Heater Heater_Top;
+	_Heater Heater_Bottom;
 	uint16_t OpTime;
 	uint16_t RunTime;
 	uint16_t Temp1;
@@ -50,6 +58,7 @@ typedef struct{
 	uint8_t OldStart;
 	uint8_t Start;
 	uint8_t status;
+	uint8_t oldstatus;
 }_Status;
 typedef struct{
 	uint16_t Value;
@@ -60,7 +69,6 @@ EXT _Status Status;
 EXT _Status gStatus;
 EXT _Parameter gParameter[6];
 EXT _Para gDispParameter;
-EXT _AD gADC;
 //EXT _Status Status;
 /*===================================================================*/
 /* uint8_t Variable													 */

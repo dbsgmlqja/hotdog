@@ -2,13 +2,13 @@
 #include "key.h"
 #include "eeprom.h"
 #include "led.h"
-#include "adc.h"
 #define MODE_KEY_IN 	((*(RB_BTF*)&P6IN).p4)
 #define DEC_KEY_IN ((*(RB_BTF*)&P6IN).p5)
-#define INC_KEY_IN ((*(RB_BTF*)&PCIN).p2)
+#define INC_KEY_IN ((*(RB_BTF*)&PCIN).p0)
 #define START_KEY_IN	((*(RB_BTF*)&35IN).p0)
 
 extern void pBeep(uint8_t Cnt, uint8_t sl);
+extern uint8_t adcCheck(void);
 //extern uint16_t EEP_ParaTBL[][3];
 
 extern uint16_t EEP_ParaTBL[][6][3];
@@ -26,7 +26,7 @@ key_obj_t btn_start_stop;
 const key_tbl_t key_TBL[4] = {
 	{&P6IN, 0x10, 0x00}, 	//mode
 	{&P6IN, 0x20, 0x00},	//dec
-	{&PCIN, 0x04, 0x00},	//inc
+	{&PCIN, 0x01, 0x00},	//inc
 	{&P3IN, 0x01, 0x00},	//start_stop
 };
 void keyInit(void)
@@ -35,7 +35,7 @@ void keyInit(void)
 	keyObjCreate(&btn_dec, _DEF_DEC_KEY, 100);
 	keyObjCreate(&btn_inc, _DEF_INC_KEY, 100);
 	keyObjCreate(&btn_start_stop, _DEF_START_KEY, 1500);
-	PCIE |= 0x04;
+	PCIE |= 0x01;
 	P6IE |= 0x30;
 	P3IE |= 0x01;
 }
@@ -126,6 +126,7 @@ void pDecKeyScan(void)
 	else
 	{
 		DecKeyOn = 0;
+		if(btn_dec.state == 0)btn_dec.repeat_time = 100;
 	}
 	
 		
@@ -136,10 +137,12 @@ void pDecKeyScan(void)
 			if(gStatus.OpTime > gDispParameter.Min)gStatus.OpTime--;
 			break;
 		case 1:
-			if(gStatus.Comp1 > gDispParameter.Min)gStatus.Comp1 -= 100;
+			if(gStatus.Heater_Top.Comp > gDispParameter.Min)gStatus.Heater_Top.Comp -= 100;
+			if(btn_dec.repeat_time > 30)btn_dec.repeat_time -= 5;
 			break;
 		case 2:
-			if(gStatus.Comp2 > gDispParameter.Min)gStatus.Comp2 -= 100;
+			if(gStatus.Heater_Bottom.Comp > gDispParameter.Min)gStatus.Heater_Bottom.Comp -= 100;
+			if(btn_dec.repeat_time > 30)btn_dec.repeat_time -= 5;
 			break;
 		case 5:
 			if(gRoast_No > 0)gRoast_No--;
@@ -163,16 +166,17 @@ void pIncKeyScan(void)
 			if(IncKeyOn == 0)
 			{
 				IncKeyOn = 1;
+				if(btn_inc.repeat_time > 30)btn_inc.repeat_time -= 5;
 				switch(gStatus.Mode)
 				{
 					case 0:
 						if(gStatus.OpTime < gDispParameter.Max)gStatus.OpTime++;
 						break;
 					case 1:
-						if(gStatus.Comp1 < gDispParameter.Max)gStatus.Comp1 += 100;
+						if(gStatus.Heater_Top.Comp < gDispParameter.Max)gStatus.Heater_Top.Comp += 100;
 						break;
 					case 2:
-						if(gStatus.Comp2 < gDispParameter.Max)gStatus.Comp2 += 100;
+						if(gStatus.Heater_Bottom.Comp < gDispParameter.Max)gStatus.Heater_Bottom.Comp += 100;
 						break;
 					case 5:
 						if(gRoast_No < 5)gRoast_No++;
@@ -191,6 +195,7 @@ void pIncKeyScan(void)
 	else
 	{
 		IncKeyOn = 0;
+		if(btn_inc.state == 0) btn_inc.repeat_time = 100;
 	}
 }
 void gStartKeyScan(void)

@@ -55,19 +55,19 @@ void pFnd_LoadString(void)
 				gFndText[0] = S_A;
 				break;
 			case 1:
-				data = gStatus.Comp1/100;
+				data = gStatus.Heater_Top.Comp/100;
 				gFndText[0] = S_B;
 				break;
 			case 2:
-				data = gStatus.Comp2/100;
+				data = gStatus.Heater_Bottom.Comp/100;
 				gFndText[0] = S_C;
 				break;
 			case 3:
-				data = gADC.Temp1 / 100;
+				data = gStatus.Heater_Top.Temp / 100;
 				gFndText[0] = S_D;
 				break;
 			case 4:
-				data = gADC.Temp2 / 100;
+				data = gStatus.Heater_Bottom.Temp / 100;
 				gFndText[0] = S_E;
 				break;
 			case 5:

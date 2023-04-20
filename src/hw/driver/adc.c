@@ -14,7 +14,7 @@ typedef struct{
 	uint8_t Cnt;
 	uint16_t Temp;
 }temp_tbl_t;
-_AD gAD;
+_AD gADC;
 temp_tbl_t pAD[2];
 uint8_t gTempCnt;
 uint16_t gTemperature1[16],gTemperature2[16];
@@ -128,18 +128,20 @@ void adcISR(void *arg)
 {
 	int_AD0();
 }
-uint8_t sss;
 uint8_t adcCheck(void)
 {
 	uint16_t data;
 	uint8_t status = 0;
 	
-	data = gADC.Temp1;
-	if(data > 23600)status = STATUS_ERR;
-	data = gADC.Temp2;
-	if(data > 23600)status = STATUS_ERR;
+	data = gStatus.Heater_Top.Temp;
+	if(data > 23600){
+		status = STATUS_ERR;
+	}
+	data = gStatus.Heater_Bottom.Temp;
+	if(data > 23600){
+		status = STATUS_ERR;
+	}
 	if(status == STATUS_INIT)status = STATUS_IDLE;
-	sss = status;
 	return status;
 }
 #ifdef _USE_HW_CLI

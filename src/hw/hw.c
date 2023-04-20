@@ -104,11 +104,10 @@ void hwInit(void)
 	}
 	*/
 	clear_WDT();
-	adcInit();
 	eepromInit();
-
+	
 	keyInit();
 	cliInit();
 	pn_EEP_Load();
-
+	MAX6675_Init();
 }
