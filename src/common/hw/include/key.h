@@ -16,12 +16,29 @@ void keyInit(void);
 void keyObjCreate(key_obj_t *p_obj, uint8_t ch, uint32_t repeat_time);
 uint8_t keyObjGetPressed(key_obj_t *p_obj, uint32_t pressed_time);
 uint8_t keyGetPressed(uint8_t ch);
-void gModeKeyScan(void);
-void gStartKeyScan(void);
-void pDecKeyScan(void);
+void gMotorKeyScan(void);
+void gHeaterKeyScan(void);
+void gEmgKeyScan(void);
+void pReverseKeyScan(void);
 
-void pIncKeyScan(void);
+void pConvayorKeyScan(void);
 void gKeyScan(void);
-void gModeKeyReleaseCheck(void);
-uint8_t gAllKeyReleaseCheck(void);
+void pLocKeyRead(void);
+void pLocKeyProcess(void);
+void pLocKeyRepeatProcess(void);
+
+enum{
+	LKEY_MENU=1,
+	LKEY_DOWN,
+	LKEY_UP,
+	LKEY_SET,
+	LKEY_END
+};
+enum{
+	LKEY_NUM_1=1,
+	LKEY_NUM_2,
+	LKEY_NUM_3,
+	LKEY_NUM_4,
+	LKEY_NUM_END
+};
 #endif

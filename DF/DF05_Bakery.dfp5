@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<DF05_WAFFLE
+<DF05_Bakery
 	ProjSeries="103S"
-	ProjName="DF05_WAFFLE"
-	ProjDir="D:\Firmware\DF05K\WAFFLE\DF\"
-	MaxFileId="95"
+	ProjName="DF05_Bakery"
+	ProjDir="D:\Firmware\DF05K\Bakery\DF\"
+	MaxFileId="107"
 	ProjectInitializing="1"
 	ProjId="1"
-	TimeStamp="0x63ef5929"
+	TimeStamp="0x663da612"
 	BuiltInCCName="CC103S.EXE"
 	BuiltInAsmName="AS103S.EXE"
 	BuiltInLinkName="LD103S.EXE"
@@ -461,26 +461,6 @@ ODB_OCD_TYPE     : 1;"
 				Encode=""
 				LineEnd=""
 			/>
-			<78
-				FolderID="26"
-				BldTarget="false"
-				ViewFlag=""
-				FileName="FND.h"
-				FilePath="..\src\common\hw\include\"
-				Encode=""
-				LineEnd=""
-				FileType="h"
-			/>
-			<79
-				FolderID="28"
-				BldTarget="true"
-				ViewFlag=""
-				FileName="FND.c"
-				FilePath="..\src\hw\driver\"
-				Encode=""
-				LineEnd=""
-				FileType="c"
-			/>
 			<80
 				FolderID="28"
 				BldTarget="true"
@@ -539,26 +519,6 @@ ODB_OCD_TYPE     : 1;"
 				LineEnd=""
 				FileType="c"
 			/>
-			<92
-				FolderID="26"
-				BldTarget="false"
-				ViewFlag=""
-				FileName="gpio.h"
-				FilePath="..\..\WAFFLE_temp\src\common\hw\include\"
-				Encode=""
-				LineEnd=""
-				FileType="h"
-			/>
-			<93
-				FolderID="28"
-				BldTarget="true"
-				ViewFlag=""
-				FileName="gpio.c"
-				FilePath="..\..\WAFFLE_temp\src\hw\driver\"
-				Encode=""
-				LineEnd=""
-				FileType="c"
-			/>
 			<94
 				FolderID="28"
 				BldTarget="true"
@@ -578,19 +538,116 @@ ODB_OCD_TYPE     : 1;"
 				Encode=""
 				LineEnd=""
 			/>
+			<96
+				FolderID="28"
+				BldTarget="true"
+				ViewFlag=""
+				FileName="modbus.c"
+				FilePath="..\..\WAFFLE_temp\src\hw\driver\"
+				Encode=""
+				LineEnd=""
+				FileType="c"
+			/>
+			<97
+				FolderID="26"
+				BldTarget="false"
+				ViewFlag=""
+				FileName="modbus.h"
+				FilePath="..\..\WAFFLE_temp\src\common\hw\include\"
+				Encode=""
+				LineEnd=""
+				FileType="h"
+			/>
+			<98
+				FolderID="28"
+				BldTarget="true"
+				ViewFlag=""
+				FileName="display.c"
+				FilePath="..\src\hw\driver\"
+				Encode=""
+				LineEnd=""
+				FileType="c"
+			/>
+			<99
+				FolderID="28"
+				BldTarget="true"
+				ViewFlag=""
+				FileName="LCD_CTRL.c"
+				FilePath="..\src\hw\driver\"
+				Encode=""
+				LineEnd=""
+				FileType="c"
+			/>
+			<100
+				FolderID="26"
+				BldTarget=""
+				ViewFlag=""
+				FileName="display.h"
+				FilePath="..\src\common\hw\include\"
+				Encode=""
+				LineEnd=""
+			/>
+			<101
+				FolderID="26"
+				BldTarget=""
+				ViewFlag=""
+				FileName="LCD_CORL.h"
+				FilePath="..\src\common\hw\include\"
+				Encode=""
+				LineEnd=""
+			/>
+			<102
+				FolderID="28"
+				BldTarget="true"
+				ViewFlag=""
+				FileName="gpio.c"
+				FilePath="..\src\hw\driver\"
+				Encode=""
+				LineEnd=""
+				FileType="c"
+			/>
+			<103
+				FolderID="26"
+				BldTarget=""
+				ViewFlag=""
+				FileName="gpio.h"
+				FilePath="..\src\common\hw\include\"
+				Encode=""
+				LineEnd=""
+			/>
+			<104
+				FolderID="28"
+				BldTarget="true"
+				ViewFlag=""
+				FileName="ssr.c"
+				FilePath="..\src\hw\driver\"
+				Encode=""
+				LineEnd=""
+				FileType="c"
+			/>
+			<105
+				FolderID="26"
+				BldTarget="false"
+				ViewFlag=""
+				FileName="ssr.h"
+				FilePath="..\src\common\hw\include\"
+				Encode=""
+				LineEnd=""
+				FileType="h"
+			/>
 		</SrcFileList>
 		<MakeFileList
 			MaxId="1"
 			CurMakefileId="1"
-			CurMakefileKey="112301004"
+			CurMakefileKey="118071354"
 			TargetType="ODB"
 			CpuType="103DF05K"
 			CoreType="103S"
 		>
 			<1
-				MakeFileName="WAFFLE_DF05"
+				MakeFileName="BAKERY_DF05"
 				MakeFilePath=".\"
-				ExFileName="WAFFLE_DF05.x"
+				ExFileName="BAKERY_DF05.x"
 				ExFilePath=".\"
 				TargetType="ex"
 				CCPath="5_4R4"
@@ -625,12 +682,15 @@ key.c
 qbuffer.c
 cli.c
 FlashOption.c
-FND.c
 eeprom.c
 swtimer.c
 buzzer.c
-gpio.c
 MAX6675.c
+modbus.c
+display.c
+LCD_CTRL.c
+gpio.c
+ssr.c
 "
 				FlagAutoBuild="True"
 				FlagSrcTimeStampCheck="False"
@@ -658,9 +718,9 @@ MAX6675.c
 				FlagContinueOnError="False"
 				FlagUseXCV="True"
 				FlagUseCRCCalc="False"
-				FLAGS_XCV="-i -o&quot;D:\Firmware\DF05K\WAFFLE\OUTPUT\DF05K_WAFFLE.hex&quot; "
+				FLAGS_XCV="-i -o&quot;D:\Firmware\DF05K\Bakery\OUTPUT\DF05K_BAKERY.hex&quot; "
 				FILE_EMPTY="false"
-				MaxFileId="75"
+				MaxFileId="95"
 			>
 				<View>
 					<CustomView>
@@ -922,15 +982,6 @@ MAX6675.c
 						LineEnd=""
 						FileType="c"
 					/>
-					<37
-						FolderID="26"
-						BldTarget=""
-						ViewFlag=""
-						FileName="pwm.h"
-						FilePath="..\src\common\hw\include\"
-						Encode=""
-						LineEnd=""
-					/>
 					<38
 						FolderID="26"
 						BldTarget=""
@@ -969,26 +1020,6 @@ MAX6675.c
 						LineEnd=""
 						FileType="h"
 					/>
-					<42
-						FolderID="26"
-						BldTarget="false"
-						ViewFlag=""
-						FileName="display.h"
-						FilePath="..\src\common\hw\include\"
-						Encode=""
-						LineEnd=""
-						FileType="h"
-					/>
-					<43
-						FolderID="28"
-						BldTarget="true"
-						ViewFlag=""
-						FileName="display.c"
-						FilePath="..\src\hw\driver\"
-						Encode=""
-						LineEnd=""
-						FileType="c"
-					/>
 					<44
 						FolderID="1"
 						BldTarget="false"
@@ -998,16 +1029,6 @@ MAX6675.c
 						Encode=""
 						LineEnd=""
 						FileType="h"
-					/>
-					<48
-						FolderID="28"
-						BldTarget="true"
-						ViewFlag=""
-						FileName="status.c"
-						FilePath="..\src\hw\driver\"
-						Encode=""
-						LineEnd=""
-						FileType="c"
 					/>
 					<53
 						FolderID="28"
@@ -1116,6 +1137,123 @@ MAX6675.c
 						Encode=""
 						LineEnd=""
 					/>
+					<78
+						FolderID="26"
+						BldTarget="false"
+						ViewFlag=""
+						FileName="FND.h"
+						FilePath="..\src\common\hw\include\"
+						Encode=""
+						LineEnd=""
+						FileType="h"
+					/>
+					<79
+						FolderID="28"
+						BldTarget="true"
+						ViewFlag=""
+						FileName="FND.c"
+						FilePath="..\src\hw\driver\"
+						Encode=""
+						LineEnd=""
+						FileType="c"
+					/>
+					<80
+						FolderID="28"
+						BldTarget="true"
+						ViewFlag=""
+						FileName="eeprom.c"
+						FilePath="..\src\hw\driver\"
+						Encode=""
+						LineEnd=""
+						FileType="c"
+					/>
+					<81
+						FolderID="26"
+						BldTarget=""
+						ViewFlag=""
+						FileName="eeprom.h"
+						FilePath="..\src\common\hw\include\"
+						Encode=""
+						LineEnd=""
+					/>
+					<88
+						FolderID="28"
+						BldTarget="true"
+						ViewFlag=""
+						FileName="swtimer.c"
+						FilePath="..\src\hw\driver\"
+						Encode=""
+						LineEnd=""
+						FileType="c"
+					/>
+					<89
+						FolderID="26"
+						BldTarget="false"
+						ViewFlag=""
+						FileName="swtimer.h"
+						FilePath="..\src\common\hw\include\"
+						Encode=""
+						LineEnd=""
+						FileType="h"
+					/>
+					<90
+						FolderID="26"
+						BldTarget=""
+						ViewFlag=""
+						FileName="buzzer.h"
+						FilePath="..\src\common\hw\include\"
+						Encode=""
+						LineEnd=""
+					/>
+					<91
+						FolderID="28"
+						BldTarget="true"
+						ViewFlag=""
+						FileName="buzzer.c"
+						FilePath="..\src\hw\driver\"
+						Encode=""
+						LineEnd=""
+						FileType="c"
+					/>
+					<92
+						FolderID="26"
+						BldTarget="false"
+						ViewFlag=""
+						FileName="gpio.h"
+						FilePath="..\..\WAFFLE_temp\src\common\hw\include\"
+						Encode=""
+						LineEnd=""
+						FileType="h"
+					/>
+					<93
+						FolderID="28"
+						BldTarget="true"
+						ViewFlag=""
+						FileName="gpio.c"
+						FilePath="..\..\WAFFLE_temp\src\hw\driver\"
+						Encode=""
+						LineEnd=""
+						FileType="c"
+					/>
+					<94
+						FolderID="28"
+						BldTarget="true"
+						ViewFlag=""
+						FileName="MAX6675.c"
+						FilePath="..\src\hw\driver\"
+						Encode=""
+						LineEnd=""
+						FileType="c"
+					/>
+					<95
+						FolderID="26"
+						BldTarget=""
+						ViewFlag=""
+						FileName="MAX6675.h"
+						FilePath="..\src\common\hw\include\"
+						Encode=""
+						LineEnd=""
+					/>
 				</SrcFileList>
 			</1>
 		</MakeFileList>
@@ -1208,4 +1346,4 @@ MAX6675.c
 			SimDelayTime="0.1s"
 		/>
 	</DebugOption>
-</DF05_WAFFLE>
+</DF05_Bakery>

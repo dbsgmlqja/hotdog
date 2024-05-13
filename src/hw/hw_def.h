@@ -14,7 +14,8 @@
 	#define false 0
 #endif
 
-
+#define IG5A	(0)
+#define G100	(1)
 #define _USE_HW_SD
 #define _USE_HW_FATFS
 #define _USE_HW_FLASH
@@ -28,7 +29,7 @@
 #define      HW_MCP2515_MAX_CH      1
 
 #define _USE_HW_LED
-#define      HW_LED_MAX_CH          2
+#define      HW_LED_MAX_CH          5
 
 #define _USE_HW_UART
 #define      HW_UART_MAX_CH         3
@@ -40,7 +41,7 @@
 #define      HW_CLI_CMD_NAME_MAX    16
 #define      HW_CLI_LINE_HIS_MAX    4
 #define      HW_CLI_LINE_BUF_MAX    64
-
+#define	_USE_HW_INVERTER	IG5A
 #define _USE_HW_BUTTON
 #define      HW_BUTTON_MAX_CH       1
 
@@ -97,7 +98,7 @@
 
 #define FLASH_ADDR_BOOT_VER         0x8000400
 
-#define _HW_KEY_MAX_CH 4
+#define _HW_KEY_MAX_CH 5
 
 
 #endif /* SRC_HW_HW_DEF_H_ */

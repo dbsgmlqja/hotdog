@@ -278,45 +278,29 @@ uint8_t i2cWriteByte (uint16_t dev_addr, uint16_t reg_addr, uint8_t data, uint32
 }
 uint8_t i2cWriteBytes(uint16_t dev_addr, uint16_t reg_addr, uint8_t *p_data, uint32_t length, uint32_t timeout)
 {
-	uint8_t i,j,len,pCnt = 0;
-	uint8_t mod = reg_addr % PAGESIZE;
-	uint8_t PageCnt = (length + mod - 1) / PAGESIZE + 1;
-	uint8_t First,Last;
+	uint8_t i,pCnt = 0;
 	uint8_t temp_REG;
 	uint16_t address = reg_addr;
+	
+	temp_REG = SC0IICMD3;
+	temp_REG &= ~0x20;	// Stop Condition Disable
+	temp_REG &= ~0x08;	// TX
+	temp_REG &= ~0x01;	// ACK
+	SC0IICMD3 = temp_REG;
 	pTimeout = timeout;
-	First = mod;
-	len = length + mod;
-	
-	
-	for(j=0;j<PageCnt;j++)
+	SC0IICMD0 |= 0x08;		// Start Condition Enable
+	if(pIIC_SendByte(dev_addr | ((address >> 7) & 0x0e)) == 0x01)	return 1;
+	SC0IICMD0 &= ~0x08;		// Start Condition Disable
+	if(pIIC_SendByte(address & 0xff) == 0x01)							return 1;
+	for(i=0;i<length;i++)
 	{
-		if(len > PAGESIZE)Last = PAGESIZE;
-		else Last = len;
-		temp_REG = SC0IICMD3;
-		temp_REG &= ~0x20;	// Stop Condition Disable
-		temp_REG &= ~0x08;	// TX
-		temp_REG &= ~0x01;	// ACK
-		SC0IICMD3 = temp_REG;
-	
-		SC0IICMD0 |= 0x08;		// Start Condition Enable
-		if(pIIC_SendByte(dev_addr | ((address >> 7) & 0x0e)) == 0x01)	return 1;
-		SC0IICMD0 &= ~0x08;		// Start Condition Disable
-		if(pIIC_SendByte(address & 0xff) == 0x01)							return 1;
-		for(i=First;i<Last;i++)
-		{
-			if(pIIC_SendByte(*p_data++) == 0x01)return 1;
-			pCnt++;
-		}
-		SC0IICMD3 |= 0x20;	// Stop Condition Enable
-		pDelay_Soft_5ms();
-		if(pCnt >= length)return 0;
-		len -= PAGESIZE;
-		First = 0;
-		address = reg_addr + pCnt;
+		if(pIIC_SendByte(*p_data++) == 0x01)return 1;
+		pCnt++;
 	}
-
-	return 0;	// OK
+	SC0IICMD3 |= 0x20;	// Stop Condition Enable
+	pDelay_Soft_5ms();
+	if(pCnt >= length)return 0;
+	else return 1;
 
 }
 

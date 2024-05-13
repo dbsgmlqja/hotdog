@@ -7,6 +7,7 @@ extern void SysTick_Handler(void);
 extern void SysTick_Handler2(void);
 extern void int_WDT(void);
 extern void UART1_IRQHandler(void);
+extern void UART3_IRQHandler(void);
 void irq_group00(void);  /* group 0: */
 void irq_group01(void);  /* group 1: */
 void irq_group02(void);  /* group 2: */
@@ -588,7 +589,8 @@ void irq_group45(void)	//Serial 3
 {
 	if(G45ICR & 0x0001){
 		G45ICR_C = 0x01;
-		G45ICR &= 0x0100;
+		enable_irq();
+		UART3_IRQHandler();
 	}
 	else if(G45ICR & 0x0002){
 		G45ICR_C = 0x02;

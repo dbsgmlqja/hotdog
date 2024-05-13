@@ -8,8 +8,8 @@
 extern void init_WDT(void);
 typedef struct
 {
-  uint8_t     is_open;
-  uint32_t baud;
+	uint8_t     is_open;
+	uint32_t baud;
 	uint8_t rx_buf[UART_RX_BUF_LENGTH];
 	uint8_t rx_data;
 	
@@ -26,7 +26,7 @@ static uart_t uart_tbl[4];
 void uartInit(void)
 {
 	SC1MD3 &= ~(char)0x30;
-	TM00BR = (8-1);
+	TM00BR = (8-1);//8 - 115200bps,8.681uS, 195 - 9600bps,104uS 
 	TM00MD |= 0x40;
 	TM00MD &= ~0x40;
 	
@@ -43,6 +43,11 @@ void uartInit(void)
 	G43ICR = 0x4100;
 	uart_tbl[1].is_open = 1;
 	qbufferCreate(&uart_tbl[1].qbuffer_rx, (uint8_t *)&uart_tbl[1].rx_buf, UART_RX_BUF_LENGTH);
+	
+	
+
+	uart_tbl[3].is_open = 1;
+//	qbufferCreate(&uart_tbl[1].qbuffer_rx, (uint8_t *)&uart_tbl[1].rx_buf, UART_RX_BUF_LENGTH);
 }
 uint8_t getDigit(uint32_t Data, uint8_t Notation)
 {
@@ -115,8 +120,9 @@ uint8_t uartRead(uint8_t ch)
 
 uint32_t uartWrite(uint8_t ch, uint8_t Data)
 {
-	uint32_t ret = 0;
-	uint16_t i;
+	uint32_t ret = 0,i;
+	uint32_t pre_time;
+	pre_time = millis();
 	switch(ch)
 	{
 		case _DEF_SERIAL0:
@@ -133,7 +139,7 @@ uint32_t uartWrite(uint8_t ch, uint8_t Data)
 		case _DEF_UART4:
 			while(SC3STR & 0x20 == 0x20);
 			SC3TB = Data;
-			for(i=0;i!=0x1f0;i++)clear_WDT();
+			for(i=0;i<0x1ff;i++)clear_WDT();
 			break;
 	}
 	return ret;
@@ -371,11 +377,4 @@ void UART1_IRQHandler(void)
 	RxBuffer = SC1RB;
 	qbufferWrite(&p_uart->qbuffer_rx, &RxBuffer, 1);
 }
-void UART3_IRQHandler(void)
-{
-	uint8_t RxBuffer;
-	uart_t *p_uart = &uart_tbl[3];
-	
-	RxBuffer = SC3RB;
-	qbufferWrite(&p_uart->qbuffer_rx, &RxBuffer, 1);
-}
+

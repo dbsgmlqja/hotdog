@@ -5,6 +5,7 @@ void SysTick_Handler(void)
 {
   	systick_ms++;
 	swtimerISR();
+	p1msTimer();
 }
 void SysTick_Handler2(void)
 {

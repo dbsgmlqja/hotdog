@@ -94,7 +94,8 @@ stack		ds	STACK_SIZE
 stack_end
 
 .text		SECTION "ax", PROGBITS,PUBLIC
-		ALIGN 1
+	
+	ALIGN 1
 _reset								;branch here after reset (set 0x40000000 when linking!)
 		jmp	_start
 

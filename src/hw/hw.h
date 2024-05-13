@@ -12,7 +12,8 @@
 #include "FlashOption.h"
 #include "cli.h"
 #include "buzzer.h"
-#include "FND.h"
+#include "LCD_CTRL.h"
+#include "display.h"
 #include "i2c.h"
 #include "eeprom.h"
 #include "key.h"
@@ -20,6 +21,8 @@
 #include "adc.h"
 #include "swtimer.h"
 #include "MAX6675.h"
+#include "modbus.h"
+#include "ssr.h"
 void hwInit(void);
 
 

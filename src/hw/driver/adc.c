@@ -83,7 +83,14 @@ void adcRead(void)
 	gADC.Temp2 = pVar >> 4;
 	pAD[1].Cnt = 0;
 }
-
+void adc0Read(void)
+{
+	AN0CTR1A = 0x0001;
+	AN0CTR0  = 0x047B;
+	
+	while(AN0CTR1A & 0x0001);
+	gKey_AD0 = AN0BUF00;
+}
 uint16_t adcReadCH(uint8_t ch)
 {
 	uint16_t ret = 0;

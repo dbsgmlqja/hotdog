@@ -3,16 +3,20 @@
 #include "hw_def.h"
 #ifdef _USE_HW_EEPROM
 enum{
-	EEP_OPTIME,
-	EEP_TEMP1,
-	EEP_TEMP2,
+	EEP_TOP_TEMP,
+	EEP_BOTTOM_TEMP,
 	EEP_END
+};
+enum{
+	EEP_INV_F_FREQ,
+	EEP_INV_R_FREQ,
+	EEP_INV_END
 };
 uint8_t eepromInit(void);
 uint8_t eepromIsInit(void);
 uint8_t eepromValid(uint32_t addr);
 uint8_t eepromReadByte(uint32_t addr);
-uint8_t eepromWriteByte(uint32_t addr, uint8_t data_in);
+uint8_t pn_EepromWriteByte(uint32_t addr, uint8_t data_in);
 uint8_t eepromWrite(uint32_t addr, uint8_t *p_data, uint8_t length);
 uint32_t eepromGetLength(void);
 uint8_t eepromFormat(void);
@@ -33,5 +37,7 @@ uint8_t pn_EepromSparaAddr(void);
 uint8_t pn_EepromUparaAddr(void);
 void pn_EEP_SaveCheck(void);
 void pn_EEP_Write_Parameter(void);
+uint8_t pn_EepromPageWrite(uint16_t reg_addr, uint8_t *p_data, uint32_t length, uint32_t timeout);
+uint8_t pn_EEP_WriteBytes(uint16_t addr, uint8_t *p_data, uint32_t length);
 #endif
 #endif

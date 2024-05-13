@@ -1,9 +1,10 @@
 #include "global.h"
 #include "display.h"
+#include "LCD_CTRL.h"
 #include "strings.h"
+#include "uart.h"
+#include "FlashOption.h"
 
-
-static uint8_t gFndText[4];
 enum{
 	FORMAT_xxx,
 	FORMAT_xxxx, //@150508 by Bang
@@ -12,64 +13,249 @@ enum{
 
 	FORMAT10_xPxx,
 	FORMAT10_xxPxx,
-	FORMAT__xxx //@150820
+	FORMAT10_xxxPxx,
+	FORMAT10_xxxPx,
+
+	FORMAT_xxxxx,
+	FORMAT_xxxxxx
 };
-static void pFnd_DisplayByte_Format(uint8_t Format,uint8_t Val,char *Ptr)
+uint8_t getDigitPosition(uint16_t data)
 {
-	unsigned short Value = Val;
-	unsigned char Data;
-	
+	uint8_t ret = 0;
+	int8_t i;
+	for(i=15;i>=0;i--)
+	{
+		if(data & (1 << i))return (i+1);
+	}
+	return ret;
+}
+void pLCD_DisplayInt_Format(uint8_t Format, uint32_t Val, char *Ptr)
+{
+	uint32_t Value = Val;
+	uint32_t Data;
+	uint8_t IsZero = 1;
+	switch(Format)
+	{
+		case FORMAT_xxxxx:
+			
+			Data = Value/10000;
+			if(Data){
+				*Ptr++ = Data + 0x30;
+				IsZero = 0;
+			}
+			else *Ptr++ = ' ';
+			Value %= 10000;
+			Data = Value/1000;
+			if(Data)
+			{
+				*Ptr++ = Data + 0x30;
+				IsZero = 0;
+			}
+			else
+			{
+				if(IsZero)
+				{
+					*Ptr++ = ' ';
+				}
+				else
+				{
+					*Ptr++ = '0';
+				}
+			}
+			Value %= 1000;
+			Data = Value/100;
+			if(Data)
+			{
+				*Ptr++ = Data + 0x30;
+				IsZero = 0;
+			}
+			else
+			{
+				if(IsZero)
+				{
+					*Ptr++ = ' ';
+				}
+				else
+				{
+					*Ptr++ = '0';
+				}
+			}
+			*Ptr++ = Data;
+			Value %= 100;
+			Data = Value/10;
+			if(Data)
+			{
+				*Ptr++ = Data + 0x30;
+				IsZero = 0;
+			}
+			else
+			{
+				if(IsZero)
+				{
+					*Ptr++ = ' ';
+				}
+				else
+				{
+					*Ptr++ = '0';
+				}
+			}
+			Value %= 10;
+			*Ptr++ = Value + 0x30;
+		break;
+		default:
+			Data = Value/100000;
+			if(Data)
+			{
+				*Ptr++ = Data + 0x30;
+				IsZero = 0;
+			}
+			else
+			{
+				*Ptr++ = ' ';
+			}
+			Value %= 100000;
+			Data = Value/10000;
+			if(Data)
+			{
+				*Ptr++ = Data + 0x30;
+				IsZero = 0;
+			}
+			else
+			{
+				if(IsZero)
+				{
+					*Ptr++ = ' ';
+				}
+				else
+				{
+					*Ptr++ = '0';
+				}
+			}
+			Value %= 10000;
+			Data = Value/1000;
+			if(Data)
+			{
+				*Ptr++ = Data + 0x30;
+				IsZero = 0;
+			}
+			else
+			{
+				if(IsZero)
+				{
+					*Ptr++ = ' ';
+				}
+				else
+				{
+					*Ptr++ = '0';
+				}
+			}
+			Value %= 1000;
+			Data = Value/100;
+			if(Data)
+			{
+				*Ptr++ = Data + 0x30;
+				IsZero = 0;
+			}
+			else
+			{
+				if(IsZero)
+				{
+					*Ptr++ = ' ';
+				}
+				else
+				{
+					*Ptr++ = '0';
+				}
+			}
+			Value %= 100;
+			Data = Value/10;
+			if(Data)
+			{
+				*Ptr++ = Data + 0x30;
+				IsZero = 0;
+			}
+			else
+			{
+				if(IsZero)
+				{
+					*Ptr++ = ' ';
+				}
+				else
+				{
+					*Ptr++ = '0';
+				}
+			}
+			Value %= 10;
+			*Ptr++ = Value + 0x30;
+		break;
+	}
+}
+void pLcd_DisplayShort_Format(uint8_t Format,uint16_t Val,char *Ptr)
+{
+	uint16_t Value = Val;
+	uint16_t Data;
+	uint8_t IsZero = 1;
 	switch(Format)
 	{
 		case FORMAT_xxx:
-
-			*Ptr++ = 0x00;
 			Data = Value/100;
-			if(Data == 0) *Ptr++ = 0x00;
-			else *Ptr++ = Dec2Bcd[Data];
-			Value %= 100;
-			if(Data == 0){
-				Data = Value/10;
-				if(Data == 0) *Ptr++ = 0x00;
-				else *Ptr++ = Dec2Bcd[Data];
+			if(Data){
+				*Ptr++ = Data + 0x30;
+				IsZero = 0;
 			}
-			else{
-				Data = Value/10;
-				*Ptr++ = Dec2Bcd[Data];
+			else
+			{
+				*Ptr++ = ' ';
+			}
+			Value %= 100;
+			Data = Value/10;
+			if(Data){
+				*Ptr++ = Data + 0x30;
+				IsZero = 0;
+			}
+			else
+			{
+				if(IsZero)
+				{
+					*Ptr++ = ' ';
+				}
+				else
+				{
+					*Ptr++ = '0';
+				}
 			}
 			Value %= 10;
-			*Ptr++ = Dec2Bcd[Value];
-			
+			*Ptr++ = Value + 0x30;
 			break;
+		//@150508 by Bang
 		case FORMAT_xxxx:
-			
-			
-			Data = Value/1000;
-			if(Data == 0) *Ptr++ = 0x00;
-			else *Ptr++ = Dec2Bcd[Data];
+			Data = Value/10000 + 0x30;
+			*Ptr++ = Data;
+			Value %= 10000;
+			Data = Value/1000 + 0x30;
+			*Ptr++ = Data;
 			Value %= 1000;
-			if(Data == 0){
-				Data = Value/100;
-				if(Data == 0) *Ptr++ = 0x00;
-				else *Ptr++ = Dec2Bcd[Data];
-			}
-			else{
-				Data = Value/100;
-				*Ptr++ = Dec2Bcd[Data];
-			}
+			Data = Value/100 + 0x30;
+			*Ptr++ = Data;
 			Value %= 100;
-			if(Data == 0){
-				Data = Value/10;
-				if(Data == 0) *Ptr++ = 0x00;
-				else *Ptr++ = Dec2Bcd[Data];
-			}
-			else{
-				Data = Value/10;
-				*Ptr++ = Dec2Bcd[Data];
-			}
+			Data = Value/10 + 0x30;
+			*Ptr++ = Data;
 			Value %= 10;
-			*Ptr++ = Dec2Bcd[Value];
-			
+			*Ptr++ = Value + 0x30;
+			break;
+		case FORMAT10_xxxPx:
+			Data = Value/1000 + 0x30;
+			if(Data == 0x30) Data = 0x20;
+			*Ptr++ = Data;
+			Value %= 1000;
+			Data = Value/100 + 0x30;
+			if(Data == 0x30) Data = 0x20;
+			*Ptr++ = Data;
+			Value %= 100;
+			*Ptr++ = Value/10 + 0x30;
+			*Ptr++ = '.';
+			Value %= 10;
+			*Ptr++ = Value + 0x30;
 			break;
 		case FORMAT_xPxx:
 			*Ptr++ = Value/100 + 0x30;
@@ -80,16 +266,99 @@ static void pFnd_DisplayByte_Format(uint8_t Format,uint8_t Val,char *Ptr)
 			*Ptr++ = Value + 0x30;
 			break;
 		case FORMAT_xxPx:
-			Data = Value/100;
-			if(Data == 0) *Ptr++ = 0x00;
-			else *Ptr++ = Dec2Bcd[Data];
+			Data = Value/100 + 0x30;
+			if(Data == 0x30) Data = 0x20;
+			*Ptr++ = Data;
 			Value %= 100;
-			Data = Value/10;
-			*Ptr = Dec2Bcd[Data];
-			*Ptr++ |= 0x80;
+			*Ptr++ = Value/10 + 0x30;
+			*Ptr++ = '.';
 			Value %= 10;
-			Data = Value;
-			*Ptr++ = Dec2Bcd[Data]; 
+			*Ptr++ = Value + 0x30;
+			break;
+
+		case FORMAT10_xPxx:
+		//	Value = Val * 10;
+			*Ptr++ = Value/100 + 0x30;
+			*Ptr++ = '.';
+			Value %= 100;
+			*Ptr++ = Value/10 + 0x30;
+			Value %= 10;
+			*Ptr++ = Value + 0x30;
+			break;
+
+		case FORMAT10_xxPxx:
+			Value = Val * 10;
+			Data = Value/10000 + 0x30;
+			if(Data == 0x30) Data = 0x20;
+			*Ptr++ = Data;
+			Value %= 10000;
+			Data = Value/1000 + 0x30;
+			*Ptr++ = Data;
+			*Ptr++ = '.';
+			Value %= 1000;
+			*Ptr++ = Value/100 + 0x30;
+			Value %= 100;
+			*Ptr++ = Value/10 + 0x30;
+			break;
+		case FORMAT10_xxxPxx:
+			Value = Val * 10;
+			Data = Value/10000 + 0x30;
+			if(Data == 0x30) Data = 0x20;
+			*Ptr++ = Data;
+			Value %= 10000;
+			Data = Value/1000 + 0x30;
+			*Ptr++ = Data;
+			*Ptr++ = '.';
+			Value %= 1000;
+			*Ptr++ = Value/100 + 0x30;
+			Value %= 100;
+			*Ptr++ = Value/10 + 0x30;
+			break;
+	}
+}
+
+
+void pLcd_DisplayByte_Format(uint8_t Format,uint8_t Val,char *Ptr)
+{
+	uint16_t Value = Val;
+	uint8_t Data;
+	
+	switch(Format)
+	{
+		case FORMAT_xxx:
+			Data = Value/100 + 0x30;
+			if(Data == 0x30) Data = 0x20;
+			*Ptr++ = Data;
+			Value %= 100;
+			if(Data == 0x20){
+				Data = Value/10 + 0x30;
+				if(Data == 0x30) Data = 0x20;
+				*Ptr++ = Data;
+			}
+			else{
+				Data = Value/10 + 0x30;
+				*Ptr++ = Data;
+			}
+			Value %= 10;
+			*Ptr++ = Value + 0x30;
+			break;
+		case FORMAT_xPxx:
+			*Ptr++ = Value/100 + 0x30;
+			*Ptr++ = '.';
+			Value %= 100;
+			*Ptr++ = Value/10 + 0x30;
+			Value %= 10;
+			*Ptr++ = Value + 0x30;
+			break;
+		case FORMAT_xxPx:
+			Data = Value/100 + 0x30;
+			if(Data == 0x30) Data = 0x20;
+			*Ptr++ = Data;
+			Value %= 100;
+			*Ptr++ = Value/10 + 0x30;
+			*Ptr++ = '.';
+			Value %= 10;
+			*Ptr++ = Value + 0x30;
 			break;
 
 		case FORMAT10_xPxx:
@@ -104,365 +373,376 @@ static void pFnd_DisplayByte_Format(uint8_t Format,uint8_t Val,char *Ptr)
 
 		case FORMAT10_xxPxx:
 			Value = Val * 10;
-			Data = Value/1000;
-			if(Data == 0) *Ptr++ = 0x00;
-			else *Ptr++ = Dec2Bcd[Data];
+			Data = Value/1000 + 0x30;
+			if(Data == 0x30) Data = 0x20;
+			*Ptr++ = Data;
 			Value %= 1000;
-			*Ptr++ = Dec2Bcd[Value/100] | 0x80;
-			
+			*Ptr++ = Value/100 + 0x30;
+			*Ptr++ = '.';
 			Value %= 100;
-			*Ptr++ = Dec2Bcd[Value/10];
+			*Ptr++ = Value/10 + 0x30;
 			Value %= 10;
-			*Ptr++ = Dec2Bcd[Value];
-
+			*Ptr++ = Value + 0x30;
 			break;
 	}
 }
-static void pFnd_DisplayInt_Format(int Val)
-{
-	unsigned int Value;
-	
-	
-	
-	unsigned char i;
-	signed char Dot2;
-	unsigned int check = 10, su = 1;
-	if(Val>=0) Value = Val;
-	else Value = (Val ^  0xffffffff)+1;
-	while(Value / check)
-    {
-		su++;
-		check *= 10;
-    }
-	Dot2 = 3 - su;
-	
-	if(Val >= 0){
-		for(i=0;i!=4;i++){
-			if(Dot2 >= i) gFndText[i] = S_BLK;
-			else {
-				Value %= check;
-				check /= 10;
-				gFndText[i] = Dec2Bcd[Value/check];
-			}
-		}
-		if((signed char)(su - 4) >= 0)	gFndText[su - 4] |= 0x80;
-	}
-	else {
-		gFndText[0] = S_DS;
-		for(i=1;i!=4;i++){
-			if(Dot2 >= i) gFndText[i] = S_BLK;
-			else {
-				Value %= check;
-				check /= 10;
-				gFndText[i] = Dec2Bcd[Value/check];
-			}
-		
-		}
-		if((signed char)(su - 4) >= 0)	gFndText[su - 3] |= 0x80;
-	}
-}
 
-static void pFnd_DisplayShortDot_Format(uint16_t Val)
-{
-	uint16_t Value;
-	uint8_t i = 0;
-	Value = Val;
-	gFndText[i++] = 0x00;
-	Value %= 1000;
-	gFndText[i++] = Dec2Bcd[Value/100];
-	
-	Value %= 100;
-	gFndText[i++] = Dec2Bcd[Value/10] | 0x80;
-	Value %= 10;
-	gFndText[i++] = Dec2Bcd[Value];
-	
-}
-static void pFnd_LoadString(void)
+
+extern uint32_t SS_Position;
+
+void pLcd_LoadString(uint8_t Line)
 {
 	uint8_t i;
-	
-	char *Ptr;
+	int8_t *Ptr;
+	int8_t Arr[17];
+	uint8_t Debug = 0;
 
 	switch(gDispMode)
 	{
 		case LCD_SYS_INIT:
-			
-			/*Ptr = (char *)&LCD_RESET1[0];
-			for(i=0;i!=4;i++)gFndText[i] = *Ptr++;*/
-			gFndText[0] = S_S;
-			gFndText[1] = Dec2Bcd[Versions[1] - 0x30] | 0x80;
-			gFndText[2] = Dec2Bcd[Versions[3] - 0x30];
-			gFndText[3] = Dec2Bcd[Versions[4] - 0x30];
+			if(Line == 0)
+			{
+				Ptr = (int8_t *)&LCD_RESET0[Line][0];
+			}
+			else
+			{
+				Ptr = (char *)&LCD_BOTTOM_RESET0[0];
+				Ptr += 11;
+				for(i=1;i!=5;i++)
+				{
+					*Ptr++ = Versions[i];
+				}
+				Ptr = (int8_t *)&LCD_RESET0[1][0];
+			}
 			break;
 
 		case LCD_MAIN_INIT:
 			if(System.OverTemp){
-				Ptr = (char *)&DISP_MODE_FAULT_OVERTEMP[0];
-				for(i=0;i!=4;i++)gFndText[i] = *Ptr++;
+				Ptr = (char *)&DISP_MODE_FAULT_OVERTEMP[Line][0];
 			}
-		
-			else if((System.SetupModeOn) && (System.SetupSaveDisplay)){
-				Ptr = (char *)&LCD_SAVEMODE[0];
+			else if(System.inverterCommError)
+			{
+				Ptr = (char *)&DISP_MODE_FAULT_INVERTERCOMM[Line][0];
 			}
-			else if(System.TestModeOn){
-				Ptr = (char *)&LCD_TESTMODE[0];
+			else if(System.ssr1CommError)
+			{
+				Ptr = (char *)&DISP_MODE_FAULT_SSR1COMM[Line][0];
 			}
-			else if(System.OverCurrent == 1){
-				Ptr = (char *)&ERRMSG_OVERCURRENT[0];
-				for(i=0;i!=4;i++)gFndText[i] = *Ptr++;
+			else if(System.ssr2CommError)
+			{
+				Ptr = (char *)&DISP_MODE_FAULT_SSR2COMM[Line][0];
 			}
-			
-			else if(System.OverVoltage == 1){
-				Ptr = (char *)&ERRMSG_OVERVOLTAGE[0];
-				for(i=0;i!=4;i++)gFndText[i] = *Ptr++;
+			else if(Ssr1.error)
+			{
+				if(Line == 0)Ptr = (char *)&DISP_MODE_FAULT_SSR1ERRORTOP[0];
+				else
+				{
+					Ptr = (char *)&DISP_MODE_FAULT_SSRERROR[Ssr1.error][0];
+				}
 			}
-			else if(System.LowVoltage == 1){
-				Ptr = (char *)&ERRMSG_UNDERVOLTAGE[0];
-				for(i=0;i!=4;i++)gFndText[i] = *Ptr++;
-			}
-/*@090115*/
-			else if(System.InputError == 1){
-				Ptr = (char *)&ERRMSG_INPUTERROR[0];
-				for(i=0;i!=4;i++)gFndText[i] = *Ptr++;
-			}
-		/*	else if(System.LimitError == 1){
-				Ptr = (char *)&ERRMSG_LIMITERROR[0];
-				for(i=0;i!=4;i++)gFndText[i] = *Ptr++; 
-			}*/
-			else if(System.IGBT_FO == 1){
-				Ptr = (char *)&ERRMSG_IGBT_FO[0];
-				for(i=0;i!=4;i++)gFndText[i] = *Ptr++;
-			}
-/*@090115*/
-
-			
-
-			else if(System.FaultTimeError){
-				if(gFaultTimeErrNo == 1)	Ptr = (char *)&DISP_MODE_FAULT_FTIMEHIGH[0];
-				else						Ptr = (char *)&DISP_MODE_FAULT_FTIMELOW[0];
-				for(i=0;i!=4;i++)gFndText[i] = *Ptr++;
-			}
-
-			else if(System.P24VError){
-				Ptr = (char *)&ERRMSG_P24V[0];
-				for(i=0;i!=4;i++)gFndText[i] = *Ptr++;
+			else if(Ssr2.error)
+			{
+				if(Line == 0)Ptr = (char *)&DISP_MODE_FAULT_SSR2ERRORTOP[0];
+				else
+				{
+					Ptr = (char *)&DISP_MODE_FAULT_SSRERROR[Ssr2.error][0];
+				}
 			}
 			else{
-					//pFnd_DisplayInt_Format(gDispTimer);
-#if 1				
-				if(gDispTimer > 1){
-					if(System.TestModeOn) Ptr = (char *)&LCD_TESTMODE[0];
-					else Ptr = (char *)&SCR_L2MODE[gDispSub];
-					for(i=0;i!=4;i++){
-						gFndText[i] = *Ptr++;
-					}
-					
+				if(Line == 0)	Ptr = (char *)&BLANK[0];
+				else{
+					Ptr = (char *)&SCR_L3MODE[gDispSub];
 				}
-				else {
-					/* Sub Data */
-					
-					switch(gDispMode)
-					{
-						case LCD_MAIN_INIT:
-							if(System.OverCurrent == 1) break;
-							if(System.OverTemp == 1) break;
-							if(System.OverVoltage == 1) break;
-							if(System.LowVoltage == 1) break;
-							if(System.InputError == 1) break; //@150429 by Bang
-							if(System.FaultTimeError == 1) break;
-							if(System.P24VError == 1)break;
-						
-							
-							
-							
-							if(System.TestModeOn){
-								gFndText[0] = Dec2Bcd[gParameter.Counter[2]];
-								gFndText[1] = Dec2Bcd[gParameter.Counter[3]];
-								gFndText[2] = Dec2Bcd[gParameter.Counter[4]];
-								gFndText[3] = Dec2Bcd[gParameter.Counter[5]];
-								
-								break;
-							}
-						
-							{
-								unsigned short Value;
-								
-								switch(gDispSub)
-								{
-									case LCD_MAIN_STATUS_0: /* System Mode  Auto/Hand,Safty,Loop,Press */
-										
-										if(System.Mode == 0)gFndText[0] = S_A;
-										else if(System.Mode == OPERATION_MODE_SOFT_MANUAL)gFndText[0] = S_H;
-										else if(System.Mode == OPERATION_MODE_SOFT_MANUAL2)gFndText[0] = S_H | 0x80;
-										else gFndText[0] = 0x74;
-										if(fSS_PC7_IN==1)gFndText[1] = S_S;
-										else gFndText[1] = S_DS;
-										if(System.LoopSensorOn)gFndText[2] = S_L;
-										else gFndText[2] = S_DS;
-										
-										if((gMotorStatus != MOTOR_OFF) && (MotorStatus.Direction == DIR_UP) && (fSS_PD1_IN_SUB == 1))gFndText[3] = S_P;
-										else if(fSS_PD1_IN == 1)gFndText[3] = S_P;
-										else gFndText[3] = S_DS;
-										
-										break;
-									case LCD_MAIN_STATUS_1:
-										Ptr = (int8_t *)&gFndSensor[0];
-										for(i=0;i!=4;i++)gFndText[i] = *Ptr++;
-										
-										break;
-									
-									case LCD_MAIN_STATUS_2: /* gWork Frequency */
-										pFnd_DisplayShortDot_Format(gWorkFreq);
-										
-										break;
-									
-									case LCD_MAIN_STATUS_3: /* Current */
-										Value = gMonitorCurrent;
-										pFnd_DisplayInt_Format(Value);
-										
-										break;
-									
-									case LCD_MAIN_STATUS_4: /* Out Level : Voltage */
-										pFnd_DisplayByte_Format(FORMAT_xxxx,gAD.Voltage,(char *)&gFndText[0]);
-										break;
-									
-									case LCD_MAIN_STATUS_5: /* Counter */
-										pFnd_DisplayInt_Format((int)gDoorCount);
-										break;
-									case LCD_MAIN_STATUS_6: /* IGBT Temperature */
-										if((IntTimer%500)==0)pFnd_DisplayInt_Format(gAD.Temperature);
-										break;
-								}
-								
-							}
-							break;
-					
-					}
-				}
-#endif				
 			}
-			
 			break;
 			
 		case LCD_MAIN_MENU:
-			
-			if(gDispTimer != 0)	{
-				Ptr = (char *)&MAIN_MENU_TOP[0];
-				for(i=0;i!=4;i++)gFndText[i] = *Ptr++;
+			if(Line == 0)	Ptr = (char *)&MAIN_MENU_TOP[gDispMode][0];
+			else {
+				Ptr = (char *)&MAIN_MENU_SUB[gDispSub][0];
 			}
-			else{
-				gFndText[0] = S_P;
-				gFndText[1] = S_BLK;
-				i = gDispSub / 10;
-				if(i == 0)gFndText[2] = S_BLK;
-				else {
-					gFndText[2] = Dec2Bcd[i];
-				}
-				gFndText[3] = Dec2Bcd[gDispSub%10];
-			}
-			
 			break;
-		case LCD_MAIN_FACTORY:
-			if(gDispTimer != 0)	{
-				Ptr = (char *)&MAIN_FMENU_TOP[0];
-				for(i=0;i!=4;i++)gFndText[i] = *Ptr++;
+
+		case LCD_MAIN_HEAT_SET:
+			if(Line == 0)	Ptr = (char *)&MAIN_MENU_TOP[gDispMode][0];
+			else	{
+				Ptr = (char *)&HEAT_MODE_SUB[gDispSub][0];
+
 			}
-			else{
-				gFndText[0] = S_F;
-				gFndText[1] = S_P;
-				i = gDispSub / 10;
-				if(i == 0)gFndText[2] = S_BLK;
-				else {
-					gFndText[2] = Dec2Bcd[i];
-				}
-				gFndText[3] = Dec2Bcd[gDispSub%10];
-			}
-			
 			break;
-	
-		case LCD_MAIN_PARA_SUB:
-		case LCD_MAIN_FPARA_SUB:	
-				switch(gDispSub)
-				{
-					case LCD_SUB_PARA_ACC:
-					case LCD_SUB_PARA_DEC:
-					case LCD_SUB_PARA_AIR:
-					case LCD_SUB_PARA_LL1DEC:
-						gFndText[0] = 0x00;
-						pFnd_DisplayByte_Format(FORMAT_xxPx,gDispParameter.Value,(char *)&gFndText[1]);
-						
-						break;
+		case LCD_MAIN_INV_SET:
+			if(Line == 0)	Ptr = (char *)&MAIN_MENU_TOP[gDispMode][0];
+			else	{
+				Ptr = (char *)&INV_MODE_SUB[gDispSub][0];
 
+			}
+			break;
 
-					case LCD_SUB_PARA_FAULT:
-						Ptr = (char *)&ERRMSG_LIST[gMonitorError[gDispParameter.Value]];
-						for(i=0;i!=4;i++)gFndText[i] = *Ptr++;
-					
-						break;
-					default:
-						pFnd_DisplayByte_Format(FORMAT_xxx,gDispParameter.Value,(char *)&gFndText[0]);
-						
-						break;
-				}
-			
+		case LCD_MAIN_INITIALIZE:
+			if(Line == 0)	Ptr = (char *)&MAIN_MENU_TOP[3][0];
+			else			Ptr = (char *)&INITIALIZE_MODE_SUB[gDispSub][0];
+			break;
+
+		case LCD_MAIN_FAULT:
+			if(Line == 0)	Ptr = (char *)&MAIN_MENU_TOP[4][0];
+			else			Ptr = (char *)&FAULT_MODE_SUB[gDispSub][0];
+			break;
+
+		case LCD_MAIN_HEAT_SET_SUB:
+			if(Line == 0)	Ptr = (char *)&HEAT_MODE_SUB_TOP[gDispSub][0];
+			else			Ptr = (char *)&BLANK[0];
+			break;
+		case LCD_MAIN_INV_SET_SUB:
+			if(Line == 0)	Ptr = (char *)&INV_MODE_SUB_TOP[gDispSub][0];
+			else			Ptr = (char *)&BLANK[0];
+			break;
+		case LCD_MAIN_FAULT_SUB:
+			if(Line == 0)	Ptr = (char *)&FAULT_MODE_TOP[gDispSub][0];
+			else			Ptr = (char *)&ERRMSG_LIST[gMonitorError[gDispSub]];
+			break;
 		
 		default:
 			break;
 	}
-}
-void pLcd_UpdateDisplay(void)
-{
-    unsigned char i,j;
-	static uint32_t pre_timer = 0;
-	if(IntTimer != pre_timer)
+	for(i=0;i!=16;i++){
+		gLCD_Line[i] = *Ptr++;
+	}
+
+	/* Sub Data */
+	switch(gDispMode)
 	{
-		pre_timer = IntTimer;
-		if((IntTimer%2) == 0){
+		case LCD_MAIN_INIT:
+			if(System.OverTemp == 1) break;
+			if(System.inverterCommError == 1) break;
+			if(System.ssr1CommError == 1) break;
+			if(System.ssr2CommError == 1) break;
+			if(Ssr1.error) break;
+			if(Ssr2.error) break;
+			if(Debug == 1){
+				int TempEncoder;
+				if(Line == 0){
+					TempEncoder = gWorkFreq;
+					if(TempEncoder >= 0){
+						gLCD_Line[0] = '+';
+					}
+					else{
+						gLCD_Line[0] = '-';
+						TempEncoder = (TempEncoder ^ 0xffffffff) + 1;
+					}
+					gLCD_Line[1] = TempEncoder / 1000000 + 0x30;
+					TempEncoder = TempEncoder % 1000000;
+					gLCD_Line[2] = TempEncoder / 100000 + 0x30;
+					TempEncoder = TempEncoder % 100000;
+					gLCD_Line[3] = TempEncoder / 10000 + 0x30;
+					TempEncoder = TempEncoder % 10000;
+					gLCD_Line[4] = TempEncoder / 1000 + 0x30;
+					TempEncoder = TempEncoder % 1000;
+					gLCD_Line[5] = TempEncoder / 100 + 0x30;
+					TempEncoder = TempEncoder % 100;
+					gLCD_Line[6] = TempEncoder / 10 + 0x30;
+					TempEncoder = TempEncoder % 10;
+					gLCD_Line[7] = TempEncoder + 0x30;
+					/* Encoder Display */
+				//	gLCD_Line[7] = ' ';
+					TempEncoder = gWorkFreq;
+					if(TempEncoder >= 0){
+						gLCD_Line[8] = '+';
+					}
+					else{
+						gLCD_Line[8] = '-';
+						TempEncoder = (TempEncoder ^ 0xffffffff) + 1;
+					}
+					gLCD_Line[9] = TempEncoder / 1000000 + 0x30;
+					TempEncoder = TempEncoder % 1000000;
+					gLCD_Line[10] = TempEncoder / 100000 + 0x30;
+					TempEncoder = TempEncoder % 100000;
+					gLCD_Line[11] = TempEncoder / 10000 + 0x30;
+					TempEncoder = TempEncoder % 10000;
+					gLCD_Line[12] = TempEncoder / 1000 + 0x30;
+					TempEncoder = TempEncoder % 1000;
+					gLCD_Line[13] = TempEncoder / 100 + 0x30;
+					TempEncoder = TempEncoder % 100;
+					gLCD_Line[14] = TempEncoder / 10 + 0x30;
+					TempEncoder = TempEncoder % 10;
+					gLCD_Line[15] = TempEncoder + 0x30;
+				}
+				else{
+					TempEncoder = gWorkFreq;
+					if(TempEncoder >= 0){
+						gLCD_Line[0] = '+';
+					}
+					else{
+						gLCD_Line[0] = '-';
+						TempEncoder = (TempEncoder ^ 0xffffffff) + 1;
+					}
+					gLCD_Line[1] = TempEncoder / 1000000 + 0x30;
+					TempEncoder = TempEncoder % 1000000;
+					gLCD_Line[2] = TempEncoder / 100000 + 0x30;
+					TempEncoder = TempEncoder % 100000;
+					gLCD_Line[3] = TempEncoder / 10000 + 0x30;
+					TempEncoder = TempEncoder % 10000;
+					gLCD_Line[4] = TempEncoder / 1000 + 0x30;
+					TempEncoder = TempEncoder % 1000;
+					gLCD_Line[5] = TempEncoder / 100 + 0x30;
+					TempEncoder = TempEncoder % 100;
+					gLCD_Line[6] = TempEncoder / 10 + 0x30;
+					TempEncoder = TempEncoder % 10;
+					gLCD_Line[7] = TempEncoder + 0x30;
+					TempEncoder = gWorkFreq;
+					if(TempEncoder >= 0){
+						gLCD_Line[8] = '+';
+					}
+					else{
+						gLCD_Line[8] = '-';
+						TempEncoder = (TempEncoder ^ 0xffffffff) + 1;
+					}
+					gLCD_Line[9] = TempEncoder / 1000000 + 0x30;
+					TempEncoder = TempEncoder % 1000000;
+					gLCD_Line[10] = TempEncoder / 100000 + 0x30;
+					TempEncoder = TempEncoder % 100000;
+					gLCD_Line[11] = TempEncoder / 10000 + 0x30;
+					TempEncoder = TempEncoder % 10000;
+					gLCD_Line[12] = TempEncoder / 1000 + 0x30;
+					TempEncoder = TempEncoder % 1000;
+					gLCD_Line[13] = TempEncoder / 100 + 0x30;
+					TempEncoder = TempEncoder % 100;
+					gLCD_Line[14] = TempEncoder / 10 + 0x30;
+					TempEncoder = TempEncoder % 10;
+					gLCD_Line[15] = TempEncoder + 0x30;
+				}
+				break;
+			}
+
+			if(Line == 0){
+				switch(gDispSub)
+				{
+					case LCD_MAIN_STATUS_0:
+						for(i=0;i!=16;i++)Arr[i] = LCD_MAIN0[0][i];
+						pLcd_DisplayShort_Format(FORMAT_xxx, gParameter.TopTemp/100, (char *)&Arr[4]);
+						pLcd_DisplayShort_Format(FORMAT_xxx, gParameter.BottomTemp/100, (char *)&Arr[12]);
+						if(Ssr1.output == 1)Arr[1] = 0xFF;
+						else Arr[1] = ' ';
+						if(Ssr2.output == 1)Arr[9] = 0xFF;
+						else Arr[9] = ' ';
+						Ptr = (int8_t *)&Arr[0];
+						break;
+					case LCD_MAIN_STATUS_1:
+						if(gInverterStatus.bit.fowardRun == 1)i = 0;
+						else if(gInverterStatus.bit.reverseRun == 1)i = 1;
+						else i = 2;
+						
+						Ptr = (int8_t *)&INVERTER_OP[i][0];
+						break;
+					case LCD_MAIN_STATUS_2:
+						for(i=0;i!=16;i++)Arr[i] = SCR_L3MODE[3][i];
+					
+						pLcd_DisplayShort_Format(FORMAT10_xxxPx, Ssr1.voltage, (char *)&Arr[7]);
+						if(gStatus.status > STATUS_INIT)Arr[14] = 0xff;
+						else Arr[14] = ' ';
+						Ptr = (int8_t *)&Arr[0];
+				}
+				
+				for(i=0;i!=16;i++)gLCD_Line[i] = *Ptr++;
+			}
+			else{
+				/*uint8_t Ratio_Voltage,i;
+				uint16_t Data,Value;
+				uint8_t *Ptr;*/
+
+				switch(gDispSub)
+				{
+					case LCD_MAIN_STATUS_0:		/* Heater Information */
+						pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.Heater_Top.Temp/100, (char *)&gLCD_Line[4]);
+						pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.Heater_Bottom.Temp/100, (char *)&gLCD_Line[12]);
+						//SSR1, SSR2 동작 표시
+						
+						break;
+
+					case LCD_MAIN_STATUS_1:		/* Inverter Information */
+						if(System.inverterError)
+						{
+							i = getDigitPosition(gInverterError.All);
+							Ptr = (int8_t *)&InverterErrorString[i][0];
+						}
+						else
+						{
+							pLcd_DisplayShort_Format(FORMAT10_xxxPxx,gWorkFreq,(char *)&gLCD_Line[8]);
+						}
+						break;
+
+					case LCD_MAIN_STATUS_2:		/* Voltage */
+						/*if(Ssr2.output == 0)i = 0;
+						else */i = Ssr2.voltage/38;
+						pLcd_DisplayShort_Format(FORMAT10_xxxPx, Ssr2.voltage,(char *)&gLCD_Line[7]);
+						if(gStatus.status > STATUS_INIT)gLCD_Line[14] = 0xFF;
+						else gLCD_Line[14] = ' ';
+						break;
+				}
+			}
+			break;
+
+		case LCD_MAIN_FACTORY: //@150423 by Bang
 			
-			pFnd_LoadString();
-			j = (IntTimer / 2) %4;
-	/*		
-			PORT_FND_SEL1 = 0;
-			PORT_FND_SEL2 = 0;
-			PORT_FND_SEL3 = 0;
-			PORT_FND_SEL4 = 0;
-			PORT_FND_LATCH = 0;*/
-			
-			for (i = 0; i < 8; i++)
-			{
-				
-				//   digitalWrite(dataPin, !!(val & (1 << i)));
-				
-	/*			PORT_FND_DATA = !!(gFndText[j] & (1 << (7 - i)));
-				
-				PORT_FND_CLKPIN = 1;
-				PORT_FND_CLKPIN = 0;*/
-			} 
-//			PORT_FND_LATCH = 1;
-				
-/*			switch(j){
-				case 0:
-					PORT_FND_SEL1 = 1;
-				break;
+			break;
 		
-				case 1:
-					PORT_FND_SEL2 = 1;
-				break;
 		
-				case 2:
-					PORT_FND_SEL3 = 1;
+
+		case LCD_MAIN_HEAT_SET_SUB:
+			if(Line == 1){
+				pLcd_DisplayShort_Format(FORMAT_xxxx,gDispParameter.Value,(char *)&gLCD_Line[4]);
+				for(i=0;i!=5;i++)	gLCD_Line[10+i]=UNIT[gDispSub][i];
 				break;
-		
-				case 3:
-					PORT_FND_SEL4 = 1;
+			}
+			break;
+		case LCD_MAIN_INV_SET_SUB:
+			if(Line == 1){
+				pLcd_DisplayShort_Format(FORMAT10_xxxPxx,gDispParameter.Value,(char *)&gLCD_Line[4]);
+				for(i=0;i!=5;i++)	gLCD_Line[10+i]=UNIT[gDispSub][i];
 				break;
-		
-			}*/
-		}
+			}
+			break;
 	}
 }
 
-void pLcd_UpdateDisplay2(void)
+void pLcd_UpdateDisplay(void)
 {
-	if((IntTimer%100) == 0)pFnd_LoadString();	
+      
+	if(gDisplay.Request == DISPLAY_REQUEST_ON){
+		if(gDisplay.Connect == 1){
+			if(gDisplay.Lines & TOP_LINE){
+				pLcd_LoadString(0);
+				pLcd_DataOut(0x80);
+			}
+			if(gDisplay.Lines & BTM_LINE){
+				pLcd_LoadString(1);
+				pLcd_DataOut(0xc0);
+			}
+			gDisplay.Lines = 0;
+			gDisplay.Request = DISPLAY_REQUEST_OFF;
+	
+			/*@081021_1*/		
+			gLCD_Refresh_Timer = 0;
+			gLCD_Mode_Backup = gDispMode;
+			
+		}
+		else pLCD_Connect_Check();
+	}
 }
+
+
+void pLcd_SystemLockLoadString(uint8_t Line)
+{
+	uint8_t i;
+	char *Ptr;
+
+	Ptr = (char *)&SystemLock_Top[Line][0];
+
+	for(i=0;i!=16;i++){
+		gLCD_Line[i] = *Ptr++;
+	}
+
+	if(Line == 1){
+	
+	}
+}
+

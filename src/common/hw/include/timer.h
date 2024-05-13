@@ -4,5 +4,6 @@
 #include "hw_def.h"
 
 void timerInit(void);
+void p1msTimer(void);
 #endif
 
