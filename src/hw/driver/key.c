@@ -10,7 +10,7 @@
 #define MOTOR_KEY_IN	((*(RB_BTF*)&PDIN).p0)
 #define HEATER_KEY_IN	((*(RB_BTF*)&PDIN).p1)
 
-#define INV_MONITOR_ADDR (0x0009)
+
 
 
 extern void pBeep(uint8_t Cnt, uint8_t sl);
@@ -34,7 +34,7 @@ key_obj_t btn_motor;
 const key_tbl_t key_TBL[5] = {
 	{&PCIN, 0x02, 0x00}, 	//reverse
 	{&PCIN, 0x04, 0x00},	//convayor
-	{&PCIN, 0x08, 0x00},	//emg
+	{&PCIN, 0x08, 0x08},	//emg
 	{&PDIN, 0x01, 0x00},	//motor
 	{&PDIN, 0x02, 0x00},	//heater
 };
@@ -127,6 +127,11 @@ void pReverseKeyScan(void)
 	{
 		if(btn_reverse.state == 2)
 		{
+			if(millis() - btn_convayor.pre_time < 1000)
+			{
+				pBeep(3, 0);
+				return;
+			}
 			btn_reverse.pre_time = millis();
 			if(RevKeyOn == 0)
 			{
@@ -138,22 +143,22 @@ void pReverseKeyScan(void)
 				}
 				KeyIn = 1;
 				if(gInverterStatus.bit.stop == 1){
-					pre_time = millis();
+					/*pre_time = millis();
 					while(gModBus.status == MODBUS_RECEIVE)
 					{
 						if(millis() - pre_time > 20)break;
 						clear_WDT();
-					}
+					}*/
 					gModBus.no = MODBUS_INVERTER;
 					gModBus.mode = MODBUS_MODE_COMMAND;
-					gModBus.p500msFlag = 1;
+					//gModBus.p500msFlag = 1;
 					gSetCommand(MODBUS_INVERTER, 0x0005, 0x0004, 1);
-					pre_time = millis();
+					/*pre_time = millis();
 					while(gModBus.status == MODBUS_RECEIVE)
 					{
 						if(millis() - pre_time > 20)break;
 						clear_WDT();
-					}
+					}*/
 					modbusTransmit();
 					ledOn(_DEF_LED2);
 				}
@@ -173,7 +178,10 @@ void pReverseKeyScan(void)
 			ledOff(_DEF_LED2);
 			
 		}
-		else ledOff(_DEF_LED2);
+		else
+		{
+			ledOff(_DEF_LED2);
+		}
 		
 	}
 	
@@ -184,7 +192,7 @@ void pReverseKeyScan(void)
 void pConvayorKeyScan(void)
 {
 	static uint8_t IncKeyOn = 0;
-	uint8_t ret;
+	uint8_t check;
 	if(keyObjGetPressed(&btn_convayor, 60) == true)
 	{
 		if(btn_convayor.state == 2)
@@ -206,7 +214,9 @@ void pConvayorKeyScan(void)
 				else
 				{
 					ledOff(_DEF_LED3);
-					gSetCommand(MODBUS_INVERTER, 0x0005, 0x0001, 1);
+					check = gGetCommand(MODBUS_INVERTER);
+					if(check == 0)gSetCommand(MODBUS_INVERTER, 0x0005, 0x0001, 1);
+					else gSetCommand(MODBUS_INVERTER, 0x0000, 0x0000, false);
 				}
 			}
 		}
@@ -214,7 +224,10 @@ void pConvayorKeyScan(void)
 	else
 	{
 		IncKeyOn = 0;
-	
+		if((gInverterStatus.bit.stop == 1) && (millis() - btn_convayor.pre_time > 2000))
+		{
+			ledOff(_DEF_LED3);
+		}
 	}
 }
 void gEmgKeyScan(void)
@@ -306,12 +319,24 @@ void gHeaterKeyScan(void)
 				{
 					if(gStatus.status == STATUS_INIT){
 						gStatus.status = STATUS_IDLE;
-						Ssr1.PID.integral = 0;
-						Ssr1.PID.prev_error = 0;
-						Ssr2.PID.integral = 0;
-						Ssr2.PID.prev_error = 0;
+						SSR_TOP.PID.integral = 0;
+						SSR_TOP.PID.prev_error = 0;
+						SSR_BOTTOM.PID.integral = 0;
+						SSR_BOTTOM.PID.prev_error = 0;
+						
+						gModBus.no = MODBUS_SSR_TOP;
+						gModBus.mode = MODBUS_MODE_COMMAND;
+						gSetCommand(MODBUS_SSR_TOP, 0x0002, 1, 1);
+						gSetCommand(MODBUS_SSR_BOTTOM, 0x0002, 1, 1);
 					}
-					else gStatus.status = STATUS_INIT;
+					else
+					{
+						gStatus.status = STATUS_INIT;
+						gModBus.no = MODBUS_SSR_TOP;
+						gModBus.mode = MODBUS_MODE_COMMAND;
+						gSetCommand(MODBUS_SSR_TOP, 0x0002, 0, 1);
+						gSetCommand(MODBUS_SSR_BOTTOM, 0x0002, 0, 1);
+					}
 				}
 			}
 		}
@@ -523,10 +548,10 @@ void pLKey_Set(void)
 	}
 	if(System.ssr1CommError == 1)
 	{
-		if(modbusConnectCheck(MODBUS_SSR1) == 1)
+		if(modbusConnectCheck(MODBUS_SSR_TOP) == 1)
 		{
 			pBeep(2, 0);
-			gReleaseError(MODBUS_SSR1, 0);
+			gReleaseError(MODBUS_SSR_TOP, 0);
 			System.ssr1CommError = 0;
 		}
 		else pBeep(3,0);
@@ -534,16 +559,16 @@ void pLKey_Set(void)
 	}
 	if(System.ssr2CommError == 1)
 	{
-		if(modbusConnectCheck(MODBUS_SSR2) == 1)
+		if(modbusConnectCheck(MODBUS_SSR_BOTTOM) == 1)
 		{
 			pBeep(2, 0);
-			gReleaseError(MODBUS_SSR2, 0);
+			gReleaseError(MODBUS_SSR_BOTTOM, 0);
 			System.ssr2CommError = 0;
 		}
 		else pBeep(3,0);
 		return;
 	}
-	if(Ssr1.error)
+	if(SSR_TOP.error)
 	{
 		
 	}
@@ -686,15 +711,15 @@ void pLKey_Up(void)
 					break;
 				case LCD_MAIN_STATUS_1:
 					gSetMonitor(MODBUS_INVERTER, INV_MONITOR_ADDR, 0);
-					gSetMonitor(MODBUS_SSR1, 0x0004, 1);
-					gSetMonitor(MODBUS_SSR2, 0x0004, 1);
+					gSetMonitor(MODBUS_SSR_TOP, 0x0004, 1);
+					gSetMonitor(MODBUS_SSR_BOTTOM, 0x0004, 1);
 					gDispSub++;
 					break;
 				default:
 					gDispSub = LCD_MAIN_STATUS_0;
 					gSetMonitor(MODBUS_INVERTER, INV_MONITOR_ADDR, 0);
-					gSetMonitor(MODBUS_SSR1, 0x0000, 0);
-					gSetMonitor(MODBUS_SSR2, 0x0000, 0);
+					gSetMonitor(MODBUS_SSR_TOP, 0x0000, 0);
+					gSetMonitor(MODBUS_SSR_BOTTOM, 0x0000, 0);
 					break;
 			}
 			
@@ -794,20 +819,20 @@ void pLKey_Down(void)
 			{
 				case LCD_MAIN_STATUS_0:
 					gDispSub = LCD_MAIN_STATUS_2;
-					gSetMonitor(MODBUS_SSR1, 0x0004, 1);
-					gSetMonitor(MODBUS_SSR2, 0x0004, 1);
+					gSetMonitor(MODBUS_SSR_TOP, 0x0004, 1);
+					gSetMonitor(MODBUS_SSR_BOTTOM, 0x0004, 1);
 					break;
 				case LCD_MAIN_STATUS_2:
 					gDispSub = LCD_MAIN_STATUS_1;
 					gSetMonitor(MODBUS_INVERTER, INV_MONITOR_ADDR, 1);
-					gSetMonitor(MODBUS_SSR1, 0x0004, 0);
-					gSetMonitor(MODBUS_SSR2, 0x0004, 0);
+					gSetMonitor(MODBUS_SSR_TOP, 0x0004, 0);
+					gSetMonitor(MODBUS_SSR_BOTTOM, 0x0004, 0);
 					break;
 				default:
 					gDispSub = LCD_MAIN_STATUS_0;
 					gSetMonitor(MODBUS_INVERTER, INV_MONITOR_ADDR, 0);
-					gSetMonitor(MODBUS_SSR1, 0x0004, 0);
-					gSetMonitor(MODBUS_SSR2, 0x0004, 0);
+					gSetMonitor(MODBUS_SSR_TOP, 0x0004, 0);
+					gSetMonitor(MODBUS_SSR_BOTTOM, 0x0004, 0);
 					break;
 			}
 			

@@ -53,7 +53,13 @@ const char LCD_MAIN0[][COLUMN_MAX] = {
 	{"SSR1 : xxx.xV[ ]"},
 };
 
-
+const char EMG_DISPLAY[][COLUMN_MAX]={
+	//0123456789012345
+//	 "   EMERGENCY    ",
+//	 " [Turn off/on]  ",
+	 " EMERGENCY-STOP ",
+	 " Release Key    ",
+};
 
 const uint8_t LCD_RESET0[][COLUMN_MAX]={
 	//Welcome to
@@ -220,21 +226,6 @@ const char BLANK[COLUMN_MAX]={
 	"                "
 };
 
-const char EMG_DISPLAY[][COLUMN_MAX]={
-	//0123456789012345
-//	 "   EMERGENCY    ",
-//	 " [Turn off/on]  ",
-	 "  SYSTEM HOLD   ",
-	 "  Release Key   ",
-};
-
-const char EMG1_DISPLAY[][COLUMN_MAX]={
-	//0123456789012345
-//	 "   EMERGENCY    ",
-//	 " [Turn off/on]  ",
-	 "  SYSTEM HOLD   ",
-	 "  Power Off/On  ",
-};
 
 const char DISP_MODE_FREQ[][COLUMN_MAX]={
 	//0123456789012345

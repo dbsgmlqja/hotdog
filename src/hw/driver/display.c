@@ -420,6 +420,10 @@ void pLcd_LoadString(uint8_t Line)
 			if(System.OverTemp){
 				Ptr = (char *)&DISP_MODE_FAULT_OVERTEMP[Line][0];
 			}
+			else if(System.EmergencyOn)
+			{
+				Ptr = (char *)&EMG_DISPLAY[Line][0];
+			}
 			else if(System.inverterCommError)
 			{
 				Ptr = (char *)&DISP_MODE_FAULT_INVERTERCOMM[Line][0];
@@ -432,20 +436,20 @@ void pLcd_LoadString(uint8_t Line)
 			{
 				Ptr = (char *)&DISP_MODE_FAULT_SSR2COMM[Line][0];
 			}
-			else if(Ssr1.error)
+			else if(SSR_TOP.error)
 			{
 				if(Line == 0)Ptr = (char *)&DISP_MODE_FAULT_SSR1ERRORTOP[0];
 				else
 				{
-					Ptr = (char *)&DISP_MODE_FAULT_SSRERROR[Ssr1.error][0];
+					Ptr = (char *)&DISP_MODE_FAULT_SSRERROR[SSR_TOP.error][0];
 				}
 			}
-			else if(Ssr2.error)
+			else if(SSR_BOTTOM.error)
 			{
 				if(Line == 0)Ptr = (char *)&DISP_MODE_FAULT_SSR2ERRORTOP[0];
 				else
 				{
-					Ptr = (char *)&DISP_MODE_FAULT_SSRERROR[Ssr2.error][0];
+					Ptr = (char *)&DISP_MODE_FAULT_SSRERROR[SSR_BOTTOM.error][0];
 				}
 			}
 			else{
@@ -513,11 +517,12 @@ void pLcd_LoadString(uint8_t Line)
 	{
 		case LCD_MAIN_INIT:
 			if(System.OverTemp == 1) break;
+			if(System.EmergencyOn == 1)break;
 			if(System.inverterCommError == 1) break;
 			if(System.ssr1CommError == 1) break;
 			if(System.ssr2CommError == 1) break;
-			if(Ssr1.error) break;
-			if(Ssr2.error) break;
+			if(SSR_TOP.error) break;
+			if(SSR_BOTTOM.error) break;
 			if(Debug == 1){
 				int TempEncoder;
 				if(Line == 0){
@@ -620,9 +625,9 @@ void pLcd_LoadString(uint8_t Line)
 						for(i=0;i!=16;i++)Arr[i] = LCD_MAIN0[0][i];
 						pLcd_DisplayShort_Format(FORMAT_xxx, gParameter.TopTemp/100, (char *)&Arr[4]);
 						pLcd_DisplayShort_Format(FORMAT_xxx, gParameter.BottomTemp/100, (char *)&Arr[12]);
-						if(Ssr1.output == 1)Arr[1] = 0xFF;
+						if(SSR_TOP.output == 1)Arr[1] = 0xFF;
 						else Arr[1] = ' ';
-						if(Ssr2.output == 1)Arr[9] = 0xFF;
+						if(SSR_BOTTOM.output == 1)Arr[9] = 0xFF;
 						else Arr[9] = ' ';
 						Ptr = (int8_t *)&Arr[0];
 						break;
@@ -636,7 +641,7 @@ void pLcd_LoadString(uint8_t Line)
 					case LCD_MAIN_STATUS_2:
 						for(i=0;i!=16;i++)Arr[i] = SCR_L3MODE[3][i];
 					
-						pLcd_DisplayShort_Format(FORMAT10_xxxPx, Ssr1.voltage, (char *)&Arr[7]);
+						pLcd_DisplayShort_Format(FORMAT10_xxxPx, SSR_TOP.voltage, (char *)&Arr[7]);
 						if(gStatus.status > STATUS_INIT)Arr[14] = 0xff;
 						else Arr[14] = ' ';
 						Ptr = (int8_t *)&Arr[0];
@@ -671,9 +676,9 @@ void pLcd_LoadString(uint8_t Line)
 						break;
 
 					case LCD_MAIN_STATUS_2:		/* Voltage */
-						/*if(Ssr2.output == 0)i = 0;
-						else */i = Ssr2.voltage/38;
-						pLcd_DisplayShort_Format(FORMAT10_xxxPx, Ssr2.voltage,(char *)&gLCD_Line[7]);
+						/*if(SSR_BOTTOM.output == 0)i = 0;
+						else */i = SSR_BOTTOM.voltage/38;
+						pLcd_DisplayShort_Format(FORMAT10_xxxPx, SSR_BOTTOM.voltage,(char *)&gLCD_Line[7]);
 						if(gStatus.status > STATUS_INIT)gLCD_Line[14] = 0xFF;
 						else gLCD_Line[14] = ' ';
 						break;
@@ -706,7 +711,7 @@ void pLcd_LoadString(uint8_t Line)
 
 void pLcd_UpdateDisplay(void)
 {
-      
+    
 	if(gDisplay.Request == DISPLAY_REQUEST_ON){
 		if(gDisplay.Connect == 1){
 			if(gDisplay.Lines & TOP_LINE){

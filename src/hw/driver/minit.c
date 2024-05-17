@@ -177,7 +177,7 @@ void tm67set(void)
 	TM06MD_W |= 0x4040;	/* load base register			*/
 	TM06MD_W &= ~0x4040;	/* end of load				*/
 	TM06MD_W |= 0x8080;	/* enable timer count 			*/
-	G48ICR = 0x4800;	/* enable interrupt (1ms)		*/
+	G48ICR = 0x3800;	/* enable interrupt (1ms)		*/
 }
 
 enum{

@@ -1,6 +1,5 @@
 #include "global.h"
 #include "led.h"
-#include "display.h"
 #define	LED1	((*(RB_BTF*)&P5OUT).p1)	//READY LED
 #define	LED2	((*(RB_BTF*)&PCOUT).p4)	//Reverse LED
 #define	LED3	((*(RB_BTF*)&PCOUT).p5)	//Convayor LED

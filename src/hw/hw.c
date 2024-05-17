@@ -38,7 +38,11 @@ void hwInit(void)
 //	timerInit();
 	tm67set();
 	enable_irq();			/* enable interrupt (set IE)	*/
+	gpioInit();
 	uartInit();
+	ssrControl(4, 1);
+	delay(300);
+	delay(300);
 	modbusInit();
 	
 	pLcd_Init();
@@ -49,7 +53,7 @@ void hwInit(void)
 	cliInit();
 	pn_EEP_Load();
 	MAX6675_Init();
-	gpioInit();
+	
 	gDispSub = LCD_MAIN_STATUS_0;
 	gDispMode = LCD_MAIN_INIT;
 }

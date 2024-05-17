@@ -139,7 +139,7 @@ uint32_t uartWrite(uint8_t ch, uint8_t Data)
 		case _DEF_UART4:
 			while(SC3STR & 0x20 == 0x20);
 			SC3TB = Data;
-			for(i=0;i<0x1ff;i++)clear_WDT();
+			for(i=0;i<0x5ff;i++)clear_WDT();
 			break;
 	}
 	return ret;

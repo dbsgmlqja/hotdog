@@ -17,7 +17,7 @@ void timerInit(void)
 }
 void p1msHandlingTimer(void)
 {
-	uint8_t i;
+	/*uint8_t i;
 	if(gModBus.rxTmr[MODBUS_INVERTER] > 1)
 	{
 		gModBus.rxTmr[gModBus.no]--;
@@ -44,7 +44,7 @@ void p1msHandlingTimer(void)
 				SC3STR &= ~0x02;
 			}
 		}
-	}
+	}*/
 }
 void p10msHandlingTimer(void)
 {

@@ -11,6 +11,8 @@
 #define TRIAC_BOTTOM		((*(RB_BTF*)&P3OUT).p2)
 #define SSR4_OUT			((*(RB_BTF*)&P8OUT).p0)
 #define SSR3_OUT			((*(RB_BTF*)&P8OUT).p1)
+
+#define INV_MONITOR_ADDR (0x0009)
 /**************************************************************/
 /*  Fixed Parameter List                                      */
 /**************************************************************/
@@ -35,8 +37,8 @@ enum{
 };
 enum{
 	MODBUS_INVERTER,
-	MODBUS_SSR1,
-	MODBUS_SSR2,
+	MODBUS_SSR_TOP,
+	MODBUS_SSR_BOTTOM,
 	MODBUS_DEVICE_END
 };
 enum{
@@ -234,6 +236,8 @@ typedef struct{
 	uint8_t inverterCommError : 1;
 	uint8_t ssr1CommError : 1;
 	uint8_t ssr2CommError : 1;
+	uint8_t ssrTopError	: 1;
+	uint8_t ssrBottomError : 1;
 }_System;
 typedef struct{
 	uint8_t p500msFlag;
@@ -300,7 +304,7 @@ EXT _IParameter gIParameter;
 EXT _Para gDispParameter;
 EXT _Disp gDisplay;
 EXT _System System;
-EXT _SSR Ssr1, Ssr2;
+EXT _SSR SSR_TOP, SSR_BOTTOM;
 EXT _DebugVar gDebugVar;
 //EXT _Status Status;
 /*===================================================================*/
@@ -320,6 +324,7 @@ EXT uint8_t gSSR1Error,gSSR2Error;
 //Key Variable
 EXT uint8_t gKeyScanFlag;
 EXT uint16_t gKey_AD0;
+EXT uint8_t gFan;
 /*===================================================================*/
 /* uint16_t Variable												 */
 /*===================================================================*/

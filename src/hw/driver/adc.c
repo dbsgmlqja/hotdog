@@ -24,10 +24,10 @@ extern uint32_t uartPrintf(uint8_t ch, uint8_t *fmt, ...);
 void adcInit(void)
 {
 	PCMD = 0x00000011;
-	PDMD = 0x11000000;
-	adc_ch = swTimerGetHandle();
-	swtimerSet(adc_ch, 10, 1, adcISR, NULL);
-	swtimerStart(adc_ch);
+//	PDMD = 0x11000000;
+//	adc_ch = swTimerGetHandle();
+//	swtimerSet(adc_ch, 10, 1, adcISR, NULL);
+//	swtimerStart(adc_ch);
 #ifdef _USE_HW_CLI
 	cliAdd("adc", cliAdc);
 #endif

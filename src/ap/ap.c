@@ -90,6 +90,8 @@ void apMain(void)
 	modbusTransmit();
 	gModBus.mode = 0;
 	delay(50);
+	gSetMonitor(MODBUS_INVERTER, INV_MONITOR_ADDR, 1);
+	gSetCommand(MODBUS_INVERTER, 0x0004, gIParameter.F_Freq, 1);
 	// 1. SSR1 output check
 	pre_time = millis();
 	while(gModBus.status == MODBUS_RECEIVE)
@@ -97,14 +99,14 @@ void apMain(void)
 		if(millis() - pre_time > 30)break;
 		clear_WDT();
 	}
-	gSetMonitor(MODBUS_SSR1 , 0x3000, true);
+	gSetMonitor(MODBUS_SSR_TOP , 0x3000, true);
 	gModBus.p500msFlag = 1;
 	gModBus.status = MODBUS_READY;
 	gModBus.mode = MODBUS_MODE_MONITOR;
 	modbusTransmit();
 	gModBus.mode = 0;
 	delay(50);
-	if(Ssr1.voltage < 100)check = 1;
+	if(SSR_TOP.voltage < 100)check = 1;
 	
 	// 2. SSR2 output check
 	if(check == 1)
@@ -115,21 +117,20 @@ void apMain(void)
 			if(millis() - pre_time > 30)break;
 			clear_WDT();
 		}
-		gSetMonitor(MODBUS_SSR2 , 0x3000, true);
+		gSetMonitor(MODBUS_SSR_BOTTOM , 0x3000, true);
 		//gModBus.p500msFlag = 1;
 		gModBus.status = MODBUS_READY;
 		gModBus.mode = MODBUS_MODE_MONITOR;
 		modbusTransmit();
 		gModBus.mode = MODBUS_MODE_COMMAND;
 		delay(50);
-		if(Ssr2.voltage < 100)check = 1;
+		if(SSR_BOTTOM.voltage < 100)check = 1;
 		else check = 0;
 	}
 	
 	// 3. not proble SSR4 On
 	/*if(check)
 	{*/
-		ssrControl(4, 1);
 		gStatus.status = STATUS_INIT;
 //	}
 	
@@ -154,18 +155,15 @@ void apMain(void)
 	{
 	    /* WDT reset */
 		clear_WDT();			/* reset WDT binary counter */
-		if(millis() - pre_time > 300){
-			pre_time = millis();
-		//	pTriacCheck();
-		}
-		if((gModBus.status == MODBUS_RECEIVE) && (gModBus.pre_time - 100 >= millis()))
+		
+		/*if((gModBus.status == MODBUS_RECEIVE) && (millis() - gModBus.pre_time >= 100))
 		{
 			gModBus.status = MODBUS_READY;
 			if(++gModBus.no >= MAX_485_CH){
 				gModBus.no = MODBUS_INVERTER;
 				if(++gModBus.mode >= MODBUS_MODE_END)gModBus.mode = MODBUS_MODE_COMMAND;
 			}
-		}
+		}*/
 		if(gModBus.p500msFlag == 1)
 		{
 			modbusCheck();
