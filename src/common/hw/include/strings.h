@@ -148,8 +148,15 @@ const char POS_INIT_MODE_SUB[][COLUMN_MAX]={
 	{"Pos. Initialize "},
 	{"Pos.Initializing"},
 };
-
-
+const char UNIT_HEAT[][6]={
+//0123456789012345
+	{'[',0xDF,'C',']',' ',0x0A},	/*ACC TIME*/
+	{'[',0xDF,'C',']',' ',0x0A},	/*ACC TIME*/
+	"[%]  ",	/*TORQUE*/
+	"[HZ] ",	/*UP FREQ*/
+	"[HZ] ",	/*DOWN FREQ*/
+	"[SEC]",	/*ULS TIME*/
+};
 const char UNIT[][6]={
 //0123456789012345
 	"[Hz] ",	/*ACC TIME*/
