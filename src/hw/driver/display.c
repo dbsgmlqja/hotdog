@@ -192,7 +192,7 @@ void pLCD_DisplayInt_Format(uint8_t Format, uint32_t Val, char *Ptr)
 }
 void pLcd_DisplayShort_Format(uint8_t Format,uint16_t Val,char *Ptr)
 {
-	uint16_t Value = Val;
+	uint32_t Value = Val;
 	uint16_t Data;
 	uint8_t IsZero = 1;
 	switch(Format)
@@ -245,12 +245,19 @@ void pLcd_DisplayShort_Format(uint8_t Format,uint16_t Val,char *Ptr)
 			break;
 		case FORMAT10_xxxPx:
 			Data = Value/1000 + 0x30;
-			if(Data == 0x30) Data = 0x20;
-			*Ptr++ = Data;
+			if(Data == 0x30) *Ptr++ = 0x20;
+			else{
+				IsZero = 0;
+				*Ptr++ = Data;
+			}
 			Value %= 1000;
 			Data = Value/100 + 0x30;
-			if(Data == 0x30) Data = 0x20;
-			*Ptr++ = Data;
+			if(Data == 0x30){
+				if(IsZero) *Ptr++ = ' ';
+				else *Ptr++ = Data;
+				
+			}
+			else *Ptr++ = Data;
 			Value %= 100;
 			*Ptr++ = Value/10 + 0x30;
 			*Ptr++ = '.';
@@ -301,13 +308,36 @@ void pLcd_DisplayShort_Format(uint8_t Format,uint16_t Val,char *Ptr)
 			*Ptr++ = Value/10 + 0x30;
 			break;
 		case FORMAT10_xxxPxx:
-			Value = Val * 10;
-			Data = Value/10000 + 0x30;
-			if(Data == 0x30) Data = 0x20;
-			*Ptr++ = Data;
+			Value = Val*10;
+			Data = Value/100000;
+			if(Data){
+				*Ptr++ = Data + 0x30;
+				IsZero = 0;
+			}
+			else *Ptr++ = ' ';
+			Value %= 100000;
+			Data = Value/10000;
+			if(Data)
+			{
+				*Ptr++ = Data + 0x30;
+				IsZero = 0;
+			}
+			else
+			{
+				if(IsZero)*Ptr++ = ' ';
+				else *Ptr++ = 0x30;
+			}
 			Value %= 10000;
-			Data = Value/1000 + 0x30;
-			*Ptr++ = Data;
+			Data = Value/1000;
+			if(Data)
+			{
+				*Ptr++ = Data + 0x30;
+				IsZero = 0;
+			}
+			else
+			{
+				*Ptr++ = 0x30;
+			}
 			*Ptr++ = '.';
 			Value %= 1000;
 			*Ptr++ = Value/100 + 0x30;
@@ -396,7 +426,8 @@ void pLcd_LoadString(uint8_t Line)
 	int8_t *Ptr;
 	int8_t Arr[17];
 	uint8_t Debug = 0;
-
+	uint16_t pTemp;
+	
 	switch(gDispMode)
 	{
 		case LCD_SYS_INIT:
@@ -625,10 +656,7 @@ void pLcd_LoadString(uint8_t Line)
 						for(i=0;i!=16;i++)Arr[i] = LCD_MAIN0[0][i];
 						pLcd_DisplayShort_Format(FORMAT_xxx, gParameter.TopTemp/100, (char *)&Arr[4]);
 						pLcd_DisplayShort_Format(FORMAT_xxx, gParameter.BottomTemp/100, (char *)&Arr[12]);
-						if(SSR_TOP.output == 1)Arr[1] = 0xFF;
-						else Arr[1] = ' ';
-						if(SSR_BOTTOM.output == 1)Arr[9] = 0xFF;
-						else Arr[9] = ' ';
+						
 						Ptr = (int8_t *)&Arr[0];
 						break;
 					case LCD_MAIN_STATUS_1:
@@ -640,8 +668,9 @@ void pLcd_LoadString(uint8_t Line)
 						break;
 					case LCD_MAIN_STATUS_2:
 						for(i=0;i!=16;i++)Arr[i] = SCR_L3MODE[3][i];
-					
-						pLcd_DisplayShort_Format(FORMAT10_xxxPx, SSR_TOP.voltage, (char *)&Arr[7]);
+						if(SSR_TOP.output == 0)pTemp = 0;
+						else pTemp = SSR_TOP.outVoltage*10;
+						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp, (char *)&Arr[7]);
 						if(gStatus.status > STATUS_INIT)Arr[14] = 0xff;
 						else Arr[14] = ' ';
 						Ptr = (int8_t *)&Arr[0];
@@ -660,7 +689,10 @@ void pLcd_LoadString(uint8_t Line)
 						pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.Heater_Top.Temp/100, (char *)&gLCD_Line[4]);
 						pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.Heater_Bottom.Temp/100, (char *)&gLCD_Line[12]);
 						//SSR1, SSR2 동작 표시
-						
+						if((SSR_TOP.output == 1) && (SSR_TOP.outVoltage > 0))gLCD_Line[1] = 0xFF;
+						else gLCD_Line[1] = ' ';
+						if((SSR_BOTTOM.output == 1) && (SSR_BOTTOM.outVoltage > 0))gLCD_Line[9] = 0xFF;
+						else gLCD_Line[9] = ' ';
 						break;
 
 					case LCD_MAIN_STATUS_1:		/* Inverter Information */
@@ -676,9 +708,10 @@ void pLcd_LoadString(uint8_t Line)
 						break;
 
 					case LCD_MAIN_STATUS_2:		/* Voltage */
-						/*if(SSR_BOTTOM.output == 0)i = 0;
-						else */i = SSR_BOTTOM.voltage/38;
-						pLcd_DisplayShort_Format(FORMAT10_xxxPx, SSR_BOTTOM.voltage,(char *)&gLCD_Line[7]);
+						if(SSR_BOTTOM.output == 0)pTemp = 0;
+						else pTemp = SSR_BOTTOM.outVoltage*10;
+						
+						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp,(char *)&gLCD_Line[7]);
 						if(gStatus.status > STATUS_INIT)gLCD_Line[14] = 0xFF;
 						else gLCD_Line[14] = ' ';
 						break;
@@ -694,8 +727,8 @@ void pLcd_LoadString(uint8_t Line)
 
 		case LCD_MAIN_HEAT_SET_SUB:
 			if(Line == 1){
-				pLcd_DisplayShort_Format(FORMAT_xxxx,gDispParameter.Value,(char *)&gLCD_Line[4]);
-				for(i=0;i!=5;i++)	gLCD_Line[10+i]=UNIT[gDispSub][i];
+				pLcd_DisplayShort_Format(FORMAT10_xxxPxx,gDispParameter.Value,(char *)&gLCD_Line[4]);
+				for(i=0;i!=5;i++)	gLCD_Line[10+i]=UNIT_HEAT[gDispSub][i];
 				break;
 			}
 			break;

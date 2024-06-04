@@ -13,7 +13,7 @@ typedef struct
 led_tbl_t led_tbl[LED_MAX_CH] =
 {
     {0, 1}, // LED1
-    {1, 0}, // LED2
+    {0, 1}, // LED2
     {1, 0}, // LED3
     {1, 0}, // LED4
     {1, 0}, // LED5

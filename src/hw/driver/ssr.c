@@ -24,14 +24,31 @@ void ssrUpdate(void)
 		pre_time = millis();
 		if(gStatus.status > STATUS_INIT)
 		{
-			if(gStatus.status == STATUS_IDLE)
+			pTemperature = gStatus.Heater_Top.Comp * 0.8;
+			if(gStatus.Heater_Top.Temp < pTemperature)
 			{
-				SSR_TOP.PID.value = 400;
-				SSR_BOTTOM.PID.value = 400;
+				SSR_TOP.PID.value = 420;
+			}
+			else if(gStatus.Heater_Top.Temp > gStatus.Heater_Top.Comp)
+			{
+				SSR_TOP.PID.value = 0;
 			}
 			else
 			{
 				SSR_TOP.PID.value = pidControlTop();
+			}
+			pTemperature = gStatus.Heater_Bottom.Comp * 0.8;
+			
+			if(gStatus.Heater_Bottom.Temp < pTemperature)
+			{
+				SSR_BOTTOM.PID.value = 420;
+			}
+			else if(gStatus.Heater_Bottom.Temp > gStatus.Heater_Bottom.Comp)
+			{
+				SSR_BOTTOM.PID.value = 0;
+			}
+			else
+			{
 				SSR_BOTTOM.PID.value = pidControlBottom();
 			}
 			if(SSR_TOP.output == 1)	gSetCommand(MODBUS_SSR_TOP, 0x0000, SSR_TOP.PID.value, 1);
@@ -65,7 +82,7 @@ void ssrUpdate(void)
 	}
 	
 	//Error Check
-	/*if(System.ssrTopError == 0)
+	if(System.ssrTopError == 0)
 	{
 		if((SSR_TOP.output == 0) && (SSR_TOP.voltage > 100))error1++;
 		else if((SSR_TOP.output == 0) && (SSR_TOP.voltage < 100))error1 = 0;
@@ -84,5 +101,5 @@ void ssrUpdate(void)
 			error2 = 0;
 			ssrControl(4, gFan);
 		}
-	}*/
+	}
 }

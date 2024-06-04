@@ -4,7 +4,6 @@
 #include "cli.h"
 //#include "pwm.h"
 //#include "pwm.h"
-#include "swtimer.h"
 #include "led.h"
 #define ADC_MAX_CH 4
 #ifdef _USE_HW_CLI
@@ -18,7 +17,6 @@ _AD gADC;
 temp_tbl_t pAD[2];
 uint8_t gTempCnt;
 uint16_t gTemperature1[16],gTemperature2[16];
-void adcISR(void *arg);
 extern uint32_t uartPrintf(uint8_t ch, uint8_t *fmt, ...);
 #endif
 void adcInit(void)
@@ -131,10 +129,6 @@ short adcReadVoltage(uint8_t ch)
 	return ret;
 }
 
-void adcISR(void *arg)
-{
-	int_AD0();
-}
 uint8_t adcCheck(void)
 {
 	uint16_t data;

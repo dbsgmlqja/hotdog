@@ -77,12 +77,12 @@ void readTemperature(void)
 	pCnt1 = 0;
 	delayUsecond(100);
 	v >>= 3;
-//	gStatus.Heater_Top.Temp = v * 25;
-	total1 -= readings[0][readIndex];
+	gStatus.Heater_Top.Temp = v * 25;
+	/*total1 -= readings[0][readIndex];
 	
 	readings[0][readIndex] = v * 25;
 	total1 += readings[0][readIndex];
-	gStatus.Heater_Top.Temp = total1 >> 3;
+	gStatus.Heater_Top.Temp = total1 >> 3;*/
 	CS_BOTTOM = 0;
 	delayUsecond(10);
 	
@@ -100,14 +100,14 @@ void readTemperature(void)
 	}
 	pCnt2 = 0;
 	v >>= 3;
-//	gStatus.Heater_Bottom.Temp = v * 25;
-	total2 -= readings[1][readIndex];
+	gStatus.Heater_Bottom.Temp = v * 25;
+	/*total2 -= readings[1][readIndex];
 	
 	readings[1][readIndex] = v * 25;
 	total2 += readings[1][readIndex];
 	gStatus.Heater_Bottom.Temp = total2 >> 3;
 	
-	if(++readIndex >= numReadings)readIndex = 0;
+	if(++readIndex >= numReadings)readIndex = 0;*/
 }
 
 // PID 제어 함수
@@ -166,8 +166,8 @@ void gSetStatus(void)
 		case STATUS_IDLE:
 			comp = gParameter.TopTemp * 0.8;
 			comp2 = gParameter.BottomTemp * 0.8;
-		//	if(gStatus.Heater_Top.Temp > comp)pTemp = 1;
-			if(gStatus.Heater_Bottom.Temp > comp2)pTemp |= 1;
+			if(gStatus.Heater_Top.Temp > comp)pTemp = 1;
+			if(gStatus.Heater_Bottom.Temp > comp2)pTemp &= 1;
 			if(pTemp)gStatus.status = STATUS_ON;
 			break;
 		case STATUS_READY:

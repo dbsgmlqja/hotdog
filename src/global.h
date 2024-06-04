@@ -114,6 +114,7 @@ enum{
 enum{
 	LCD_SUB_HEAT_TOP,
 	LCD_SUB_HEAT_BOTTOM,
+	LCD_SUB_HEAT_TIME,
 	LCD_SUB_HEAT_END
 };
 enum{
@@ -133,6 +134,7 @@ enum{
 typedef struct{
 	uint16_t TopTemp;
 	uint16_t BottomTemp;
+	uint16_t Time;
 }_Parameter;
 typedef struct{
 	uint16_t Temp1;
@@ -243,6 +245,7 @@ typedef struct{
 	uint8_t p500msFlag;
 	uint8_t no;
 	uint8_t mode;
+	uint8_t rxMode;
 	uint8_t status;
 	uint8_t comm[3];
 	uint8_t rxTmr[3];
@@ -289,6 +292,7 @@ typedef struct{
 	uint8_t error;
 	uint8_t output;
 	uint16_t voltage;
+	uint16_t outVoltage;
 	uint16_t temperature;
 	_PID PID;
 }_SSR;
