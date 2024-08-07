@@ -119,6 +119,9 @@ void ledStatus(void)
 		default:
 			ledOff(_DEF_LED5);
 	}
+	led_time = millis() - gSwitch.AutoPreTime;
+	interval = millis() - gSwitch.InvPreTime;
+	if((led_time > 2000) && (interval > 2000) && (gInverterStatus.bit.stop == 1))ledOff(_DEF_LED3);
 }
 
 

@@ -128,7 +128,7 @@ void pReverseKeyScan(void)
 	{
 		if(btn_reverse.state == 2)
 		{
-			btn_reverse.pre_time = millis();
+			gSwitch.AutoPreTime = millis();
 			if(RevKeyOn == 0)
 			{
 				RevKeyOn = 1;
@@ -150,7 +150,7 @@ void pReverseKeyScan(void)
 					gInverterStatus.bit.stop = 0;
 					gModBus.no = MODBUS_INVERTER;
 					gModBus.rxMode = gModBus.mode;
-					if(gModBus.status > MODBUS_READY)gModBus.rxMode = gModBus.mode;
+					if((gModBus.status > MODBUS_READY) && (gModBus.rxMode == 0xFF)) gModBus.rxMode = gModBus.mode;
 					gModBus.mode = MODBUS_MODE_COMMAND;
 					gSetCommand(MODBUS_INVERTER, 0x0005, 0x0002, 1);
 					ledOn(_DEF_LED2);
@@ -170,7 +170,7 @@ void pReverseKeyScan(void)
 					if(pKeyIn & 0x01)
 					{
 						gModBus.no = MODBUS_INVERTER;
-						if(gModBus.status > MODBUS_READY)gModBus.rxMode = gModBus.mode;
+						if((gModBus.status > MODBUS_READY) && (gModBus.rxMode == 0xFF)) gModBus.rxMode = gModBus.mode;
 						gModBus.mode = MODBUS_MODE_COMMAND;
 						gSetCommand(MODBUS_INVERTER, 0x0005, 0x0001, 1);
 						ledOff(_DEF_LED3);
@@ -194,8 +194,6 @@ void pReverseKeyScan(void)
 	else
 	{
 		RevKeyOn = 0;
-		
-		
 	}
 #if 0	
 	if(keyObjGetPressed(&btn_reverse, 60) == true)
@@ -272,7 +270,7 @@ void pConvayorKeyScan(void)
 	{
 		if(btn_convayor.state == 2)
 		{
-			btn_convayor.pre_time = millis();
+			gSwitch.InvPreTime = millis();
 			if(IncKeyOn == 0)
 			{
 				IncKeyOn = 1;
@@ -299,10 +297,6 @@ void pConvayorKeyScan(void)
 	else
 	{
 		IncKeyOn = 0;
-		if((gInverterStatus.bit.stop == 1) && (millis() - btn_convayor.pre_time > 2000))
-		{
-			ledOff(_DEF_LED3);
-		}
 	}
 }
 void gEmgKeyScan(void)
@@ -417,7 +411,7 @@ void gHeaterKeyScan(void)
 						SSR_BOTTOM.PID.prev_error = 0;
 						
 						gModBus.no = MODBUS_SSR_TOP;
-						if(gModBus.status > MODBUS_READY)gModBus.rxMode = gModBus.mode;
+						if((gModBus.status > MODBUS_READY) && (gModBus.rxMode == 0xFF)) gModBus.rxMode = gModBus.mode;
 						gModBus.mode = MODBUS_MODE_COMMAND;
 						gSetCommand(MODBUS_SSR_TOP, 0x0002, 1, 1);
 						gSetCommand(MODBUS_SSR_BOTTOM, 0x0002, 1, 1);
@@ -426,7 +420,7 @@ void gHeaterKeyScan(void)
 					{
 						gStatus.status = STATUS_INIT;
 						gModBus.no = MODBUS_SSR_TOP;
-						if(gModBus.status > MODBUS_READY)gModBus.rxMode = gModBus.mode;
+						if((gModBus.status > MODBUS_READY) && (gModBus.rxMode == 0xFF)) gModBus.rxMode = gModBus.mode;
 						gModBus.mode = MODBUS_MODE_COMMAND;
 						gSetCommand(MODBUS_SSR_TOP, 0x0002, 0, 1);
 						gSetCommand(MODBUS_SSR_BOTTOM, 0x0002, 0, 1);

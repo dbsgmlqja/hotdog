@@ -277,6 +277,14 @@ typedef struct{
 	uint8_t SystemLock: 1;
 }_Key;
 typedef struct{
+	uint32_t InvPreTime;
+	uint32_t ReversePreTime;
+	uint32_t HeaterPreTime;
+	uint32_t Motor1PreTime;
+	uint32_t Motor2PreTime;
+	uint32_t AutoPreTime;
+}_Switch;
+typedef struct{
 	uint16_t P;
 	uint16_t I;
 	uint16_t D;
@@ -296,6 +304,7 @@ typedef struct{
 	uint16_t temperature;
 	_PID PID;
 }_SSR;
+EXT _Switch gSwitch;
 EXT _InverterError gInverterError;
 EXT _InverterStatus gInverterStatus;
 EXT _ModBus gModBus;
