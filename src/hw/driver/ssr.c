@@ -3,6 +3,7 @@
 #include "modbus.h"
 #include "MAX6675.h"
 #include "gpio.h"
+#define FAN_TEMPERATURE 50
 #define FAN_OUT ((*(RB_BTF*)&P8OUT).p3)
 void ssrOn(uint8_t ch)
 {
@@ -18,8 +19,8 @@ void ssrUpdate(void)
 {
 	static uint32_t pre_time;
 	static uint8_t error1= 0,error2 = 0;
-	uint16_t pTemperature;
-	if(millis() - pre_time > 2000)
+	uint16_t pTemperature,pVar;
+	if(millis() - pre_time > 5000)
 	{
 		pre_time = millis();
 		if(gStatus.status > STATUS_INIT)
@@ -29,13 +30,16 @@ void ssrUpdate(void)
 			{
 				SSR_TOP.PID.value = 420;
 			}
-			else if(gStatus.Heater_Top.Temp > gStatus.Heater_Top.Comp)
+			else if(gStatus.Heater_Top.Temp >= gStatus.Heater_Top.Comp)
 			{
-				SSR_TOP.PID.value = 0;
+				SSR_TOP.PID.value = 126;
+				SSR_TOP.PID.integral = 0;
 			}
 			else
 			{
-				SSR_TOP.PID.value = pidControlTop();
+				pVar = pidControlTop();
+				if(pVar > 336)pVar = 336;
+				SSR_TOP.PID.value = pVar;
 			}
 			pTemperature = gStatus.Heater_Bottom.Comp * 0.8;
 			
@@ -43,13 +47,16 @@ void ssrUpdate(void)
 			{
 				SSR_BOTTOM.PID.value = 420;
 			}
-			else if(gStatus.Heater_Bottom.Temp > gStatus.Heater_Bottom.Comp)
+			else if(gStatus.Heater_Bottom.Temp >= gStatus.Heater_Bottom.Comp)
 			{
-				SSR_BOTTOM.PID.value = 0;
+				SSR_BOTTOM.PID.value = 126;
+				SSR_BOTTOM.PID.integral = 0;
 			}
 			else
 			{
-				SSR_BOTTOM.PID.value = pidControlBottom();
+				pVar = pidControlBottom();
+				if(pVar > 336)pVar = 336;
+				SSR_BOTTOM.PID.value = pVar;
 			}
 			if(SSR_TOP.output == 1)	gSetCommand(MODBUS_SSR_TOP, 0x0000, SSR_TOP.PID.value, 1);
 			else gSetCommand(MODBUS_SSR_TOP, 0x0002, 1, 1);
@@ -65,41 +72,41 @@ void ssrUpdate(void)
 		
 		if(gFan == 1)
 		{
-			if(pTemperature < 31)
+			if(pTemperature < FAN_TEMPERATURE)
 			{
 				gFan = 0;
-				ssrControl(2, gFan);
+				ssrControl(5, gFan);
 			}
 		}
 		else
 		{
-			if(pTemperature >= 32)
+			if(pTemperature >= FAN_TEMPERATURE)
 			{
 				gFan = 1;
-				ssrControl(2, gFan);
+				ssrControl(5, gFan);
 			}
 		}
 	}
 	
 	//Error Check
-	if(System.ssrTopError == 0)
+	if(gError.bit.ssrTopError == 0)
 	{
 		if((SSR_TOP.output == 0) && (SSR_TOP.voltage > 100))error1++;
 		else if((SSR_TOP.output == 0) && (SSR_TOP.voltage < 100))error1 = 0;
 		if(error1 > 10){
-			System.ssrTopError = 1;
+			gError.bit.ssrTopError = 1;
 			error1 = 0;
-			ssrControl(4, gFan);
+			ssrControl(5, gFan);
 		}
 	}
-	if(System.ssrBottomError == 0)
+	if(gError.bit.ssrBottomError == 0)
 	{
 		if((SSR_BOTTOM.output == 0) && (SSR_BOTTOM.voltage > 100))error2++;
 		else if((SSR_BOTTOM.output == 0) && (SSR_BOTTOM.voltage < 100))error2 = 0;
 		if(error2 > 10){
-			System.ssrBottomError = 1;
+			gError.bit.ssrBottomError = 1;
 			error2 = 0;
-			ssrControl(4, gFan);
+			ssrControl(5, gFan);
 		}
 	}
 }

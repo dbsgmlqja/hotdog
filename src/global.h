@@ -7,11 +7,11 @@
 	#define EXT extern volatile
 #endif
 
-#define TRIAC_TOP			((*(RB_BTF*)&P3OUT).p1)
-#define TRIAC_BOTTOM		((*(RB_BTF*)&P3OUT).p2)
-#define SSR4_OUT			((*(RB_BTF*)&P8OUT).p0)
-#define SSR3_OUT			((*(RB_BTF*)&P8OUT).p1)
-
+#define SSR1_OUT			((*(RB_BTF*)&P2OUT).p2)	//SSR M.C
+#define SSR2_OUT			((*(RB_BTF*)&P4OUT).p7)	//Inverter M.C
+#define SSR3_OUT			((*(RB_BTF*)&P5OUT).p0)	//Motor1
+#define SSR4_OUT			((*(RB_BTF*)&P5OUT).p1) //Motor2
+#define SSR5_OUT			((*(RB_BTF*)&P8OUT).p2)	//Fan
 #define INV_MONITOR_ADDR (0x0009)
 /**************************************************************/
 /*  Fixed Parameter List                                      */
@@ -119,7 +119,7 @@ enum{
 };
 enum{
 	LCD_SUB_INV_F_FREQ,
-	LCD_SUB_INV_R_FREQ,
+//	LCD_SUB_INV_R_FREQ,
 	LCD_SUB_INV_END
 };
 
@@ -210,7 +210,20 @@ typedef union{
 	} bit;
 	uint16_t All;
 }_InverterError;
-
+typedef union{
+	struct{
+		uint16_t OverTemp : 1;
+		uint16_t EmergencyOn	: 1;
+		uint16_t inverterError : 1;
+		uint16_t inverterCommError : 1;
+		uint16_t ssr1CommError : 1;
+		uint16_t ssr2CommError : 1;
+		uint16_t ssrTopError	: 1;
+		uint16_t ssrBottomError : 1;
+		uint16_t dummy	: 8;
+	}bit;
+	uint16_t All;
+}_Error;
 typedef struct{
 	uint32_t pre_time;
 	uint8_t Request;
@@ -231,16 +244,7 @@ typedef struct{
 	uint32_t rxTime;
 	uint32_t txTime;
 }USART_User_InitTypeDef;
-typedef struct{
-	uint8_t OverTemp : 1;
-	uint8_t EmergencyOn	: 1;
-	uint8_t inverterError : 1;
-	uint8_t inverterCommError : 1;
-	uint8_t ssr1CommError : 1;
-	uint8_t ssr2CommError : 1;
-	uint8_t ssrTopError	: 1;
-	uint8_t ssrBottomError : 1;
-}_System;
+
 typedef struct{
 	uint8_t p500msFlag;
 	uint8_t no;
@@ -294,7 +298,7 @@ typedef struct{
 }_PID;
 typedef struct{
 	uint16_t F_Freq;
-	uint16_t R_Freq;
+//	uint16_t R_Freq;
 }_IParameter;
 typedef struct{
 	uint8_t error;
@@ -304,6 +308,7 @@ typedef struct{
 	uint16_t temperature;
 	_PID PID;
 }_SSR;
+EXT _Error gError;
 EXT _Switch gSwitch;
 EXT _InverterError gInverterError;
 EXT _InverterStatus gInverterStatus;
@@ -316,7 +321,7 @@ EXT _Parameter gParameter;
 EXT _IParameter gIParameter;
 EXT _Para gDispParameter;
 EXT _Disp gDisplay;
-EXT _System System;
+
 EXT _SSR SSR_TOP, SSR_BOTTOM;
 EXT _DebugVar gDebugVar;
 //EXT _Status Status;

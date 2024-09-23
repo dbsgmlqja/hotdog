@@ -18,13 +18,13 @@ static uint8_t gTest;
 static uint8_t is_init = 0;
 
 const uint16_t EEP_HEAT_ParaTBL[][3]={ 
-	{2000,	25000,	18000},		/* P0	FP0	TEMP1*/
-	{2000,	25000,	18000},		/* P1	FP1	TEMP2*/
+	{2000,	35000,	35000},		/* P0	FP0	TEMP1*/
+	{2000,	35000,	35000},		/* P1	FP1	TEMP2*/
 	{60,	 1800,	  600},		/* 2 Operating Time */
 };
 const uint16_t EEP_Inverter_ParaTBL[][3]={ 
 	{5,	6000,	6000},			/* P0	FP0	Foward Frequency */
-	{5,	6000,	3000},			/* P1	FP1	Reverse Frequncy */
+//	{5,	6000,	3000},			/* P1	FP1	Reverse Frequncy */
 };
 const uint8_t EEP_ERASE_DATA[16] = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff

@@ -7,7 +7,7 @@ static uint32_t pTimeout = 10;
 void i2cInit(void)
 {
 	//@200519 kishida-san 9
-	P2OUT = 0x00;
+	P2OUT &= ~0x03;
 
 	P2DIR |= 0x03;	//P20, P21 Output
 

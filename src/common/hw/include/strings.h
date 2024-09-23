@@ -104,12 +104,14 @@ const char HEAT_MODE_SUB[][COLUMN_MAX]={
 
 const char INV_MODE_SUB_TOP[][COLUMN_MAX]={
 	//0123456789012345
-	{"* FOWARD SPEED *"},
+	{"*INVERTER SPEED*"},
+//	{"* FOWARD SPEED *"},
 	{"* REVERSE SPEED*"},
 };
 const char INV_MODE_SUB[][COLUMN_MAX]={
 	//0123456789012345
-	{"  Foward Speed  "},
+	{" Inverter Speed "},
+//	{"  Foward Speed  "},
 	{"  Reverse Speed "},
 };
 
@@ -473,7 +475,7 @@ const char SystemLock_Top[][COLUMN_MAX]={
 };
 const char INVERTER_OP[][COLUMN_MAX] = {
 	//0123456789012345
-	{"FORWARD RUNNING "},
+	{"FOWARD RUNNING  "},
 	{"BACKWARD RUNNING"},
 	{"INVERTER STOP   "}
 };

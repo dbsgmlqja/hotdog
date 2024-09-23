@@ -7,7 +7,6 @@ static uint8_t last_error = 0;
 /*                                                                                                         */
 /**************************************************************/
 #define	PORT_LCD_RS	((*(RB_BTF*)&PDOUT).p6)
-//#define	PORT_LCD_RW	((*(RB_BTF*)&P5OUT).p2)
 #define	PORT_LCD_EN	((*(RB_BTF*)&PDOUT).p7)
 void pLcd_Control_Port(uint8_t CTRL_REG,uint8_t Data);
 void pLcd_Wait(void);

@@ -29,7 +29,9 @@
 #define      HW_MCP2515_MAX_CH      1
 
 #define _USE_HW_LED
-#define      HW_LED_MAX_CH          5
+#define      HW_LED_MAX_CH          7
+
+#define _USE_HW_BOTTOM_HEATER
 
 #define _USE_HW_UART
 #define      HW_UART_MAX_CH         3
@@ -98,7 +100,7 @@
 
 #define FLASH_ADDR_BOOT_VER         0x8000400
 
-#define _HW_KEY_MAX_CH 5
+#define _HW_KEY_MAX_CH 7
 
 
 #endif /* SRC_HW_HW_DEF_H_ */

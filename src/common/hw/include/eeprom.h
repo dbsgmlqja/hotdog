@@ -9,7 +9,7 @@ enum{
 };
 enum{
 	EEP_INV_F_FREQ,
-	EEP_INV_R_FREQ,
+//	EEP_INV_R_FREQ,
 	EEP_INV_END
 };
 uint8_t eepromInit(void);

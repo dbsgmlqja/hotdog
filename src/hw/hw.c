@@ -40,7 +40,8 @@ void hwInit(void)
 	enable_irq();			/* enable interrupt (set IE)	*/
 	gpioInit();
 	uartInit();
-	ssrControl(4, 1);
+	ssrControl(1, 1);
+	ssrControl(2, 1);
 	delay(300);
 	delay(300);
 	modbusInit();

@@ -11,7 +11,7 @@ void apInit(void)
 {
 	cliOpen(_DEF_SERIAL1, 115200);
 	spi_ch = swTimerGetHandle();
-	swtimerSet(spi_ch, 250, 1, spiISR, NULL);
+	swtimerSet(spi_ch, 5000, 1, spiISR, NULL);
 	swtimerStart(spi_ch);
 }
 void apMain(void)
@@ -76,6 +76,7 @@ void apMain(void)
 			if(millis() - pre_time > 30)break;
 			clear_WDT();
 		}
+#ifdef _USE_HW_BOTTOM_HEATER		
 		ssrOff(MODBUS_SSR_BOTTOM);
 		gModBus.p500msFlag = 1;
 		gModBus.no = MODBUS_SSR_BOTTOM;
@@ -98,6 +99,7 @@ void apMain(void)
 		delay(50);
 		if(SSR_BOTTOM.voltage < 100)check = 1;
 		else check = 0;
+#endif		
 	}
 	
 	// 3. not proble SSR4 On
@@ -140,26 +142,15 @@ void apMain(void)
 		pLocKeyRead();
 		pLocKeyProcess();
 		pLocKeyRepeatProcess();
-		if(System.EmergencyOn == 0)
+		if(gError.bit.EmergencyOn == 0)
 		{
-			if(cFlag)
-			{
-				cFlag = 0;
-				readTemperature();
-				gSetStatus();
-	
-				uartWrite(_DEF_SERIAL1,gStatus.Heater_Top.Temp/100);
-				uartWrite(_DEF_SERIAL1,gStatus.Heater_Bottom.Temp/100);
-			}
+			
 			if(gModBus.p500msFlag == 1)
 			{
 				modbusCheck();
 				modbusTransmit();
 			}
-			gMotorKeyScan();
-			pReverseKeyScan();
-			pConvayorKeyScan();
-			gHeaterKeyScan();
+			gKeyScan();
 			if(gStatus.OldStart != gStatus.Start){
 				if(gStatus.Start == 1){
 					gStatus.pre_time = millis();
@@ -193,7 +184,15 @@ void apMain(void)
 				gModBus.status = 0;
 			}
 		}
-		
+		if(cFlag)
+		{
+			cFlag = 0;
+			readTemperature();
+			gSetStatus();
+
+			uartPrintf(_DEF_SERIAL1,"%d ",(gStatus.Heater_Top.Temp/100));
+			uartPrintf(_DEF_SERIAL1,"%d \n",(gStatus.Heater_Bottom.Temp/100));
+		}
 		gEmgKeyScan();
 		pLcd_UpdateDisplay();
 		pLcd_Init_Seq();

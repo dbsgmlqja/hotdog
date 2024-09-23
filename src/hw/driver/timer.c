@@ -52,13 +52,14 @@ void p10msHandlingTimer(void)
 		gKeyScanFlag = 1;
 		if(gKey.RepeatTimer != 0) --gKey.RepeatTimer;
 		if(gSaveDisplayTimer != 0) --gSaveDisplayTimer;
-		gLCD_Update_Req = 1;
 	}
 }
 void p100msHandlingTimer(void)
 {
 	if((IntTimer%100) == 0){
 		gModBus.p500msFlag = 1;
+		
+		gLCD_Update_Req = 1;
 	}
 }
 void p200msHandlingTimer(void)

@@ -448,22 +448,22 @@ void pLcd_LoadString(uint8_t Line)
 			break;
 
 		case LCD_MAIN_INIT:
-			if(System.OverTemp){
+			if(gError.bit.OverTemp){
 				Ptr = (char *)&DISP_MODE_FAULT_OVERTEMP[Line][0];
 			}
-			else if(System.EmergencyOn)
+			else if(gError.bit.EmergencyOn)
 			{
 				Ptr = (char *)&EMG_DISPLAY[Line][0];
 			}
-			else if(System.inverterCommError)
+			else if(gError.bit.inverterCommError)
 			{
 				Ptr = (char *)&DISP_MODE_FAULT_INVERTERCOMM[Line][0];
 			}
-			else if(System.ssr1CommError)
+			else if(gError.bit.ssr1CommError)
 			{
 				Ptr = (char *)&DISP_MODE_FAULT_SSR1COMM[Line][0];
 			}
-			else if(System.ssr2CommError)
+			else if(gError.bit.ssr2CommError)
 			{
 				Ptr = (char *)&DISP_MODE_FAULT_SSR2COMM[Line][0];
 			}
@@ -547,11 +547,11 @@ void pLcd_LoadString(uint8_t Line)
 	switch(gDispMode)
 	{
 		case LCD_MAIN_INIT:
-			if(System.OverTemp == 1) break;
-			if(System.EmergencyOn == 1)break;
-			if(System.inverterCommError == 1) break;
-			if(System.ssr1CommError == 1) break;
-			if(System.ssr2CommError == 1) break;
+			if(gError.bit.OverTemp == 1) break;
+			if(gError.bit.EmergencyOn == 1)break;
+			if(gError.bit.inverterCommError == 1) break;
+			if(gError.bit.ssr1CommError == 1) break;
+			if(gError.bit.ssr2CommError == 1) break;
 			if(SSR_TOP.error) break;
 			if(SSR_BOTTOM.error) break;
 			if(Debug == 1){
@@ -696,7 +696,7 @@ void pLcd_LoadString(uint8_t Line)
 						break;
 
 					case LCD_MAIN_STATUS_1:		/* Inverter Information */
-						if(System.inverterError)
+						if(gError.bit.inverterError)
 						{
 							i = getDigitPosition(gInverterError.All);
 							Ptr = (int8_t *)&InverterErrorString[i][0];

@@ -10,8 +10,8 @@
 #define EMG_KEY_IN 		((*(RB_BTF*)&PCIN).p3)
 #define MOTOR_KEY_IN	((*(RB_BTF*)&PDIN).p0)
 #define HEATER_KEY_IN	((*(RB_BTF*)&PDIN).p1)
-
-
+#define MOTOR2_KEY_IN	((*(RB_BTF*)&P6IN).p5)
+#define AM_KEY_IN		((*(RB_BTF*)&P6IN).p1)
 
 
 extern void pBeep(uint8_t Cnt, uint8_t sl);
@@ -31,13 +31,17 @@ key_obj_t btn_convayor;
 key_obj_t btn_emg;
 key_obj_t btn_heater;
 key_obj_t btn_motor;
+key_obj_t btn_motor2;
+key_obj_t btn_am;
 
-const key_tbl_t key_TBL[5] = {
+const key_tbl_t key_TBL[7] = {
 	{&PCIN, 0x02, 0x00}, 	//reverse
 	{&PCIN, 0x04, 0x00},	//convayor
 	{&PCIN, 0x08, 0x08},	//emg
 	{&PDIN, 0x01, 0x00},	//motor
 	{&PDIN, 0x02, 0x00},	//heater
+	{&P6IN, 0x20, 0x00},	//motor2
+	{&P6IN, 0x02, 0x00},	//AM
 };
 void keyInit(void)
 {
@@ -46,8 +50,11 @@ void keyInit(void)
 	keyObjCreate(&btn_emg, _DEF_EMG_KEY, 100);
 	keyObjCreate(&btn_motor, _DEF_MOTOR_KEY, 100);
 	keyObjCreate(&btn_heater, _DEF_HEATER_KEY, 1500);
+	keyObjCreate(&btn_motor2, _DEF_MOTOR2_KEY, 100);
+	keyObjCreate(&btn_am, _DEF_AM_KEY, 100);
 	PCIE |= 0x0E;
 	PDIE |= 0x03;
+	P6IE |= 0x22;
 }
 
 void keyObjCreate(key_obj_t *p_obj, uint8_t ch, uint32_t repeat_time)
@@ -107,7 +114,6 @@ uint8_t keyObjGetPressed(key_obj_t *p_obj, uint32_t pressed_time)
 	}
 	return ret;
 }
-
 uint8_t keyGetPressed(uint8_t ch)
 {
 	uint8_t ret = false;
@@ -118,17 +124,17 @@ uint8_t keyGetPressed(uint8_t ch)
 	}
 	return ret;
 }
-void pReverseKeyScan(void)
+void pAMKeyScan(void)
 {
 	static uint8_t RevKeyOn = 0;
 	uint8_t pKeyIn = 0;
-	uint32_t pre_time;
 	
-	if(keyObjGetPressed(&btn_reverse, 60) == true)
+	if(keyObjGetPressed(&btn_am, 60) == true)
 	{
-		if(btn_reverse.state == 2)
+		if(btn_am.state == 2)
 		{
 			gSwitch.AutoPreTime = millis();
+			btn_am.pre_time = millis();
 			if(RevKeyOn == 0)
 			{
 				RevKeyOn = 1;
@@ -144,6 +150,10 @@ void pReverseKeyScan(void)
 				{
 					pKeyIn |= 0x08;
 				}
+				if(SSR4_OUT == 1)
+				{
+					pKeyIn |= 0x10;
+				}
 				if(pKeyIn == 0x00)
 				{
 					// Inverter On
@@ -153,8 +163,8 @@ void pReverseKeyScan(void)
 					if((gModBus.status > MODBUS_READY) && (gModBus.rxMode == 0xFF)) gModBus.rxMode = gModBus.mode;
 					gModBus.mode = MODBUS_MODE_COMMAND;
 					gSetCommand(MODBUS_INVERTER, 0x0005, 0x0002, 1);
-					ledOn(_DEF_LED2);
-					ledOn(_DEF_LED3);
+					ledOn(LED_AM);
+					ledOn(LED_CONVAYOR);
 					
 					// Heater On
 					gStatus.status = STATUS_IDLE;
@@ -164,6 +174,10 @@ void pReverseKeyScan(void)
 					// Motor1 On
 					ssrControl(3, 1);
 					ledOn(_DEF_LED4);
+					
+					// Motor2 On
+					ssrControl(4, 1);
+					ledOn(LED_MOTOR2);
 				}
 				else
 				{
@@ -186,6 +200,11 @@ void pReverseKeyScan(void)
 						ssrControl(3, 0);
 						ledOff(_DEF_LED4);
 					}
+					if(pKeyIn & 0x10)
+					{
+						ssrControl(4, 0);
+						ledOff(LED_MOTOR2);
+					}
 					ledOff(_DEF_LED2);
 				}
 			}
@@ -195,7 +214,13 @@ void pReverseKeyScan(void)
 	{
 		RevKeyOn = 0;
 	}
-#if 0	
+}
+void pReverseKeyScan(void)
+{
+	static uint8_t RevKeyOn = 0;
+	uint8_t KeyIn = 0;
+	uint32_t pre_time;
+	
 	if(keyObjGetPressed(&btn_reverse, 60) == true)
 	{
 		if(btn_reverse.state == 2)
@@ -260,7 +285,7 @@ void pReverseKeyScan(void)
 	
 		
 	if(KeyIn == 0)return;
-#endif	
+	
 }
 void pConvayorKeyScan(void)
 {
@@ -271,6 +296,7 @@ void pConvayorKeyScan(void)
 		if(btn_convayor.state == 2)
 		{
 			gSwitch.InvPreTime = millis();
+			btn_convayor.pre_time = millis();
 			if(IncKeyOn == 0)
 			{
 				IncKeyOn = 1;
@@ -286,9 +312,11 @@ void pConvayorKeyScan(void)
 				}
 				else
 				{
-					ledOff(_DEF_LED3);
 					check = gGetCommand(MODBUS_INVERTER);
-					if(check == 0)gSetCommand(MODBUS_INVERTER, 0x0005, 0x0001, 1);
+					if(check == 0){
+						ledOff(_DEF_LED3);
+						gSetCommand(MODBUS_INVERTER, 0x0005, 0x0001, 1);
+					}
 					else gSetCommand(MODBUS_INVERTER, 0x0000, 0x0000, false);
 				}
 			}
@@ -307,12 +335,15 @@ void gEmgKeyScan(void)
 		if(btn_emg.state > 1)
 		{
 			btn_emg.pre_time = millis();
+			btn_emg.pre_time = millis();
 			if(StartKeyContinue == 0)
 			{
 				StartKeyContinue = 1;
-				System.EmergencyOn = 1;
-				ssrControl(4, 0);
+				gError.bit.EmergencyOn = 1;
+				ssrControl(1, 0);
+				ssrControl(2, 0);
 				ssrControl(3, 0);
+				ssrControl(4, 0);
 				ledOff(_DEF_LED4);
 				ledOff(_DEF_LED2);
 				if(gInverterStatus.bit.stop == 0)
@@ -351,15 +382,20 @@ void gEmgKeyScan(void)
 	{
 		if(btn_emg.state == 0){
 			StartKeyContinue = 0;
-			if(System.EmergencyOn){
-				ssrControl(4, 1);
+			if(gError.bit.EmergencyOn){
+				ssrControl(1, 1);
+				ssrControl(2, 1);
 				delay(500);
 				gReleaseError(MODBUS_INVERTER, MODBUS_MODE_COMMAND);
 				if(modbusConnectCheck(MODBUS_SSR_TOP) == 1);
 				if(modbusConnectCheck(MODBUS_SSR_BOTTOM) == 1);
+				ledOff(LED_CONVAYOR);
+				ledOff(LED_MOTOR1);
+				ledOff(LED_MOTOR2);
+				gSetCommand(MODBUS_INVERTER, 0x0004, gIParameter.F_Freq, 1);
 			}
 		}
-		System.EmergencyOn = 0;
+		gError.bit.EmergencyOn = 0;
 	}
 }
 void gMotorKeyScan(void)
@@ -375,12 +411,40 @@ void gMotorKeyScan(void)
 				if(SSR3_OUT == 0)
 				{
 					ssrControl(3, 1);
-					ledOn(_DEF_LED4);
+					ledOn(LED_MOTOR1);
 				}
 				else
 				{
 					ssrControl(3, 0);
-					ledOff(_DEF_LED4);
+					ledOff(LED_MOTOR1);
+				}
+			}
+		}
+	}
+	else
+	{
+		ModeKeyOn = 0;
+	}
+}
+void gMotor2KeyScan(void)
+{
+	static uint8_t ModeKeyOn = 0;
+	if(keyObjGetPressed(&btn_motor2, 60) == true)
+	{
+		if(btn_motor2.state == 2){
+			btn_motor2.pre_time = millis();
+			if(ModeKeyOn == 0)
+			{
+				ModeKeyOn = 1;
+				if(SSR4_OUT == 0)
+				{
+					ssrControl(4, 1);
+					ledOn(LED_MOTOR2);
+				}
+				else
+				{
+					ssrControl(4, 0);
+					ledOff(LED_MOTOR2);
 				}
 			}
 		}
@@ -436,7 +500,13 @@ void gHeaterKeyScan(void)
 }
 void gKeyScan(void)
 {
-//
+	gMotorKeyScan();
+	gMotor2KeyScan();
+	gHeaterKeyScan();
+	gEmgKeyScan();
+	pReverseKeyScan();
+	pAMKeyScan();
+	pConvayorKeyScan();
 }
 
 
@@ -623,39 +693,41 @@ void pLKey_Set(void)
 	uint8_t i;
 	uint16_t *Ptr16;
 	
-	if(System.inverterCommError == 1)
+	if((gError.bit.inverterCommError == 1) || (gError.bit.ssr1CommError == 1) || (gError.bit.ssr2CommError == 1))
 	{
-		if(modbusConnectCheck(MODBUS_INVERTER) == 1)
+		if(gError.bit.inverterCommError == 1)
 		{
-			pBeep(2, 0);
-			gReleaseError(MODBUS_INVERTER, 0);
-			System.inverterCommError = 0;
+			if(modbusConnectCheck(MODBUS_INVERTER) == 1)
+			{
+				pBeep(2, 0);
+				gReleaseError(MODBUS_INVERTER, 0);
+				gError.bit.inverterCommError = 0;
+			}
+			else pBeep(3,0);
 		}
-		else pBeep(3,0);
+		if(gError.bit.ssr1CommError == 1)
+		{
+			if(modbusConnectCheck(MODBUS_SSR_TOP) == 1)
+			{
+				pBeep(2, 0);
+				gReleaseError(MODBUS_SSR_TOP, 0);
+				gError.bit.ssr1CommError = 0;
+			}
+			else pBeep(3,0);
+		}
+		if(gError.bit.ssr2CommError == 1)
+		{
+			if(modbusConnectCheck(MODBUS_SSR_BOTTOM) == 1)
+			{
+				pBeep(2, 0);
+				gReleaseError(MODBUS_SSR_BOTTOM, 0);
+				gError.bit.ssr2CommError = 0;
+			}
+			else pBeep(3,0);
+		}
 		return;
 	}
-	if(System.ssr1CommError == 1)
-	{
-		if(modbusConnectCheck(MODBUS_SSR_TOP) == 1)
-		{
-			pBeep(2, 0);
-			gReleaseError(MODBUS_SSR_TOP, 0);
-			System.ssr1CommError = 0;
-		}
-		else pBeep(3,0);
-		return;
-	}
-	if(System.ssr2CommError == 1)
-	{
-		if(modbusConnectCheck(MODBUS_SSR_BOTTOM) == 1)
-		{
-			pBeep(2, 0);
-			gReleaseError(MODBUS_SSR_BOTTOM, 0);
-			System.ssr2CommError = 0;
-		}
-		else pBeep(3,0);
-		return;
-	}
+	
 	if(SSR_TOP.error)
 	{
 		
@@ -762,13 +834,13 @@ void pLKey_Set(void)
 		*Ptr16 = gDispParameter.Value;
 		
 		pn_EEP_WriteBytes(0x30 + gDispSub *2, (uint8_t *)&gDispParameter.Value,/* LCD_SUB_INV_END*/2);
-		if(gDispSub == LCD_SUB_INV_R_FREQ)
+		if(gDispSub == LCD_SUB_INV_F_FREQ)
 		{
-			if(gInverterStatus.bit.reverseRun == 1)gSetCommand(MODBUS_INVERTER, 0x0004, gDispParameter.Value, 1);
+			gSetCommand(MODBUS_INVERTER, 0x0004, gDispParameter.Value, 1);
 		}
 		else
 		{
-			gSetCommand(MODBUS_INVERTER, 0x0004, gDispParameter.Value, 1);
+			if(gInverterStatus.bit.reverseRun == 1)gSetCommand(MODBUS_INVERTER, 0x0004, gDispParameter.Value, 1);
 		}
 //		pn_Load_Parameters();
 		

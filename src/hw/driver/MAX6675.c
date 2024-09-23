@@ -13,10 +13,10 @@ double Kp = 1.0;         // P 값
 double Ki = 0.1;         // I 값
 double Kd = 0.01;        // D 값
 const uint8_t numReadings = 8;
-static uint16_t readings[2][8];
+/*static uint16_t readings[2][8];
 static uint8_t readIndex = 0;
 static uint32_t total1 = 0;
-static uint32_t total2 = 0;
+static uint32_t total2 = 0;*/
 #ifndef OFF
 #define OFF 0
 #endif
@@ -83,6 +83,7 @@ void readTemperature(void)
 	readings[0][readIndex] = v * 25;
 	total1 += readings[0][readIndex];
 	gStatus.Heater_Top.Temp = total1 >> 3;*/
+
 	CS_BOTTOM = 0;
 	delayUsecond(10);
 	
@@ -101,6 +102,7 @@ void readTemperature(void)
 	pCnt2 = 0;
 	v >>= 3;
 	gStatus.Heater_Bottom.Temp = v * 25;
+
 	/*total2 -= readings[1][readIndex];
 	
 	readings[1][readIndex] = v * 25;
@@ -110,6 +112,14 @@ void readTemperature(void)
 	if(++readIndex >= numReadings)readIndex = 0;*/
 }
 
+double myFabs(double n)
+{
+	int var = n;
+	if(var > 0)
+		return n;
+	else
+		return n * (-1);
+}
 // PID 제어 함수
 int pidControlTop(void)
 {
@@ -118,7 +128,11 @@ int pidControlTop(void)
 	if(gStatus.status < STATUS_IDLE)return 0;
 	setpoint = gStatus.Heater_Top.Comp/100;
     error = setpoint - gStatus.Heater_Top.Temp/100;
-    SSR_TOP.PID.integral += error;
+	num = myFabs(error);
+	if(num < 50){
+    	SSR_TOP.PID.integral += error;
+	}
+	else SSR_TOP.PID.integral = 0;
 	
 	
 	derivate = error - SSR_TOP.PID.prev_error;
@@ -126,12 +140,12 @@ int pidControlTop(void)
     output = Kp * error + Ki * SSR_TOP.PID.integral + Kd * derivate;
 	num = (int)output*10;
     SSR_TOP.PID.prev_error = error;
-		// 음수 출력이면 0으로 처리
-    if (num < 50) {
-        num = 0;
+	// 음수 출력이면 0으로 처리
+	if(num < 2)return 0;	
+    if (num > 100) {
+        num = 100;
     }
-	else if(num > 1000)num = 400;
-	else num = num*400/1000;
+	num = num * 420 / 100;
     return (int)num;
 }
 int pidControlBottom(void)
