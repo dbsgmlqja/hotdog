@@ -145,7 +145,8 @@ typedef struct{
 	uint8_t SensorErr 	: 1;
 	uint16_t RunTime;
 	uint16_t Comp;
-	uint16_t Temp;	
+	uint16_t Temp;
+	uint16_t Prev_Temp;
 	uint32_t pre_time;
 }_Heater;
 typedef struct{

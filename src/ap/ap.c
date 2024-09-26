@@ -14,10 +14,12 @@ void apInit(void)
 	swtimerSet(spi_ch, 5000, 1, spiISR, NULL);
 	swtimerStart(spi_ch);
 }
+static uint16_t pData[4];
 void apMain(void)
 {
 	uint32_t pre_time,pre_time2;
 	uint8_t check = 0;
+	
 	static pNo = 0;
 	//Hardware check and setting
 	// 0. Inverter Set
@@ -157,7 +159,12 @@ void apMain(void)
 				}
 				gStatus.OldStart = gStatus.Start;
 			}
-			ssrUpdate();
+			if(ssrUpdate() == 1){
+				pData[0] = gStatus.Heater_Top.Temp;
+				pData[1] = (uint16_t)SSR_TOP.PID.integral;
+				pData[2] = SSR_TOP.PID.value;
+				transInformation((uint16_t *)pData);
+			}
 		
 			pn_EEP_SaveCheck();
 		}
@@ -190,8 +197,8 @@ void apMain(void)
 			readTemperature();
 			gSetStatus();
 
-			uartPrintf(_DEF_SERIAL1,"%d ",(gStatus.Heater_Top.Temp/100));
-			uartPrintf(_DEF_SERIAL1,"%d \n",(gStatus.Heater_Bottom.Temp/100));
+		//	uartPrintf(_DEF_SERIAL1,"%d ",(gStatus.Heater_Top.Temp/100));
+		//	uartPrintf(_DEF_SERIAL1,"%d \n",(gStatus.Heater_Bottom.Temp/100));
 		}
 		gEmgKeyScan();
 		pLcd_UpdateDisplay();

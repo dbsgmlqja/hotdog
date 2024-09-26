@@ -366,6 +366,17 @@ uint32_t uartGetBaud(uint8_t ch)
 
   return ret;
 }
+void transInformation(uint16_t *data)
+{
+	uartWrite(_DEF_SERIAL1, data[0] >> 0);
+	uartWrite(_DEF_SERIAL1, data[0] >> 8);
+	
+	uartWrite(_DEF_SERIAL1, data[1] >> 0);
+	uartWrite(_DEF_SERIAL1, data[1] >> 8);
+	
+	uartWrite(_DEF_SERIAL1, data[2] >> 0);
+	uartWrite(_DEF_SERIAL1, data[2] >> 8);
+}
 void uartWriteStatus(uint16_t val,uint16_t Data, uint16_t Data2)
 {
 	uartPrintf(_DEF_SERIAL1, "%d,%d,%d\n",val, Data,Data2);

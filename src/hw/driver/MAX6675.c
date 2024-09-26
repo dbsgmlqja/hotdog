@@ -9,9 +9,9 @@
 #define ON 1
 #endif
 // PID 제어를 위한 변수
-double Kp = 1.0;         // P 값
+double Kp = 0.1;         // P 값
 double Ki = 0.1;         // I 값
-double Kd = 0.01;        // D 값
+double Kd = 1;        // D 값
 const uint8_t numReadings = 8;
 /*static uint16_t readings[2][8];
 static uint8_t readIndex = 0;
@@ -120,25 +120,35 @@ double myFabs(double n)
 	else
 		return n * (-1);
 }
+static int pDispVar = 0;
+static int pDispVar2 = 0;
 // PID 제어 함수
 int pidControlTop(void)
 {
 	double output,setpoint,error,derivate;
 	int num;
 	if(gStatus.status < STATUS_IDLE)return 0;
-	setpoint = gStatus.Heater_Top.Comp/100;
-    error = setpoint - gStatus.Heater_Top.Temp/100;
-	num = myFabs(error);
-	if(num < 50){
-    	SSR_TOP.PID.integral += error;
+	setpoint = gStatus.Heater_Top.Comp;
+    error = (setpoint - gStatus.Heater_Top.Temp)/100;
+	pDispVar2 = (int)error;
+	SSR_TOP.PID.integral += error;
+	num = SSR_TOP.PID.integral;
+		
+	if(gStatus.Heater_Top.Comp > gStatus.Heater_Top.Temp)
+	{
+		if(num < 20)SSR_TOP.PID.integral = 20;
+		else if(num > 50)SSR_TOP.PID.integral = 50;
 	}
-	else SSR_TOP.PID.integral = 0;
-	
-	
+	else
+	{
+		if(num > 40)SSR_TOP.PID.integral = 40;
+		else if(num < 30)SSR_TOP.PID.integral = 30;
+	}
 	derivate = error - SSR_TOP.PID.prev_error;
     // PID 제어 계산
     output = Kp * error + Ki * SSR_TOP.PID.integral + Kd * derivate;
 	num = (int)output*10;
+	pDispVar = num;
     SSR_TOP.PID.prev_error = error;
 	// 음수 출력이면 0으로 처리
 	if(num < 2)return 0;	

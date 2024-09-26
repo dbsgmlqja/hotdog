@@ -707,13 +707,14 @@ void pLcd_LoadString(uint8_t Line)
 						}
 						break;
 
-					case LCD_MAIN_STATUS_2:		/* Voltage */
-						if(SSR_BOTTOM.output == 0)pTemp = 0;
+					case LCD_MAIN_STATUS_2:		
+						/*if(SSR_BOTTOM.output == 0)pTemp = 0;
 						else pTemp = SSR_BOTTOM.outVoltage*10;
 						
 						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp,(char *)&gLCD_Line[7]);
 						if(gStatus.status > STATUS_INIT)gLCD_Line[14] = 0xFF;
-						else gLCD_Line[14] = ' ';
+						else gLCD_Line[14] = ' ';*/
+						pLcd_DisplayShort_Format(FORMAT10_xxxPxx, gStatus.Heater_Top.Temp, (char *)&gLCD_Line[7]);
 						break;
 				}
 			}

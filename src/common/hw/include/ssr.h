@@ -3,6 +3,6 @@
 #include "hw_def.h"
 void ssrOn(uint8_t ch);
 void ssrOff(uint8_t ch);
-void ssrUpdate(void);
+uint8_t ssrUpdate(void);
 
 #endif
