@@ -31,6 +31,7 @@ void hwInit(void)
 			clear_WDT();			/* reset WDT binary counter */
 		}
 	}
+	
 	tm16stop();
 	pRead_FlashVersion((int8_t *)&Versions[0]);
 	
@@ -38,15 +39,17 @@ void hwInit(void)
 //	timerInit();
 	tm67set();
 	enable_irq();			/* enable interrupt (set IE)	*/
+	
 	gpioInit();
 	uartInit();
-	ssrControl(1, 1);
-	ssrControl(2, 1);
-	delay(300);
-	delay(300);
-	modbusInit();
+	ssrControl(SSR_INVERTER, ON);
+	ssrControl(SSR_SCR, ON);
 	
+	delay(2000);
+	modbusInit();
 	pLcd_Init();
+	gDisplay.Connect = 1;
+	pLcd_UpdateDisplay();
 	clear_WDT();
 	eepromInit();
 	
@@ -57,4 +60,5 @@ void hwInit(void)
 	
 	gDispSub = LCD_MAIN_STATUS_0;
 	gDispMode = LCD_MAIN_INIT;
+	gLCD_Mode_Backup = gDispMode;
 }

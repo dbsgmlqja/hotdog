@@ -11,7 +11,7 @@ void apInit(void)
 {
 	cliOpen(_DEF_SERIAL1, 115200);
 	spi_ch = swTimerGetHandle();
-	swtimerSet(spi_ch, 5000, 1, spiISR, NULL);
+	swtimerSet(spi_ch, 1000, 1, spiISR, NULL);
 	swtimerStart(spi_ch);
 }
 static uint16_t pData[4];
@@ -36,9 +36,10 @@ void apMain(void)
 	gModBus.mode = MODBUS_MODE_COMMAND;
 	modbusTransmit();
 	gModBus.mode = 0;;
-	delay(50);
+	delay(100);
 	gSetMonitor(MODBUS_INVERTER, INV_MONITOR_ADDR, 1);
 	gSetCommand(MODBUS_INVERTER, 0x0004, gIParameter.F_Freq, 1);
+	modbusTransmit();
 	// 1. SSR1 output check
 	
 	pre_time = millis();
@@ -53,7 +54,7 @@ void apMain(void)
 	gModBus.status = MODBUS_READY;
 	gModBus.mode = MODBUS_MODE_COMMAND;
 	modbusTransmit();
-	delay(30);
+	delay(50);
 	pre_time = millis();
 	while(gModBus.status == MODBUS_RECEIVE)
 	{
@@ -124,7 +125,8 @@ void apMain(void)
 	gModBus.mode = 0;
 	pre_time = millis();
 	pre_time2 = millis();
-	uartPrintf(_DEF_SERIAL1, "Welcome to Waffle machine \n");
+	
+	uartPrintf(_DEF_SERIAL1, "Welcome to Bakery machine \n");
 	pBeep(3, 0);
 	
 	while(1)
@@ -194,7 +196,6 @@ void apMain(void)
 		if(cFlag)
 		{
 			cFlag = 0;
-			readTemperature();
 			gSetStatus();
 
 		//	uartPrintf(_DEF_SERIAL1,"%d ",(gStatus.Heater_Top.Temp/100));
@@ -207,7 +208,14 @@ void apMain(void)
 		cliMain();
 	}
 }
+
 void spiISR(void *arg)
 {
-	cFlag = 1;
+	static uint8_t num = 0;
+	
+	pSetTemperature();
+	if(++num >= 5){
+		num = 0;
+		cFlag = 1;
+	}
 }

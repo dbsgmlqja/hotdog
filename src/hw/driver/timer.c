@@ -86,6 +86,8 @@ void p500msHandlingTimer(void)
 }
 void p1msTimer(void)
 {
+	uint32_t pTime,pTime2,s1end,s2end;
+	uint16_t pTemp,pTemp2,tempDiff;
 	p1msHandlingTimer();
 	p10msHandlingTimer();
 	p100msHandlingTimer();
@@ -94,5 +96,30 @@ void p1msTimer(void)
 	if(++IntTimer >= 1000){
 		IntTimer = 0;
 		//gModBus.p500msFlag = 1;
+		if(gStatus.warmupComplete == 0){
+			pTime = gParameter.WarmupTime * 60;
+			if(gWarmupTimer < pTime){
+				if(gStatus.status == STATUS_IDLE){
+					gWarmupTimer++;
+					if(gStatus.warmupArrived == 1)
+					{
+						tempDiff = (gParameter.WarmupTemp - gParameter.TopTemp) / 3;
+						pTime2 = gWarmupTimer - gStatus.warmupTimer;
+						s1end = gStatus.warmupTimer + (pTime - gWarmupTimer) / 3;
+						s2end = gStatus.warmupTimer + (pTime - gWarmupTimer) * 2 / 3;
+						if(gWarmupTimer < s1end) gStatus.Heater_Top.Comp = gParameter.WarmupTemp - tempDiff;
+						else if(gWarmupTimer < s2end)gStatus.Heater_Top.Comp = gParameter.WarmupTemp - tempDiff * 2;
+						else gStatus.Heater_Top.Comp = gParameter.WarmupTemp - tempDiff * 3;
+					}
+				}
+			}
+			else
+			{
+				gStatus.warmupComplete = 1;
+				gStatus.Heater_Top.Comp = gParameter.TopTemp;
+				gStatus.Heater_Bottom.Comp = gParameter.BottomTemp;
+				gStatus.status = STATUS_READY;
+			}
+		}
 	}
 }

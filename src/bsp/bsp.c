@@ -10,7 +10,7 @@ void SysTick_Handler(void)
 void SysTick_Handler2(void)
 {
   	systick_ms++;
-}\
+}
 void bspInit(void)
 {
 	

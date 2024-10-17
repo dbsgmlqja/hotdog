@@ -26,22 +26,7 @@ uint8_t ssrUpdate(void)
 		pre_time = millis();
 		if(gStatus.status > STATUS_INIT)
 		{
-			/*pTemperature = gStatus.Heater_Top.Comp * 0.8;
-			if(gStatus.Heater_Top.Temp < pTemperature)
-			{
-				SSR_TOP.PID.value = 420;
-			}
-			else if(gStatus.Heater_Top.Temp >= gStatus.Heater_Top.Comp)
-			{
-				SSR_TOP.PID.value = 105;
-				SSR_TOP.PID.integral = 25;
-			}
-			else
-			{
-				pVar = pidControlTop();
-				if(pVar > 336)pVar = 336;
-				SSR_TOP.PID.value = pVar;
-			}*/
+			
 			if((gStatus.Heater_Top.Temp >= gStatus.Heater_Top.Comp) && (gStatus.Heater_Top.Prev_Temp < gStatus.Heater_Top.Comp)){
 				SSR_TOP.PID.integral = 20;
 			}
@@ -50,6 +35,7 @@ uint8_t ssrUpdate(void)
 			}
 			gStatus.Heater_Top.Prev_Temp = gStatus.Heater_Top.Temp;
 			SSR_TOP.PID.value = pidControlTop();
+			
 			pTemperature = gStatus.Heater_Bottom.Comp * 0.8;
 			ret = 1;
 			if(gStatus.Heater_Bottom.Temp < pTemperature)
@@ -84,7 +70,7 @@ uint8_t ssrUpdate(void)
 			if(pTemperature < FAN_TEMPERATURE)
 			{
 				gFan = 0;
-				ssrControl(5, gFan);
+				ssrControl(SSR_FAN, gFan);
 			}
 		}
 		else
@@ -92,7 +78,7 @@ uint8_t ssrUpdate(void)
 			if(pTemperature >= FAN_TEMPERATURE)
 			{
 				gFan = 1;
-				ssrControl(5, gFan);
+				ssrControl(SSR_FAN, gFan);
 			}
 		}
 	}
@@ -105,7 +91,7 @@ uint8_t ssrUpdate(void)
 		if(error1 > 10){
 			gError.bit.ssrTopError = 1;
 			error1 = 0;
-			ssrControl(5, gFan);
+			ssrControl(SSR_FAN, gFan);
 		}
 	}
 	if(gError.bit.ssrBottomError == 0)
@@ -115,7 +101,7 @@ uint8_t ssrUpdate(void)
 		if(error2 > 10){
 			gError.bit.ssrBottomError = 1;
 			error2 = 0;
-			ssrControl(5, gFan);
+			ssrControl(SSR_FAN, gFan);
 		}
 	}
 	return ret;

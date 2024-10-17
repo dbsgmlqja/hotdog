@@ -11,7 +11,7 @@
 // PID 제어를 위한 변수
 double Kp = 0.1;         // P 값
 double Ki = 0.1;         // I 값
-double Kd = 1;        // D 값
+double Kd = 2;        // D 값
 const uint8_t numReadings = 8;
 /*static uint16_t readings[2][8];
 static uint8_t readIndex = 0;
@@ -20,11 +20,119 @@ static uint32_t total2 = 0;*/
 #ifndef OFF
 #define OFF 0
 #endif
+_TempArr pTempArrTop;
+_TempArr pTempArrBottom;
+typedef struct{
+	uint8_t cnt;
+	uint16_t value;
+}_Value;
+_Value findMostFrequent(uint16_t arr[], uint8_t size) {
+	uint8_t i,j;
+	_Value pValue;
+    int maxCount = 0;  // 가장 높은 빈도 수
+    int mostFrequent = arr[0];  // 가장 자주 등장하는 숫자
+    int count;
+
+    // 배열의 각 요소에 대해 빈도를 계산합니다.
+    for (i = 0; i < size; i++) {
+        count = 1;  // 현재 요소를 기준으로 빈도 카운트
+        for (j = i + 1; j < size; j++) {
+            if (arr[i] == arr[j]) {
+                count++;  // 동일한 요소가 있으면 카운트 증가
+            }
+        }
+
+        // 최대 빈도보다 더 많이 나온 숫자가 있으면 업데이트
+        if (count > maxCount) {
+            maxCount = count;
+            mostFrequent = arr[i];
+			pValue.cnt = count;
+			pValue.value = arr[i];
+        }
+    }
+
+    return pValue;
+}
+uint16_t findClosest(uint16_t arr[], uint8_t size, uint16_t target) {
+	uint8_t i;
+    uint16_t closest = arr[0];  // 초기값을 배열의 첫 번째 값으로 설정
+    int minDifference;
+	int currentDifference;
+	if(arr[0] >= target)minDifference = arr[0] - target;  // 첫 번째 요소와 타겟 값의 차이
+	else minDifference = target - arr[0];
+
+    // 배열의 나머지 요소들에 대해 차이를 계산
+    for (i = 1; i < size; i++) {
+		if(arr[i] >= target) currentDifference = arr[i] - target;  // 현재 값과 타겟 값의 차이 계산
+		else currentDifference = target - arr[i];  // 현재 값과 타겟 값의 차이 계산
+
+        // 만약 현재 차이가 최소 차이보다 작다면, 갱신
+        if (currentDifference < minDifference) {
+            minDifference = currentDifference;
+            closest = arr[i];  // 가장 가까운 값 갱신
+        }
+    }
+
+    return closest;  // 가장 가까운 값 반환
+}
+uint16_t pGetMinMax(_TempArr pArr)
+{
+	uint8_t i;
+	uint16_t Min,Max;
+	Min = pArr.Arr[0];
+	Max = pArr.Arr[0];
+	for(i=1;i!=5;i++)
+	{
+		if(pArr.Arr[i] < Min)Min = pArr.Arr[i];
+		if(pArr.Arr[i] > Max)Max = pArr.Arr[i];
+	}
+	return Max - Min;
+}
 void MAX6675_Init(void)
 {
+	uint8_t i;
+	uint16_t pTemp;
+	uint32_t pTotal = 0,pTotal2 = 0;
+	_Value pVal;
 	P4DIR |= 0x0E;
 	P4IE |= 0x08;
 	MISO = 1;
+	clear_WDT();
+	
+	for(i=0;i!=5;i++)
+	{
+		readTemperature();
+		pTempArrTop.Arr[pTempArrTop.index++] = gStatus.Heater_Top.Temp2;
+		pTempArrBottom.Arr[pTempArrBottom.index++] = gStatus.Heater_Bottom.Temp2;
+		pTotal += gStatus.Heater_Top.Temp2;
+		pTotal2 += gStatus.Heater_Bottom.Temp2;
+		clear_WDT();
+	}
+	if(pGetMinMax(pTempArrTop) < 300)pTempArrTop.prev_temp = pTotal / 5;
+	else
+	{
+		pVal = findMostFrequent(pTempArrTop.Arr, 5);
+		if(pVal.cnt >= 3)pTempArrTop.prev_temp = pVal.value;
+		else
+		{
+			pTempArrTop.prev_temp = findClosest(pTempArrTop.Arr, 5, pTotal/5);
+		}
+	}
+	pTemp = pGetMinMax(pTempArrBottom);
+	if(pTemp < 300)pTempArrBottom.prev_temp = pTotal / 5;
+	else
+	{
+		pVal = findMostFrequent(pTempArrBottom.Arr, 5);
+		if(pVal.cnt >= 3)pTempArrBottom.prev_temp = pVal.value;
+		else
+		{
+			pTempArrBottom.prev_temp = findClosest(pTempArrBottom.Arr, 5, pTotal2/5);
+		}
+	}
+	pTempArrTop.index = 0;
+	pTempArrBottom.index = 0;
+	gStatus.Heater_Top.Temp = pTempArrTop.prev_temp;
+	gStatus.Heater_Bottom.Temp = pTempArrBottom.prev_temp;
 }
 static void delayUsecond(uint32_t us)
 {
@@ -77,7 +185,7 @@ void readTemperature(void)
 	pCnt1 = 0;
 	delayUsecond(100);
 	v >>= 3;
-	gStatus.Heater_Top.Temp = v * 25;
+	gStatus.Heater_Top.Temp2 = v * 25;
 	/*total1 -= readings[0][readIndex];
 	
 	readings[0][readIndex] = v * 25;
@@ -101,7 +209,7 @@ void readTemperature(void)
 	}
 	pCnt2 = 0;
 	v >>= 3;
-	gStatus.Heater_Bottom.Temp = v * 25;
+	gStatus.Heater_Bottom.Temp2 = v * 25;
 
 	/*total2 -= readings[1][readIndex];
 	
@@ -188,11 +296,15 @@ void gSetStatus(void)
 	switch(gStatus.status)
 	{
 		case STATUS_IDLE:
-			comp = gParameter.TopTemp * 0.8;
-			comp2 = gParameter.BottomTemp * 0.8;
-			if(gStatus.Heater_Top.Temp > comp)pTemp = 1;
-			if(gStatus.Heater_Bottom.Temp > comp2)pTemp &= 1;
-			if(pTemp)gStatus.status = STATUS_ON;
+			if(gStatus.warmupComplete == 1)
+			{
+				comp = gParameter.TopTemp * 0.8;
+				comp2 = gParameter.BottomTemp * 0.8;
+			
+				if(gStatus.Heater_Top.Temp > comp)pTemp = 1;
+				if(gStatus.Heater_Bottom.Temp > comp2)pTemp &= 1;
+				if(pTemp)gStatus.status = STATUS_ON;
+			}
 			break;
 		case STATUS_READY:
 		case STATUS_ON:
@@ -213,6 +325,83 @@ void gSetStatus(void)
 			if(pTemp){
 				gStatus.status = STATUS_IDLE;
 			}
+			break;
+	}
+	if(gStatus.warmupArrived == 0){
+		if(gStatus.Heater_Top.Temp >= gParameter.WarmupTemp){
+			gStatus.warmupArrived = 1;
+			gStatus.warmupTimer = gWarmupTimer;
+		}
+	}
+}
+void pSetTemperature(void)
+{
+	static uint8_t num = 0;
+	uint8_t i;
+	uint16_t val,basic;
+	
+	switch(num)
+	{
+		case 0:
+		case 1:
+		case 2:
+			num++;
+			break;
+		case 3:
+			readTemperature();
+			pTempArrTop.Rec[0] = gStatus.Heater_Top.Temp2;
+			pTempArrBottom.Rec[0] = gStatus.Heater_Bottom.Temp2;
+			num++;
+			break;
+		default:
+			readTemperature();
+			pTempArrTop.Rec[1] = gStatus.Heater_Top.Temp2;
+			pTempArrBottom.Rec[1] = gStatus.Heater_Bottom.Temp2;
+			pTempArrTop.index = 0;
+			pTempArrBottom.index = 0;
+			for(i=0;i!=2;i++)
+			{
+				if(pTempArrTop.prev_temp <= pTempArrTop.Rec[i])
+				{
+					val = pTempArrTop.Rec[i] - pTempArrTop.prev_temp;
+				}
+				else
+				{
+					val = pTempArrTop.prev_temp - pTempArrTop.Rec[i];
+				}
+				basic = pTempArrTop.prev_temp * -178 / 10000 + 1035;
+				if(val < basic){
+					pTempArrTop.Arr[pTempArrTop.index++] = pTempArrTop.Rec[i];
+				}
+				if(pTempArrBottom.prev_temp <= pTempArrBottom.Rec[i])
+				{
+					val = pTempArrBottom.Rec[i] - pTempArrBottom.prev_temp;
+				}
+				else
+				{
+					val = pTempArrBottom.prev_temp - pTempArrBottom.Rec[i];
+				}
+				basic = pTempArrBottom.Rec[i] * -178 / 10000 + 1035;
+				if(val < basic)pTempArrBottom.Arr[pTempArrBottom.index++] = pTempArrBottom.Rec[i];
+			}
+			if(i == 2)
+			{
+				pTempArrTop.prev_temp = pTempArrTop.Rec[1];
+				gStatus.Heater_Top.Temp = pTempArrTop.Rec[1];
+				pTempArrBottom.prev_temp = pTempArrBottom.Rec[1];
+				gStatus.Heater_Bottom.Temp = pTempArrBottom.Rec[1];
+			}
+			else if(i == 1)
+			{
+				pTempArrTop.prev_temp = pTempArrTop.Arr[0];
+				pTempArrBottom.prev_temp = pTempArrBottom.Arr[0];
+			}
+			else
+			{
+				pTempArrTop.prev_temp = (pTempArrTop.Rec[0] + pTempArrTop.Rec[1]) / 2;
+				pTempArrBottom.prev_temp = (pTempArrBottom.Rec[0] + pTempArrBottom.Rec[1]) / 2;
+			}
+			num = 0;
 			break;
 	}
 }

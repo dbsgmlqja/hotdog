@@ -18,9 +18,11 @@ static uint8_t gTest;
 static uint8_t is_init = 0;
 
 const uint16_t EEP_HEAT_ParaTBL[][3]={ 
-	{2000,	35000,	35000},		/* P0	FP0	TEMP1*/
-	{2000,	35000,	35000},		/* P1	FP1	TEMP2*/
+	{2000,	35000,	27500},		/* P0	FP0	TEMP1*/
+	{2000,	35000,	27500},		/* P1	FP1	TEMP2*/
 	{60,	 1800,	  600},		/* 2 Operating Time */
+	{0,	 60,	  25},	/* 3 Warmup Time */
+	{15000,	 32000,	  30000},	/* 3 Warmup Temp */
 };
 const uint16_t EEP_Inverter_ParaTBL[][3]={ 
 	{5,	6000,	6000},			/* P0	FP0	Foward Frequency */
@@ -235,6 +237,7 @@ void pn_EEP_Read_Parameters(void)
 		}
 		*Ptr++;
 	}
+
 	i2cReadBytes(DEVICE_ADDR, IPARAMETER_ADDR, (uint8_t *)&gIParameter, EEP_INV_END *2, 10);
 	Ptr = (uint16_t *)&gIParameter;
 	for(i=0;i!=EEP_INV_END;i++)
@@ -254,14 +257,20 @@ void pn_Load_Parameters(void)
 	uint16_t *Ptr;
 	
 	Ptr = (uint16_t *)&gParameter;
-	Ptr += gStatus.Mode;
-	index = gStatus.Mode;
 	gDispParameter.Value = *Ptr;
 	
 	gDispParameter.Min = EEP_HEAT_ParaTBL[index][0];
 	gDispParameter.Max = EEP_HEAT_ParaTBL[index][1];
-	gStatus.Heater_Top.Comp = gParameter.TopTemp;
-	gStatus.Heater_Bottom.Comp = gParameter.BottomTemp;
+	if(gParameter.WarmupTime > 0)
+	{
+		gStatus.Heater_Top.Comp = gParameter.WarmupTemp;
+		gStatus.Heater_Bottom.Comp = gParameter.WarmupTemp;
+	}
+	else
+	{
+		gStatus.Heater_Top.Comp = gParameter.TopTemp;
+		gStatus.Heater_Bottom.Comp = gParameter.BottomTemp;
+	}
 }
 
 void pn_EEP_Init_Parameters(void){

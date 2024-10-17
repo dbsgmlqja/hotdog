@@ -137,7 +137,11 @@ uint32_t uartWrite(uint8_t ch, uint8_t Data)
 			SC2TB = Data;
 			break;
 		case _DEF_UART4:
-			while(SC3STR & 0x20 == 0x20);
+			while(SC3STR & 0x20 == 0x20)
+			{
+				if(millis() - pre_time > 30)return 0;
+				clear_WDT();
+			}
 			
 			SC3TB = Data;
 			for(i=0;i<0x6ff;i++)clear_WDT();

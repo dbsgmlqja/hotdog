@@ -91,6 +91,7 @@ void pLcd_DataOut(uint8_t Data){
 
 	pLcd_Wait();
 	pLcd_Control_Port(LCD_CTRL_RS,LEVEL_HIGH);
+	pLcd_Wait();
 	for(i=0;i!=16;i++)
 	{
 		pLcd_Data(gLCD_Line[i]);
@@ -98,6 +99,7 @@ void pLcd_DataOut(uint8_t Data){
 	}
 	
 	pLcd_Wait();
+	pLcd_Control_Port(LCD_CTRL_RS,LEVEL_LOW);
 }
 
 void pLcd_Init(void){
@@ -112,9 +114,9 @@ void pLcd_Init(void){
 	delay(1);
 	pLcd_COMMAND(0x0C); // display on/off
 	delay(1);
-	pLcd_COMMAND(0x06); // display clear
+	pLcd_COMMAND(0x01); // display clear
 	delay(1);
-	pLcd_COMMAND(0x01); // entry mode set
+	pLcd_COMMAND(0x06); // entry mode set
 
 
 

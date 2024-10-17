@@ -73,7 +73,7 @@ const char MAIN_MENU_TOP[][COLUMN_MAX]={
 	//*Select Mode*
 	//0123456789012345
 	{"* SELECT MODE  *"},
-	{"*  HEATER      *"},
+	{"*HEATER SETTING*"},
 	{"*  IVERTER     *"},
 	{"* INITIALIZE   *"},
 	{"* FAULT SCAN   *"},
@@ -91,17 +91,27 @@ const char MAIN_MENU_SUB[][COLUMN_MAX]={
 
 const char HEAT_MODE_SUB_TOP[][COLUMN_MAX]={
 	//0123456789012345
-	{"*  TOP TEMP    *"},
-	{"*  BOTTOM TEMP *"},
+	{"* TOP TEMP     *"},
+	{"* BOTTOM TEMP  *"},
+	{"* WARM-UP SET  *"},
 };
-
+const char HEAT_WARMUP_SUB_TOP[][COLUMN_MAX]={
+	//0123456789012345
+	{"* WARM-UP TIME *"},
+	{"* WARM-UP TEMP *"},
+};
 const char HEAT_MODE_SUB[][COLUMN_MAX]={
 	//0123456789012345
-	{"  Top Temp      "},
-	{"  Bottom Temp   "},
+	{" Top Heater     "},
+	{" Bottom Heater  "},
+	{" Warm-up Setting"},
 };
 
-
+const char WARMUP_MODE_SUB[][COLUMN_MAX]={
+	//0123456789012345
+	{" Warm-up Time   "},
+	{" Warm-up Temp   "},
+};
 const char INV_MODE_SUB_TOP[][COLUMN_MAX]={
 	//0123456789012345
 	{"*INVERTER SPEED*"},
@@ -157,7 +167,8 @@ const char UNIT_HEAT[][6]={
 	"[%]  ",	/*TORQUE*/
 	"[HZ] ",	/*UP FREQ*/
 	"[HZ] ",	/*DOWN FREQ*/
-	"[SEC]",	/*ULS TIME*/
+	"[MIN]",	/*ULS TIME*/
+	{'[',0xDF,'C',']',' ',0x0A},	
 };
 const char UNIT[][6]={
 //0123456789012345

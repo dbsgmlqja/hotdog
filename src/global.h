@@ -13,6 +13,13 @@
 #define SSR4_OUT			((*(RB_BTF*)&P5OUT).p1) //Motor2
 #define SSR5_OUT			((*(RB_BTF*)&P8OUT).p2)	//Fan
 #define INV_MONITOR_ADDR (0x0009)
+#ifndef ON
+#define ON 1
+#endif
+
+#ifndef OFF
+#define OFF 0
+#endif
 /**************************************************************/
 /*  Fixed Parameter List                                      */
 /**************************************************************/
@@ -28,6 +35,15 @@ enum{
 	STATUS_IDLE,
 	STATUS_READY,
 	STATUS_ON
+};
+enum{
+	SSR_DUMMY,
+	SSR_INVERTER,
+	SSR_SCR,
+	SSR_MOTOR1,
+	SSR_MOTOR2,
+	SSR_FAN,
+	SSR_END
 };
 enum{
 	MODBUS_MODE_COMMAND,
@@ -62,23 +78,24 @@ enum{
 	//Select Mode
 	LCD_MAIN_MENU=0,
 	LCD_MAIN_HEAT_SET,
+	LCD_MAIN_HEAT_SET_WARMUP,
 	LCD_MAIN_INV_SET,
 	LCD_MAIN_INITIALIZE,
-	LCD_MAIN_FAULT,
 
+	LCD_MAIN_FAULT,
 	LCD_MAIN_OPTION,			/*@111128 Add Item*/
 	LCD_MAIN_FACTORY,           /*@1504223 By Bang*/
-
-//@090826
-//	LCD_MAIN_POS_INIT,
-
 	LCD_MAIN_HEAT_SET_SUB,
+	LCD_MAIN_HEAT_SET_TOP_SUB,
+
+
+	LCD_MAIN_HEAT_SET_BOTTOM_SUB,
+	LCD_MAIN_HEAT_SET_WARMUP_SUB,
 	LCD_MAIN_INV_SET_SUB,
 	LCD_MAIN_FAULT_SUB,
 	LCD_MAIN_FACTORY_SUB,     /*@1504223 By Bang*/
-
-
 	LCD_SYS_INIT,
+
 	LCD_MAIN_INIT,
 	LCD_POWER_FAIL,
 	LCD_MAIN_DISP_END
@@ -114,8 +131,13 @@ enum{
 enum{
 	LCD_SUB_HEAT_TOP,
 	LCD_SUB_HEAT_BOTTOM,
-	LCD_SUB_HEAT_TIME,
+	LCD_SUB_HEAT_WARMUP,
 	LCD_SUB_HEAT_END
+};
+enum{
+	LCD_SUB_WARMUP_TIME,
+	LCD_SUB_WARMUP_TEMP,
+	LCD_SUB_WARMUP_END
 };
 enum{
 	LCD_SUB_INV_F_FREQ,
@@ -135,6 +157,8 @@ typedef struct{
 	uint16_t TopTemp;
 	uint16_t BottomTemp;
 	uint16_t Time;
+	uint16_t WarmupTime;
+	uint16_t WarmupTemp;
 }_Parameter;
 typedef struct{
 	uint16_t Temp1;
@@ -146,24 +170,29 @@ typedef struct{
 	uint16_t RunTime;
 	uint16_t Comp;
 	uint16_t Temp;
+	uint16_t Temp2;
 	uint16_t Prev_Temp;
 	uint32_t pre_time;
 }_Heater;
 typedef struct{
-	_Heater Heater_Top;
-	_Heater Heater_Bottom;
+	uint8_t OldStart;
+	uint8_t Start;
+	uint8_t warmupComplete;
+	uint8_t warmupArrived;
+	uint8_t status;
+	uint8_t oldstatus;
 	uint16_t OpTime;
 	uint16_t RunTime;
 	uint16_t Temp1;
 	uint16_t Temp2;
 	uint32_t pre_time;
-	uint8_t Mode;
-	uint8_t OldStart;
-	uint8_t Start;
-	uint8_t status;
-	uint8_t oldstatus;
+	uint32_t warmupTimer;
+	_Heater Heater_Top;
+	_Heater Heater_Bottom;
+	
 }_Status;
 typedef struct{
+	uint8_t prev_sub;
 	uint16_t Value;
 	uint16_t Max;
 	uint16_t Min;
@@ -354,4 +383,5 @@ EXT uint16_t gSaveDisplayTimer;
 /*===================================================================*/
 EXT uint32_t gBakeryCount;
 EXT uint32_t gEEP_time;
+EXT uint32_t gWarmupTimer;
 #endif
