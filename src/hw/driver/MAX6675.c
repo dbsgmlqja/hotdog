@@ -9,9 +9,9 @@
 #define ON 1
 #endif
 // PID 제어를 위한 변수
-double Kp = 0.1;         // P 값
-double Ki = 0.1;         // I 값
-double Kd = 2;        // D 값
+double Kp = 14.8;         // P 값
+double Ki = 0.2;         // I 값
+double Kd = 5;        // D 값
 const uint8_t numReadings = 8;
 /*static uint16_t readings[2][8];
 static uint8_t readIndex = 0;
@@ -271,22 +271,33 @@ int pidControlBottom(void)
 	double output,setpoint,error,derivate;
 	int num;
 	if(gStatus.status < STATUS_IDLE)return 0;
-	setpoint = gStatus.Heater_Bottom.Comp/100;
-    error = setpoint - gStatus.Heater_Bottom.Temp/100;
-    SSR_BOTTOM.PID.integral += error;
-	
-	
+	setpoint = gStatus.Heater_Bottom.Comp;
+    error = (setpoint - gStatus.Heater_Bottom.Temp)/100;
+	if(SSR_BOTTOM.PID.value < 420)SSR_BOTTOM.PID.integral += error;
+	else SSR_BOTTOM.PID.integral = 0;
+	num = SSR_BOTTOM.PID.integral;
+		
+	/*if(gStatus.Heater_Bottom.Comp > gStatus.Heater_Bottom.Temp)
+	{
+		if(num < 15)SSR_BOTTOM.PID.integral = 20;
+		else if(num > 50)SSR_BOTTOM.PID.integral = 50;
+	}
+	else
+	{
+		if(num > 40)SSR_BOTTOM.PID.integral = 40;
+		else if(num < 10)SSR_BOTTOM.PID.integral = 10;
+	}*/
 	derivate = error - SSR_BOTTOM.PID.prev_error;
     // PID 제어 계산
     output = Kp * error + Ki * SSR_BOTTOM.PID.integral + Kd * derivate;
-	num = (int)output*10;
-    SSR_BOTTOM.PID.prev_error = error;
-		// 음수 출력이면 0으로 처리
-    if (num < 50) {
-        num = 0;
+	num = (int)output;
+	SSR_BOTTOM.PID.prev_error = error;
+	// 음수 출력이면 0으로 처리
+	if(num < 2)return 0;	
+    if (num > 420) {
+        num = 420;
     }
-	else if(num > 1000)num = 400;
-	else num = num*400/1000;
+	//num = num * 420 / 100;
     return (int)num;
 }
 void gSetStatus(void)

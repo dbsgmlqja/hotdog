@@ -16,6 +16,9 @@
 
 #define IG5A	(0)
 #define G100	(1)
+
+#define RT02	(0)
+#define PT100	(1)
 #define _USE_HW_SD
 #define _USE_HW_FATFS
 #define _USE_HW_FLASH
@@ -24,7 +27,7 @@
 #define _USE_HW_RESET
 #define _USE_HW_EEPROM
 #define _USE_HW_ESP
-
+#define _USE_TEMP_SENSOR	PT100
 #define _USE_HW_MCP2515
 #define      HW_MCP2515_MAX_CH      1
 

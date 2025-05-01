@@ -44,20 +44,28 @@ void hwInit(void)
 	uartInit();
 	ssrControl(SSR_INVERTER, ON);
 	ssrControl(SSR_SCR, ON);
-	
 	delay(2000);
-	modbusInit();
 	pLcd_Init();
-	gDisplay.Connect = 1;
 	pLcd_UpdateDisplay();
+	delay(500);
+	gDisplay.Request = DISPLAY_REQUEST_ON;
+	gDisplay.Lines = TOP_LINE | BTM_LINE;
+	pLcd_UpdateDisplay();
+	modbusInit();
 	clear_WDT();
 	eepromInit();
 	
 	keyInit();
 	cliInit();
 	pn_EEP_Load();
+#if(_USE_TEMP_SENSOR == RT02)
 	MAX6675_Init();
-	
+#else
+//	HX711_ADC PT100_TOP;
+//	HX711_ADC PT100_BOTTOM;
+	spiInit();
+#endif
+	delay(1000);
 	gDispSub = LCD_MAIN_STATUS_0;
 	gDispMode = LCD_MAIN_INIT;
 	gLCD_Mode_Backup = gDispMode;

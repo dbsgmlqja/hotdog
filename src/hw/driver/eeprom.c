@@ -22,7 +22,7 @@ const uint16_t EEP_HEAT_ParaTBL[][3]={
 	{2000,	35000,	27500},		/* P1	FP1	TEMP2*/
 	{60,	 1800,	  600},		/* 2 Operating Time */
 	{0,	 60,	  25},	/* 3 Warmup Time */
-	{15000,	 32000,	  30000},	/* 3 Warmup Temp */
+	{10000,	 32000,	  30000},	/* 3 Warmup Temp */
 };
 const uint16_t EEP_Inverter_ParaTBL[][3]={ 
 	{5,	6000,	6000},			/* P0	FP0	Foward Frequency */
@@ -210,8 +210,6 @@ void pn_EEP_Load(void)
 	}
 	pn_Load_Parameters();
 }
-static uint8_t Arrs[10];
-static uint16_t Arr16[4];
 uint8_t pn_EEP_WriteBytes(uint16_t addr, uint8_t *p_data, uint32_t length)
 {
 	return i2cWriteBytes(DEVICE_ADDR, addr, (uint8_t *)p_data, length, 10);

@@ -16,10 +16,10 @@
 #define	B2_a		'y'
 #define	B2_b		's'
 
-#define	B2_c		'.'
-#define	B2_d		'7'
-#define	B2_e		'5'
-#define	B2_f	 	'C'
+#define	B2_c		' '
+#define	B2_d		'.'
+#define	B2_e		'0'
+#define	B2_f	 	'0'
 
 const char LCD_LOAD[][COLUMN_MAX]={
 	//Welcome to
@@ -66,7 +66,7 @@ const uint8_t LCD_RESET0[][COLUMN_MAX]={
 	//Door System
 	//0123456789012345
 	{" Welcome To     "},
-	{B2_1,B2_2,B2_3,B2_4,B2_5,B2_6,B2_7,B2_8,B2_9,B2_a,B2_b,'6',B2_c,B2_d,B2_e,B2_f,0},
+	{B2_1,B2_2,B2_3,B2_4,B2_5,B2_6,B2_7,B2_8,B2_9,B2_a,B2_b,B2_c,'1',B2_d,B2_e,B2_f,0},
 };
 uint8_t LCD_BOTTOM_RESET0[COLUMN_MAX]={B2_1,B2_2,B2_3,B2_4,B2_5,B2_6,B2_7,B2_8,B2_9,B2_a,B2_b,B2_c,B2_c,B2_d,B2_e,B2_f,0};
 const char MAIN_MENU_TOP[][COLUMN_MAX]={

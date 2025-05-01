@@ -448,12 +448,12 @@ void pLcd_LoadString(uint8_t Line)
 			break;
 
 		case LCD_MAIN_INIT:
-			if(gError.bit.OverTemp){
-				Ptr = (char *)&DISP_MODE_FAULT_OVERTEMP[Line][0];
-			}
-			else if(gError.bit.EmergencyOn)
+			if(gError.bit.EmergencyOn)
 			{
 				Ptr = (char *)&EMG_DISPLAY[Line][0];
+			}
+			else if(gError.bit.OverTemp){
+				Ptr = (char *)&DISP_MODE_FAULT_OVERTEMP[Line][0];
 			}
 			else if(gError.bit.inverterCommError)
 			{
@@ -689,7 +689,7 @@ void pLcd_LoadString(uint8_t Line)
 					case LCD_MAIN_STATUS_2:
 						for(i=0;i!=16;i++)Arr[i] = SCR_L3MODE[3][i];
 						if(SSR_TOP.output == 0)pTemp = 0;
-						else pTemp = SSR_TOP.outVoltage*10;
+						else pTemp = SSR_BOTTOM.outVoltage*10;
 						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp, (char *)&Arr[7]);
 						if(gStatus.status > STATUS_INIT)Arr[14] = 0xff;
 						else Arr[14] = ' ';
@@ -706,8 +706,18 @@ void pLcd_LoadString(uint8_t Line)
 				switch(gDispSub)
 				{
 					case LCD_MAIN_STATUS_0:		/* Heater Information */
-						pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.Heater_Top.Temp/100, (char *)&gLCD_Line[4]);
-						pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.Heater_Bottom.Temp/100, (char *)&gLCD_Line[12]);
+						
+						if(gStatus.Heater_Top.Temp >= 0)pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.Heater_Top.Temp/100, (char *)&gLCD_Line[4]);
+						else
+						{
+							gLCD_Line[3] = '-';
+							pLcd_DisplayShort_Format(FORMAT_xxx, (gStatus.Heater_Top.Temp*-1)/100, (char *)&gLCD_Line[4]);
+						}
+						if(gStatus.Heater_Bottom.Temp >= 0)	pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.Heater_Bottom.Temp/100, (char *)&gLCD_Line[12]);
+						else{
+							gLCD_Line[11] = '-';
+							pLcd_DisplayShort_Format(FORMAT_xxx, (gStatus.Heater_Bottom.Temp*-1)/100, (char *)&gLCD_Line[12]);
+						}
 						//SSR1, SSR2 동작 표시
 						if((SSR_TOP.output == 1) && (SSR_TOP.outVoltage > 0))gLCD_Line[1] = 0xFF;
 						else gLCD_Line[1] = ' ';
@@ -734,7 +744,7 @@ void pLcd_LoadString(uint8_t Line)
 						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp,(char *)&gLCD_Line[7]);
 						if(gStatus.status > STATUS_INIT)gLCD_Line[14] = 0xFF;
 						else gLCD_Line[14] = ' ';*/
-						pLcd_DisplayShort_Format(FORMAT10_xxxPxx, gStatus.Heater_Top.Temp, (char *)&gLCD_Line[7]);
+						pLcd_DisplayShort_Format(FORMAT10_xxxPxx, gStatus.Heater_Bottom.Temp, (char *)&gLCD_Line[7]);
 						break;
 				}
 			}

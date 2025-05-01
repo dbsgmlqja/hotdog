@@ -167,9 +167,10 @@ typedef struct{
 typedef struct{
 	uint8_t Triac 		: 1;
 	uint8_t SensorErr 	: 1;
+	uint8_t rechTarget	: 1;
 	uint16_t RunTime;
 	uint16_t Comp;
-	uint16_t Temp;
+	short Temp;
 	uint16_t Temp2;
 	uint16_t Prev_Temp;
 	uint32_t pre_time;
@@ -177,6 +178,7 @@ typedef struct{
 typedef struct{
 	uint8_t OldStart;
 	uint8_t Start;
+	uint8_t mainLoop;
 	uint8_t warmupComplete;
 	uint8_t warmupArrived;
 	uint8_t status;

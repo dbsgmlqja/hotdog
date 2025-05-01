@@ -107,6 +107,12 @@ void pLcd_Init(void){
 	PDDIR |= 0xC0;
 	PDOUT &= ~0xC0;
 	P0DIR |= 0x0F;
+	/*delay(30);
+	pLcd_COMMAND(0x03); // function set
+	delay(30);
+	pLcd_COMMAND(0x03); // function set
+	delay(30);
+	pLcd_COMMAND(0x03); // function set*/
 	delay(30);
 	pLcd_COMMAND(0x02); // function set
 	delay(1);
@@ -114,12 +120,12 @@ void pLcd_Init(void){
 	delay(1);
 	pLcd_COMMAND(0x0C); // display on/off
 	delay(1);
-	pLcd_COMMAND(0x01); // display clear
+	pLcd_COMMAND(0x06); // display clear
 	delay(1);
-	pLcd_COMMAND(0x06); // entry mode set
+	pLcd_COMMAND(0x01); // entry mode set
 
 
-
+	gDisplay.Connect = 1;
 	gDispSub = 0;
 	gDisplay.Request = DISPLAY_REQUEST_ON;
 	gDispMode = LCD_SYS_INIT;
@@ -139,10 +145,11 @@ void pLcd_Init_Seq(void)
 	switch(Seq)
 	{
 		case 0:
-			pLcd_COMMAND(C_FUNCTION_SET | TWO_LINE_MODE);
+//			pLcd_COMMAND(0x03);
 			break;
 		case 1:
-			pLcd_COMMAND(C_FUNCTION_SET | TWO_LINE_MODE);
+			pLcd_COMMAND(0x02);
+			//pLcd_COMMAND(C_FUNCTION_SET | TWO_LINE_MODE);
 			break;
 		case 2:
 			pLcd_COMMAND(C_FUNCTION_SET | TWO_LINE_MODE);

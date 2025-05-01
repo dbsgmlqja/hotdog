@@ -19,14 +19,56 @@ uint8_t ssrUpdate(void)
 {
 	static uint32_t pre_time;
 	static uint8_t error1= 0,error2 = 0;
-	uint16_t pTemperature,pVar;
+	uint16_t pTemperature;
+	short compare;
 	uint8_t ret = 0;
 	if(millis() - pre_time > 5000)
 	{
 		pre_time = millis();
 		if(gStatus.status > STATUS_INIT)
 		{
-			
+			if(gStatus.Heater_Top.rechTarget == 0)
+			{
+				if(gStatus.Heater_Top.Temp >= (gStatus.Heater_Top.Comp - 150))
+				{
+					gStatus.Heater_Top.rechTarget = 1;
+				}
+			}
+			else
+			{
+				compare = gStatus.Heater_Top.Comp - gStatus.Heater_Top.Temp;
+				if(compare > 200 || compare < -200)
+				{
+					gStatus.Heater_Top.rechTarget = 0;
+				}
+			}
+#if 0			
+			if(gStatus.Heater_Bottom.rechTarget == 0)
+			{
+				if(gStatus.Heater_Bottom.Temp > (gStatus.Heater_Bottom.Comp - 150))
+				{
+					gStatus.Heater_Bottom.rechTarget = 1;
+				}
+				compare = gStatus.Heater_Bottom.Comp * 1.05;
+				if(gStatus.Heater_Bottom.Temp > compare)SSR_BOTTOM.PID.value = 0;
+				else SSR_BOTTOM.PID.value = pidControlBottom();
+			}
+			else	//case reching target temperature
+			{
+				compare = gStatus.Heater_Bottom.Comp - gStatus.Heater_Bottom.Temp;
+				if(compare > 300 || compare < -300)
+				{
+					gStatus.Heater_Bottom.rechTarget = 0;
+				}
+				if(compare > 0)	SSR_BOTTOM.PID.value = 65 + (compare * 0.11);
+				else SSR_BOTTOM.PID.value = 65 + (compare * 0.12);
+			}
+#else
+			compare = gStatus.Heater_Bottom.Comp * 1.05;
+			if(gStatus.Heater_Bottom.Temp > compare)SSR_BOTTOM.PID.value = 0;
+			else SSR_BOTTOM.PID.value = pidControlBottom();
+
+#endif
 			if((gStatus.Heater_Top.Temp >= gStatus.Heater_Top.Comp) && (gStatus.Heater_Top.Prev_Temp < gStatus.Heater_Top.Comp)){
 				SSR_TOP.PID.integral = 20;
 			}
@@ -36,27 +78,21 @@ uint8_t ssrUpdate(void)
 			gStatus.Heater_Top.Prev_Temp = gStatus.Heater_Top.Temp;
 			SSR_TOP.PID.value = pidControlTop();
 			
-			pTemperature = gStatus.Heater_Bottom.Comp * 0.8;
-			ret = 1;
-			if(gStatus.Heater_Bottom.Temp < pTemperature)
-			{
-				SSR_BOTTOM.PID.value = 420;
+			/*if((gStatus.Heater_Bottom.Temp >= gStatus.Heater_Bottom.Comp) && (gStatus.Heater_Bottom.Prev_Temp < gStatus.Heater_Bottom.Comp)){
+				SSR_BOTTOM.PID.integral = 15;
 			}
-			else if(gStatus.Heater_Bottom.Temp >= gStatus.Heater_Bottom.Comp)
-			{
-				SSR_BOTTOM.PID.value = 105;
-				SSR_BOTTOM.PID.integral = 25;
-			}
-			else
-			{
-				pVar = pidControlBottom();
-				if(pVar > 336)pVar = 336;
-				SSR_BOTTOM.PID.value = pVar;
-			}
+			if((gStatus.Heater_Bottom.Temp <= gStatus.Heater_Bottom.Comp) && (gStatus.Heater_Bottom.Prev_Temp > gStatus.Heater_Bottom.Comp)){
+				SSR_BOTTOM.PID.integral = 40;
+			}*/
+			gStatus.Heater_Bottom.Prev_Temp = gStatus.Heater_Bottom.Temp;
+			/*compare = gStatus.Heater_Bottom.Comp * 1.05;
+			if(gStatus.Heater_Bottom.Temp > compare)SSR_BOTTOM.PID.value = 0;
+			else SSR_BOTTOM.PID.value = pidControlBottom();*/
 			if(SSR_TOP.output == 1)	gSetCommand(MODBUS_SSR_TOP, 0x0000, SSR_TOP.PID.value, 1);
 			else gSetCommand(MODBUS_SSR_TOP, 0x0002, 1, 1);
 			if(SSR_BOTTOM.output == 1) gSetCommand(MODBUS_SSR_BOTTOM, 0x0000, SSR_BOTTOM.PID.value, 1);
 			else gSetCommand(MODBUS_SSR_BOTTOM, 0x0002, 1, 1);
+			ret = 1;
 		}
 		else{
 			if(SSR_TOP.output == 1)ssrOff(MODBUS_SSR_TOP);

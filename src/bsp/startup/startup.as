@@ -101,8 +101,7 @@ _reset								;branch here after reset (set 0x40000000 when linking!)
 
 		offset	0x00000008			;branch when NMI occurs (set 0x40000008 when linking!)
 
-;*--- NMI program ---*
-usr_nmi		movm	[other],(sp)	;back up of d0,d1,a0,a1,mdr,lir,lar
+;*--- NMI program ---*'ther],(sp)	;back up of d0,d1,a0,a1,mdr,lir,lar
 		movhu	(NMICR),d0			;NMI detection
 		and	0x0006,d0				;NMI?
 		beq	endnmi

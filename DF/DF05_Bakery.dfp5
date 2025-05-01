@@ -3,10 +3,10 @@
 	ProjSeries="103S"
 	ProjName="DF05_Bakery"
 	ProjDir="D:\Firmware\DF05K\Bakery\DF\"
-	MaxFileId="109"
+	MaxFileId="113"
 	ProjectInitializing="1"
 	ProjId="1"
-	TimeStamp="0x670f8e1b"
+	TimeStamp="0x6710c9c6"
 	BuiltInCCName="CC103S.EXE"
 	BuiltInAsmName="AS103S.EXE"
 	BuiltInLinkName="LD103S.EXE"
@@ -591,10 +591,11 @@ ODB_OCD_TYPE     : 1;"
 				FolderID="26"
 				BldTarget=""
 				ViewFlag=""
-				FileName="LCD_CORL.h"
+				FileName="LCD_CTRL.h"
 				FilePath="..\src\common\hw\include\"
 				Encode=""
 				LineEnd=""
+				FileType=""
 			/>
 			<102
 				FolderID="28"
@@ -635,11 +636,51 @@ ODB_OCD_TYPE     : 1;"
 				LineEnd=""
 				FileType="h"
 			/>
+			<110
+				FolderID="26"
+				BldTarget="false"
+				ViewFlag=""
+				FileName="hx711.h"
+				FilePath="..\src\common\hw\include\"
+				Encode=""
+				LineEnd=""
+				FileType="h"
+			/>
+			<111
+				FolderID="28"
+				BldTarget="true"
+				ViewFlag=""
+				FileName="hx711.c"
+				FilePath="..\src\hw\driver\"
+				Encode=""
+				LineEnd=""
+				FileType="c"
+			/>
+			<112
+				FolderID="28"
+				BldTarget="true"
+				ViewFlag=""
+				FileName="spi.c"
+				FilePath="..\src\hw\driver\"
+				Encode=""
+				LineEnd=""
+				FileType="c"
+			/>
+			<113
+				FolderID="26"
+				BldTarget="false"
+				ViewFlag=""
+				FileName="spi.h"
+				FilePath="..\src\common\hw\include\"
+				Encode=""
+				LineEnd=""
+				FileType="h"
+			/>
 		</SrcFileList>
 		<MakeFileList
 			MaxId="1"
 			CurMakefileId="1"
-			CurMakefileKey="127280366"
+			CurMakefileKey="118225802"
 			TargetType="ODB"
 			CpuType="103DF05K"
 			CoreType="103S"
@@ -691,6 +732,8 @@ display.c
 LCD_CTRL.c
 gpio.c
 ssr.c
+hx711.c
+spi.c
 "
 				FlagAutoBuild="True"
 				FlagSrcTimeStampCheck="False"

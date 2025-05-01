@@ -19,8 +19,12 @@ void apMain(void)
 {
 	uint32_t pre_time,pre_time2;
 	uint8_t check = 0;
-	
+	static uint8_t readyTop = 0;
+	static uint8_t readyBottom = 0;
 	static pNo = 0;
+	float pTemperature;
+	float R;
+  	float T;
 	//Hardware check and setting
 	// 0. Inverter Set
 	pre_time = millis();
@@ -128,12 +132,14 @@ void apMain(void)
 	
 	uartPrintf(_DEF_SERIAL1, "Welcome to Bakery machine \n");
 	pBeep(3, 0);
-	
+	gStatus.mainLoop = 1;
 	while(1)
 	{
 	    /* WDT reset */
 		clear_WDT();			/* reset WDT binary counter */
-		
+#if(_USE_TEMP_SENSOR == PT100)
+		updateSpi();
+#endif
 		/*if((gModBus.status == MODBUS_RECEIVE) && (millis() - gModBus.pre_time >= 100))
 		{
 			gModBus.status = MODBUS_READY;
@@ -162,9 +168,9 @@ void apMain(void)
 				gStatus.OldStart = gStatus.Start;
 			}
 			if(ssrUpdate() == 1){
-				pData[0] = gStatus.Heater_Top.Temp;
-				pData[1] = (uint16_t)SSR_TOP.PID.integral;
-				pData[2] = SSR_TOP.PID.value;
+				pData[0] = gStatus.Heater_Bottom.Temp;
+				pData[1] = (uint16_t)SSR_BOTTOM.PID.integral;
+				pData[2] = SSR_BOTTOM.PID.value;
 				transInformation((uint16_t *)pData);
 			}
 		
@@ -198,8 +204,8 @@ void apMain(void)
 			cFlag = 0;
 			gSetStatus();
 
-		//	uartPrintf(_DEF_SERIAL1,"%d ",(gStatus.Heater_Top.Temp/100));
-		//	uartPrintf(_DEF_SERIAL1,"%d \n",(gStatus.Heater_Bottom.Temp/100));
+//			uartPrintf(_DEF_SERIAL1,"%d ",(gStatus.Heater_Top.Temp/100));
+//			uartPrintf(_DEF_SERIAL1,"%d \n",(gStatus.Heater_Bottom.Temp/100));
 		}
 		gEmgKeyScan();
 		pLcd_UpdateDisplay();
@@ -212,8 +218,9 @@ void apMain(void)
 void spiISR(void *arg)
 {
 	static uint8_t num = 0;
-	
+#if(_USE_TEMP_SENSOR == RT02)	
 	pSetTemperature();
+#endif
 	if(++num >= 5){
 		num = 0;
 		cFlag = 1;
