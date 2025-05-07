@@ -21,11 +21,17 @@ extern uint32_t uartPrintf(uint8_t ch, uint8_t *fmt, ...);
 #endif
 void adcInit(void)
 {
-	PCMD = 0x00000011;
+	PCMD = 0x00000001;
 //	PDMD = 0x11000000;
 //	adc_ch = swTimerGetHandle();
 //	swtimerSet(adc_ch, 10, 1, adcISR, NULL);
 //	swtimerStart(adc_ch);
+	AN0CTR0 = 0x0519;
+	AN0CTR1A = 0x2006;
+	
+//	PDMD |= 0x10000000;
+	
+	
 #ifdef _USE_HW_CLI
 	cliAdd("adc", cliAdc);
 #endif
@@ -40,33 +46,6 @@ void pTempSampling(void)
 		gTemperature2[pAD[1].Cnt] = pAD[1].Temp;
 		if(++pAD[1].Cnt >= 16)	pAD[1].Cnt = 0xff;
 	}
-}
-void int_AD0(void)
-{	
-	uint16_t pTemp;
-	AN0CTR1A = 0x1005;
-	AN0CTR0 = 0x473;
-	
-	while(AN0CTR1A & 0x0001);
-	pTemp = AN0BUF00;// + AN0BUF01;
-//	if(pTemp >= 50){
-	pAD[0].Temp = (pTemp + 258) * 1000 / 115;
-	if(pAD[0].Temp < 10000)pAD[0].Temp = 10000;
-/*	}
-	else if(pTemp > 8){
-		pAD[0].AD.Temp1 = pTemp *1000 / 25;
-	}
-	else pAD[0].AD.Temp1 = 0*/;
-	AN1CTR1A = 0x5405;
-//	AN1CUTA = 0x10;
-	AN1CTR0 = 0x473;
-	
-	while(AN1CTR1A & 0x0001);
-	
-	pTemp = /*AN1BUF04 + */AN1BUF05;
-	pAD[1].Temp = (pTemp + 800) * 1000 / 126;
-	if(pAD[1].Temp < 10000)pAD[1].Temp = 10000;
-	pTempSampling();
 }
 void adcRead(void)
 {
@@ -134,11 +113,7 @@ uint8_t adcCheck(void)
 	uint16_t data;
 	uint8_t status = 0;
 	
-	data = gStatus.Heater_Top.Temp;
-	if(data > 23600){
-		status = STATUS_ERR;
-	}
-	data = gStatus.Heater_Bottom.Temp;
+	data = gStatus.KSensor_Top.Temp;
 	if(data > 23600){
 		status = STATUS_ERR;
 	}

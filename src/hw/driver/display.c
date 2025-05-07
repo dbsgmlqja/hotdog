@@ -422,7 +422,7 @@ extern uint32_t SS_Position;
 
 void pLcd_LoadString(uint8_t Line)
 {
-	uint8_t i,j;
+	uint8_t i;
 	int8_t *Ptr;
 	int8_t Arr[17];
 	uint8_t Debug = 0;
@@ -455,32 +455,33 @@ void pLcd_LoadString(uint8_t Line)
 			else if(gError.bit.OverTemp){
 				Ptr = (char *)&DISP_MODE_FAULT_OVERTEMP[Line][0];
 			}
-			else if(gError.bit.inverterCommError)
+			else if(gError.bit.Motor)
 			{
-				Ptr = (char *)&DISP_MODE_FAULT_INVERTERCOMM[Line][0];
+				Ptr = (char *)&DISP_MODE_FAULT_MOTORERROR[Line][0];
 			}
-			else if(gError.bit.ssr1CommError)
+			else if(gError.bit.TopSensor)
 			{
-				Ptr = (char *)&DISP_MODE_FAULT_SSR1COMM[Line][0];
+				Ptr = (char *)&DISP_MODE_FAULT_UPPERSENSOR[Line][0];
 			}
-			else if(gError.bit.ssr2CommError)
+			else if(gError.bit.BottomSensor)
 			{
-				Ptr = (char *)&DISP_MODE_FAULT_SSR2COMM[Line][0];
+				Ptr = (char *)&DISP_MODE_FAULT_LOWERSENSOR[Line][0];
 			}
-			else if(SSR_TOP.error)
+			else if(gError.bit.ssrCommError)
 			{
-				if(Line == 0)Ptr = (char *)&DISP_MODE_FAULT_SSR1ERRORTOP[0];
+				Ptr = (char *)&DISP_MODE_FAULT_SSRCOMM[Line][0];
+			}
+			else if(gError.bit.ssrError)
+			{
+				Ptr = (char *)&DISP_MODE_FAULT_SSRHWERROR[Line][0];
+			}
+			
+			else if(SSR.error)
+			{
+				if(Line == 0)Ptr = (char *)&DISP_MODE_FAULT_SSRERRORTOP[0];
 				else
 				{
-					Ptr = (char *)&DISP_MODE_FAULT_SSRERROR[SSR_TOP.error][0];
-				}
-			}
-			else if(SSR_BOTTOM.error)
-			{
-				if(Line == 0)Ptr = (char *)&DISP_MODE_FAULT_SSR2ERRORTOP[0];
-				else
-				{
-					Ptr = (char *)&DISP_MODE_FAULT_SSRERROR[SSR_BOTTOM.error][0];
+					Ptr = (char *)&DISP_MODE_FAULT_SSRERROR[SSR.error][0];
 				}
 			}
 			else{
@@ -507,7 +508,7 @@ void pLcd_LoadString(uint8_t Line)
 			break;
 		
 		case LCD_MAIN_HEAT_SET_WARMUP:
-			if(Line == 0)	Ptr = (char *)&HEAT_MODE_SUB_TOP[2][0];
+			if(Line == 0)	Ptr = (char *)&HEAT_MODE_SUB_TOP[1][0];
 			else	{
 				Ptr = (char *)&WARMUP_MODE_SUB[gDispSub][0];
 
@@ -523,7 +524,7 @@ void pLcd_LoadString(uint8_t Line)
 
 		case LCD_MAIN_INITIALIZE:
 			if(Line == 0)	Ptr = (char *)&MAIN_MENU_TOP[3][0];
-			else			Ptr = (char *)&INITIALIZE_MODE_SUB[gDispSub][0];
+			else			Ptr = (char *)&INITIALIZE_MODE_SUB[0];
 			break;
 
 		case LCD_MAIN_FAULT:
@@ -539,12 +540,9 @@ void pLcd_LoadString(uint8_t Line)
 			if(Line == 0)	Ptr = (char *)&HEAT_MODE_SUB_TOP[0][0];
 			else			Ptr = (char *)&BLANK[0];
 			break;
-		case LCD_MAIN_HEAT_SET_BOTTOM_SUB:
-			if(Line == 0)	Ptr = (char *)&HEAT_MODE_SUB_TOP[1][0];
-			else			Ptr = (char *)&BLANK[0];
-			break;
+		
 		case LCD_MAIN_HEAT_SET_WARMUP_SUB:
-			if(Line == 0)	Ptr = (char *)&HEAT_WARMUP_SUB_TOP[gDispSub][0];
+			if(Line == 0)	Ptr = (char *)&HEAT_WARMUP_SUB_TOP[gDispParameter.prev_sub][0];
 			else			Ptr = (char *)&BLANK[0];
 			break;
 		case LCD_MAIN_INV_SET_SUB:
@@ -553,7 +551,7 @@ void pLcd_LoadString(uint8_t Line)
 			break;
 		case LCD_MAIN_FAULT_SUB:
 			if(Line == 0)	Ptr = (char *)&FAULT_MODE_TOP[gDispSub][0];
-			else			Ptr = (char *)&ERRMSG_LIST[gMonitorError[gDispSub]];
+			else			Ptr = (char *)&ERRMSG_LIST_EEP[gMonitorError[gDispSub]];
 			break;
 		
 		default:
@@ -567,13 +565,8 @@ void pLcd_LoadString(uint8_t Line)
 	switch(gDispMode)
 	{
 		case LCD_MAIN_INIT:
-			if(gError.bit.OverTemp == 1) break;
-			if(gError.bit.EmergencyOn == 1)break;
-			if(gError.bit.inverterCommError == 1) break;
-			if(gError.bit.ssr1CommError == 1) break;
-			if(gError.bit.ssr2CommError == 1) break;
-			if(SSR_TOP.error) break;
-			if(SSR_BOTTOM.error) break;
+			if(gError.All > 0)break;
+			if(SSR.error) break;
 			if(Debug == 1){
 				int TempEncoder;
 				if(Line == 0){
@@ -674,26 +667,31 @@ void pLcd_LoadString(uint8_t Line)
 				{
 					case LCD_MAIN_STATUS_0:
 						for(i=0;i!=16;i++)Arr[i] = LCD_MAIN0[0][i];
-						pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.Heater_Top.Comp/100, (char *)&Arr[4]);
-						pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.Heater_Bottom.Comp/100, (char *)&Arr[12]);
-						
+						pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.Comp/100, (char *)&Arr[2]);
+						if(gMotorSpeed >= 0)pTemp = gMotorSpeed;
+						else pTemp = gMotorSpeed * -1;
+						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp, (char *)&Arr[9]);
+						if(gMotorSpeed < 0)Arr[8] = '-';
+						//SSR1, SSR2 동작 표시
+						if((SSR.output == 1) && (SSR.outVoltage > 0))Arr[7] = '*';
+						else Arr[7] = ' ';
 						Ptr = (int8_t *)&Arr[0];
 						break;
 					case LCD_MAIN_STATUS_1:
-						if(gInverterStatus.bit.fowardRun == 1)i = 0;
-						else if(gInverterStatus.bit.reverseRun == 1)i = 1;
-						else i = 2;
+						if(gMotorStatus == MOTOR_OFF)i = 2;
+						else if(MotorStatus.Direction == DIR_FORWARD)i = 0;
+						else i = 1;
 						
 						Ptr = (int8_t *)&INVERTER_OP[i][0];
 						break;
 					case LCD_MAIN_STATUS_2:
 						for(i=0;i!=16;i++)Arr[i] = SCR_L3MODE[3][i];
-						if(SSR_TOP.output == 0)pTemp = 0;
-						else pTemp = SSR_BOTTOM.outVoltage*10;
-						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp, (char *)&Arr[7]);
-						if(gStatus.status > STATUS_INIT)Arr[14] = 0xff;
+						pTemp = SSR.temperature;
+						pLcd_DisplayShort_Format(FORMAT_xxx, pTemp, (char *)&Arr[7]);
+						if(gFan == 1)Arr[14] = '*';
 						else Arr[14] = ' ';
 						Ptr = (int8_t *)&Arr[0];
+						break;
 				}
 				
 				for(i=0;i!=16;i++)gLCD_Line[i] = *Ptr++;
@@ -707,44 +705,36 @@ void pLcd_LoadString(uint8_t Line)
 				{
 					case LCD_MAIN_STATUS_0:		/* Heater Information */
 						
-						if(gStatus.Heater_Top.Temp >= 0)pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.Heater_Top.Temp/100, (char *)&gLCD_Line[4]);
+						if(gStatus.KSensor_Top.Temp >= 0)pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.KSensor_Top.Temp/100, (char *)&gLCD_Line[2]);
 						else
 						{
 							gLCD_Line[3] = '-';
-							pLcd_DisplayShort_Format(FORMAT_xxx, (gStatus.Heater_Top.Temp*-1)/100, (char *)&gLCD_Line[4]);
+							pLcd_DisplayShort_Format(FORMAT_xxx, (gStatus.KSensor_Top.Temp*-1)/100, (char *)&gLCD_Line[2]);
 						}
-						if(gStatus.Heater_Bottom.Temp >= 0)	pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.Heater_Bottom.Temp/100, (char *)&gLCD_Line[12]);
+						if(gStatus.KSensor_Bottom.Temp >= 0)	pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.KSensor_Bottom.Temp/100, (char *)&gLCD_Line[11]);
 						else{
-							gLCD_Line[11] = '-';
-							pLcd_DisplayShort_Format(FORMAT_xxx, (gStatus.Heater_Bottom.Temp*-1)/100, (char *)&gLCD_Line[12]);
+							gLCD_Line[10] = '-';
+							pLcd_DisplayShort_Format(FORMAT_xxx, (gStatus.KSensor_Bottom.Temp*-1)/100, (char *)&gLCD_Line[11]);
 						}
-						//SSR1, SSR2 동작 표시
-						if((SSR_TOP.output == 1) && (SSR_TOP.outVoltage > 0))gLCD_Line[1] = 0xFF;
-						else gLCD_Line[1] = ' ';
-						if((SSR_BOTTOM.output == 1) && (SSR_BOTTOM.outVoltage > 0))gLCD_Line[9] = 0xFF;
-						else gLCD_Line[9] = ' ';
+						
 						break;
 
 					case LCD_MAIN_STATUS_1:		/* Inverter Information */
-						if(gError.bit.inverterError)
-						{
-							i = getDigitPosition(gInverterError.All);
-							Ptr = (int8_t *)&InverterErrorString[i][0];
-						}
-						else
-						{
-							pLcd_DisplayShort_Format(FORMAT10_xxxPxx,gWorkFreq,(char *)&gLCD_Line[8]);
-						}
+						if(gMotorSpeed >= 0)pTemp = gMotorSpeed;
+						else pTemp = gMotorSpeed * -1;
+							
+						pLcd_DisplayShort_Format(FORMAT10_xxxPx,pTemp,(char *)&gLCD_Line[8]);
+						if(gMotorSpeed < 0)gLCD_Line[7] = '-';
 						break;
 
-					case LCD_MAIN_STATUS_2:		
-						/*if(SSR_BOTTOM.output == 0)pTemp = 0;
-						else pTemp = SSR_BOTTOM.outVoltage*10;
+					case LCD_MAIN_STATUS_2:	
+						if(SSR.output == 0)pTemp = 0;
+						else pTemp = SSR.outVoltage*10;
 						
 						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp,(char *)&gLCD_Line[7]);
-						if(gStatus.status > STATUS_INIT)gLCD_Line[14] = 0xFF;
-						else gLCD_Line[14] = ' ';*/
-						pLcd_DisplayShort_Format(FORMAT10_xxxPxx, gStatus.Heater_Bottom.Temp, (char *)&gLCD_Line[7]);
+						if(gStatus.status > STATUS_INIT)gLCD_Line[14] = '*';
+						else gLCD_Line[14] = ' ';
+							
 						break;
 				}
 			}
@@ -757,7 +747,6 @@ void pLcd_LoadString(uint8_t Line)
 		
 
 		case LCD_MAIN_HEAT_SET_TOP_SUB:
-		case LCD_MAIN_HEAT_SET_BOTTOM_SUB:
 			if(Line == 1){
 				pLcd_DisplayShort_Format(FORMAT10_xxxPxx,gDispParameter.Value,(char *)&gLCD_Line[4]);
 				for(i=0;i!=5;i++)	gLCD_Line[10+i]=UNIT_HEAT[gDispSub][i];
@@ -774,8 +763,26 @@ void pLcd_LoadString(uint8_t Line)
 			break;
 		case LCD_MAIN_INV_SET_SUB:
 			if(Line == 1){
-				pLcd_DisplayShort_Format(FORMAT10_xxxPxx,gDispParameter.Value,(char *)&gLCD_Line[4]);
-				for(i=0;i!=5;i++)	gLCD_Line[10+i]=UNIT[gDispSub][i];
+				if(gDispSub == LCD_SUB_INV_DIR)
+				{
+					if(gDispParameter.Value == 0)
+					{
+						gLCD_Line[5] = 'C';
+						gLCD_Line[6] = 'W';
+					}
+					else
+					{
+						gLCD_Line[4] = 'C';
+						gLCD_Line[5] = 'C';
+						gLCD_Line[6] = 'W';
+					}
+				}
+				else
+				{
+					pLcd_DisplayShort_Format(FORMAT_xxx, gDispParameter.Value, (char *)&gLCD_Line[4]);
+				//	pLcd_DisplayShort_Format(FORMAT10_xxxPxx,gDispParameter.Value,(char *)&gLCD_Line[4]);
+					for(i=0;i!=5;i++)	gLCD_Line[10+i]=UNIT[gDispSub][i];
+				}
 				break;
 			}
 			break;
@@ -808,19 +815,4 @@ void pLcd_UpdateDisplay(void)
 }
 
 
-void pLcd_SystemLockLoadString(uint8_t Line)
-{
-	uint8_t i;
-	char *Ptr;
-
-	Ptr = (char *)&SystemLock_Top[Line][0];
-
-	for(i=0;i!=16;i++){
-		gLCD_Line[i] = *Ptr++;
-	}
-
-	if(Line == 1){
-	
-	}
-}
 

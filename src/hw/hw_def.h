@@ -27,12 +27,12 @@
 #define _USE_HW_RESET
 #define _USE_HW_EEPROM
 #define _USE_HW_ESP
-#define _USE_TEMP_SENSOR	PT100
+#define _USE_TEMP_SENSOR	RT02
 #define _USE_HW_MCP2515
 #define      HW_MCP2515_MAX_CH      1
 
 #define _USE_HW_LED
-#define      HW_LED_MAX_CH          7
+#define      HW_LED_MAX_CH          4
 
 #define _USE_HW_BOTTOM_HEATER
 

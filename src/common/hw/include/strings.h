@@ -47,8 +47,8 @@ const char LCD_DEBUG_CODE[][COLUMN_MAX]={
 
 
 const char LCD_MAIN0[][COLUMN_MAX] = {
-	//0123456789012345
-	{"T :     B :     "},
+	//0   1   2   3   4   5    6   7   8   9   0   1   2   3   4   5
+	{'S',' ',' ',' ',' ',0xDF,'C',' ',' ',' ',' ',' ',' ',' ',' ','R'},
 	{"                "},
 	{"SSR1 : xxx.xV[ ]"},
 };
@@ -74,7 +74,7 @@ const char MAIN_MENU_TOP[][COLUMN_MAX]={
 	//0123456789012345
 	{"* SELECT MODE  *"},
 	{"*HEATER SETTING*"},
-	{"*  IVERTER     *"},
+	{"*MOTOR SETTING *"},
 	{"* INITIALIZE   *"},
 	{"* FAULT SCAN   *"},
 	
@@ -84,15 +84,14 @@ const char MAIN_MENU_SUB[][COLUMN_MAX]={
 	//    Parameter
 	//0123456789012345
 	{"  Heater        "},
-	{"  Inverter      "},
+	{"  Motor         "},
 	{"  Initialize    "},
 	{"  Fault Scan    "},
 };
 
 const char HEAT_MODE_SUB_TOP[][COLUMN_MAX]={
 	//0123456789012345
-	{"* TOP TEMP     *"},
-	{"* BOTTOM TEMP  *"},
+	{"* TEMPERATURE  *"},
 	{"* WARM-UP SET  *"},
 };
 const char HEAT_WARMUP_SUB_TOP[][COLUMN_MAX]={
@@ -102,8 +101,7 @@ const char HEAT_WARMUP_SUB_TOP[][COLUMN_MAX]={
 };
 const char HEAT_MODE_SUB[][COLUMN_MAX]={
 	//0123456789012345
-	{" Top Heater     "},
-	{" Bottom Heater  "},
+	{" Temperature    "},
 	{" Warm-up Setting"},
 };
 
@@ -114,21 +112,22 @@ const char WARMUP_MODE_SUB[][COLUMN_MAX]={
 };
 const char INV_MODE_SUB_TOP[][COLUMN_MAX]={
 	//0123456789012345
-	{"*INVERTER SPEED*"},
+	{"*FORWARD SPEED *"},
 //	{"* FOWARD SPEED *"},
-	{"* REVERSE SPEED*"},
+	{"*REVERSE SPEED *"},
+	{"* MOTOR DIR    *"},
 };
 const char INV_MODE_SUB[][COLUMN_MAX]={
 	//0123456789012345
-	{" Inverter Speed "},
+	{" Forward Speed  "},
 //	{"  Foward Speed  "},
-	{"  Reverse Speed "},
+	{" Reverse Speed  "},
+	{" Motor Dir      "},
 };
 
 const char INITIALIZE_MODE_SUB[][COLUMN_MAX]={
 	//0123456789012345
-	{"  Initialize 1  "}, //@150427 by Bang
-	{"  Initialize 2  "},//@150427 by Bang
+	"  Initialize    "
 };
 
 const char FAULT_MODE_SUB[][COLUMN_MAX]={
@@ -165,16 +164,16 @@ const char UNIT_HEAT[][6]={
 	{'[',0xDF,'C',']',' ',0x0A},	/*ACC TIME*/
 	{'[',0xDF,'C',']',' ',0x0A},	/*ACC TIME*/
 	"[%]  ",	/*TORQUE*/
-	"[HZ] ",	/*UP FREQ*/
-	"[HZ] ",	/*DOWN FREQ*/
+	"[%]  ",	/*UP FREQ*/
+	"[%]  ",	/*DOWN FREQ*/
 	"[MIN]",	/*ULS TIME*/
 	{'[',0xDF,'C',']',' ',0x0A},	
 };
 const char UNIT[][6]={
 //0123456789012345
-	"[Hz] ",	/*ACC TIME*/
-	"[Hz] ",	/*DEC TIME*/
-	"[%]  ",	/*TORQUE*/
+	"[%]  ",	/*ACC TIME*/
+	"[%]  ",	/*DEC TIME*/
+	"     ",	/*TORQUE*/
 	"[HZ] ",	/*UP FREQ*/
 	"[HZ] ",	/*DOWN FREQ*/
 	"[SEC]",	/*ULS TIME*/
@@ -282,23 +281,37 @@ const char DISP_MODE_FAULT_INVERTERCOMM[][COLUMN_MAX]={
 	{"DISCONNECT CONV'"},
 	{" [PRESS RESET]  "},
 };
-const char DISP_MODE_FAULT_SSR1COMM[][COLUMN_MAX]={
+const char DISP_MODE_FAULT_SSRCOMM[][COLUMN_MAX]={
 	//0123456789012345
-	{"DISCONNECT SSR1 "},
+	{" DISCONNECT SSR "},
 	{" [PRESS RESET]  "},
 };
-const char DISP_MODE_FAULT_SSR2COMM[][COLUMN_MAX]={
+
+const char DISP_MODE_FAULT_MOTORERROR[][COLUMN_MAX]={
 	//0123456789012345
-	{"DISCONNECT SSR2 "},
-	{" [PRESS RESET]  "},
+	{" Motor Error    "},
+	{"Check the device"},
 };
-const char DISP_MODE_FAULT_SSR1ERRORTOP[COLUMN_MAX]={
+
+const char DISP_MODE_FAULT_UPPERSENSOR[][COLUMN_MAX]={
 	//0123456789012345
-	 " SSR1 ERROR!    "
+	{" UPPER TEMP     "},
+	{" SENSOR ERROR   "},
 };
-const char DISP_MODE_FAULT_SSR2ERRORTOP[COLUMN_MAX]={
+
+const char DISP_MODE_FAULT_LOWERSENSOR[][COLUMN_MAX]={
 	//0123456789012345
-	 " SSR2 ERROR!    "
+	{" LOWER TEMP     "},
+	{" SENSOR ERROR   "},
+};
+const char DISP_MODE_FAULT_SSRHWERROR[][COLUMN_MAX]={
+	//0123456789012345
+	{" SSR ERROR      "},
+	{"Check the device"},
+};
+const char DISP_MODE_FAULT_SSRERRORTOP[COLUMN_MAX]={
+	//0123456789012345
+	 "  SSR ERROR!    "
 };
 const char DISP_MODE_FAULT_SSRERROR[][COLUMN_MAX]={
 	//0123456789012345
@@ -310,146 +323,31 @@ const char DISP_MODE_FAULT_SSRERROR[][COLUMN_MAX]={
 	{"Abnormal Input  "},
 	{"Input Disconnect"},
 };
-const char DISP_MODE_FAULT_FTIMEHIGH[][COLUMN_MAX]={
+
+const char ERRMSG_LIST_EEP[][COLUMN_MAX]={
 	//0123456789012345
-	{"OVER HSENSE TIME"},
-	{" [POWER OFF/ON] "},
-};
-
-const char DISP_MODE_FAULT_FTIMELOW[][COLUMN_MAX]={
-	//0123456789012345
-	{"OVER LSENSE TIME"},
-	{" [POWER OFF/ON] "},
-};
-
-
-const char SCR_MODE0[][5]={
-	{"STOP"},
-	{" UP "},
-	{"DOWN"},
-	{"WAIT"},
+	{" -No Error !    "},
+	{" -Over Temp.    "},
+	{" -SSR H/W Error "},
+	{" -SSR Comm Error"},
+	{" -Motor Error   "},
+	{" -Upper Sensor  "},
+	{" -Lower Sensor  "},
 	
-	{"LL01"},
-	{"LL02"},
-	{"UL01"},
-	{"UL02"},
-
-	{"ESTP"},
-	{"LSTP"},
-	{"HSTP"},
 };
-
-const char SCR_MODE1[][5]={
-	{"AUTO"},
-	{"MANU"},
-	{"TEST"},
-	{"SET "},
-};
-
-const char SCR_MODE2[][3]={
-	{"RD"},
-	{"ON"},
-};
-
-const char SCR_POS[][5]={
-	{"LL01"},
-	{"LL02"},
-	{"UL01"},
-	{"UL02"},
-};
-
-
 const char SCR_L3MODE[][17]={
-	//0123456789012345
-	{"[ ]     [ ]     "},
-	{"Freq. : xx.xx Hz"},
-	{"SSR2 : xxx.xV[ ]"},
-	{"SSR1 : xxx.xV[ ]"},
+	//0   1   2   3   4   5   6   7    8   9   0   1   2   3   4    5
+	{'U',' ',' ',' ',' ',0xDF,'C',' ',' ','L',' ',' ',' ',' ',0xDF,'C'},
+	{"Speed : xxx.xrpm"},
+	{"SSR M: xxx.xV[ ]"},
+	{'S','S','R',' ','T',':',' ','x','x','x',' ',0xDF,'C','[',' ',']'},
 };
-const char LCD_TESTMODE[][COLUMN_MAX]={
-	//0123456789012345
-	{"   TEST  MODE   "},
-	{"COUNT:          "},
-};
-
 const char LCD_SAVEMODE[][COLUMN_MAX]={
 	//0123456789012345
 	{"  *SAVE  DATA*  "},
 	{"  *SAVE  DATA*  "},
 };
 
-const char ERRMSG_OVERLOAD[][COLUMN_MAX]={
-	//0123456789012345
-	{" CURRENT ERROR  "},
-	{"   OVERLAOD     "},
-};
-
-/*@180224 */
-const char ERRMSG_OVERLOAD2[][COLUMN_MAX]={
-	//0123456789012345
-	{" CURRENT ERROR  "},
-	{"   OVERLAOD 2   "},
-};
-
-
-const char ERRMSG_OVERPVT[][COLUMN_MAX]={
-	//0123456789012345
-	{" CURRENT ERROR  "},
-	{"   OVER PVT     "},
-};
-
-const char ERRMSG_OVERCURRENT[][COLUMN_MAX]={
-	//0123456789012345
-	{" CURRENT ERROR  "},
-	{"  OVER CURRENT  "},
-};
-
-const char ERRMSG_OVERVOLTAGE[][COLUMN_MAX]={
-	//0123456789012345
-	{" VOLTAGE ERROR  "},
-	{"  OVER VOLTAGE  "},
-};
-const char ERRMSG_UNDERVOLTAGE[][COLUMN_MAX]={
-	//0123456789012345
-	{" VOLTAGE ERROR  "},
-	{" UNDER VOLTAGE  "},
-};
-/*@150429 by Bang */
-const char ERRMSG_INPUTERROR[][COLUMN_MAX]={
-	//0123456789012345
-	{"CHECK THE SWITCH"},
-	{"[ PRESS  RESET ]"},
-};
-/*@090115*/
-const char ERRMSG_IGBT_FO[][COLUMN_MAX]={
-	//0123456789012345
-	{" IGBT FO !!!!   "},
-	{" PWM OUTPUT OFF "},
-};
-
-const char ENCODER_WIRE_ERROR[][COLUMN_MAX]={
-	//0123456789012345
-	{" ENCODER ERROR  "},
-	{" [POWER OFF/ON] "},
-};
-/*@161119 by Bang */
-const char ERRMSG_BRAKE_ERROR[][COLUMN_MAX]={
-	//0123456789012345
-	{"  BRAKE ERROR   "},
-	{"[ PRESS  RESET ]"},
-};
-/*@210607 by Bang */
-const char MOTOR_OVERHEAT_ERROR[][COLUMN_MAX]={
-	//0123456789012345
-	{" MOTOR OVERHEAT "},
-	{" [PRESS RESET]  "},
-};
-/*@210607 by Bang */
-const char DOOR_FELL_ERROR[][COLUMN_MAX]={
-	//0123456789012345
-	{"DOOR FELL ERROR "},
-	{" [PRESS  RESET] "},
-};
 #if 0
 	Error_No_Error= 0,
 	Error_Under_Voltage,
@@ -479,41 +377,13 @@ const char ERRMSG_LIST[][COLUMN_MAX]={
 };
 
 
-const char SystemLock_Top[][COLUMN_MAX]={
-	//0123456789012345
-	{"** KEY LOCKED **"},
-	{" CODE : _ _ _ _ "},
-};
 const char INVERTER_OP[][COLUMN_MAX] = {
 	//0123456789012345
-	{"FOWARD RUNNING  "},
-	{"BACKWARD RUNNING"},
-	{"INVERTER STOP   "}
+	{"FOWARD DIR      "},
+	{"BACKWARD DIR    "},
+	{"MOTOR STOP      "}
 };
 const char SystemLockFault[COLUMN_MAX] =
 	//0123456789012345
 	{"  Fault Scan.   "};
-const char EncoderSet_Text[COLUMN_MAX] = 
-	{"Set up Encoder  "};
-
-const char InverterErrorString[][COLUMN_MAX] = {
-	//0123456789012345
-	{" - No Error     "},	//0
-	{" - Over Current "},	//1
-	{" - Over Voltage "},	//2
-	{" - EXT A Trip   "},	//3
-	{" - Emergency    "},	//4
-	{" - In Phase Open"},	//5
-	{" - Ground Trip  "},	//6
-	{" - Inv OverHeat "},	//7
-	{" - MotorOverHeat"},	//8
-	{" - Over Load    "},	//9
-	{" - H/W Diag     "},	//10
-	{" - EXT B Trip   "},	//11
-	{" - EEPROM Error "},	//12
-	{" - FAN Error    "},	//13
-	{" - OutPhase Open"},	//14
-	{" - Inv Over Load"},	//15
-	{" - Low Voltage  "},	//16
-};
 #endif

@@ -79,7 +79,7 @@ void i2cInit(void)
 
 
 	//G42
-	G42ICR = 0x1000;
+	G42ICR = 0x1000;  //Serial 0 For EEPROM
 	G42ICR |= 0x0300;
 
 

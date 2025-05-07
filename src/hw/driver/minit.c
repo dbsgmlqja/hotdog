@@ -101,7 +101,7 @@ void regInit(void)
 	P4DIR = 0x00;
 	P5DIR = 0x00;
 	P6DIR = 0x00;
-	P8DIR = 0x10;
+	P8DIR = 0x3f;
 	P9DIR = 0x00;
 	PCDIR = 0x00;
 	PDDIR = 0x00;
@@ -196,7 +196,7 @@ void tm16set(void)
 	TM16MD1 |= 0x2000;
 	TM16MD1 |= 0x0040;
 	TM16MD1 &= ~0x0040;
-	G31ICR = 0x3200;
+	G31ICR = 0x3200; // 1ms - 2
 	TM16MD1 |= 0x80;
 	
 

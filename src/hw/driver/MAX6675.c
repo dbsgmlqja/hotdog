@@ -8,6 +8,7 @@
 #ifndef ON
 #define ON 1
 #endif
+extern void pStoreErrorMessage(uint8_t Msg);
 // PID 제어를 위한 변수
 double Kp = 14.8;         // P 값
 double Ki = 0.2;         // I 값
@@ -53,6 +54,8 @@ _Value findMostFrequent(uint16_t arr[], uint8_t size) {
 
     return pValue;
 }
+extern void pStoreErrorMessage(uint8_t ErroMsg);
+extern void ssrOff(void);
 uint16_t findClosest(uint16_t arr[], uint8_t size, uint16_t target) {
 	uint8_t i;
     uint16_t closest = arr[0];  // 초기값을 배열의 첫 번째 값으로 설정
@@ -102,10 +105,10 @@ void MAX6675_Init(void)
 	for(i=0;i!=5;i++)
 	{
 		readTemperature();
-		pTempArrTop.Arr[pTempArrTop.index++] = gStatus.Heater_Top.Temp2;
-		pTempArrBottom.Arr[pTempArrBottom.index++] = gStatus.Heater_Bottom.Temp2;
-		pTotal += gStatus.Heater_Top.Temp2;
-		pTotal2 += gStatus.Heater_Bottom.Temp2;
+		pTempArrTop.Arr[pTempArrTop.index++] = gStatus.KSensor_Top.Temp2;
+		pTempArrBottom.Arr[pTempArrBottom.index++] = gStatus.KSensor_Bottom.Temp2;
+		pTotal += gStatus.KSensor_Top.Temp2;
+		pTotal2 += gStatus.KSensor_Bottom.Temp2;
 		clear_WDT();
 	}
 	if(pGetMinMax(pTempArrTop) < 300)pTempArrTop.prev_temp = pTotal / 5;
@@ -131,8 +134,8 @@ void MAX6675_Init(void)
 	}
 	pTempArrTop.index = 0;
 	pTempArrBottom.index = 0;
-	gStatus.Heater_Top.Temp = pTempArrTop.prev_temp;
-	gStatus.Heater_Bottom.Temp = pTempArrBottom.prev_temp;
+	gStatus.KSensor_Top.Temp = pTempArrTop.prev_temp;
+	gStatus.KSensor_Bottom.Temp = pTempArrBottom.prev_temp;
 }
 static void delayUsecond(uint32_t us)
 {
@@ -160,12 +163,10 @@ uint16_t spiread(void)
 	}
 	return d;
 }
-
 void readTemperature(void)
 {
 	static uint8_t pCnt1 = 0,pCnt2 = 0;
 	uint16_t v = 0;
-	
 	CS_TOP = 0;
 	delayUsecond(10);
 	
@@ -178,19 +179,20 @@ void readTemperature(void)
 	if(v & 0x04){
 		if(++pCnt1 > 2){
 			gStatus.status = STATUS_ERR;
-			gStatus.Heater_Top.Temp = 0xffff;
+			if(gError.bit.TopSensor == 0)
+			{
+				errorProccess();
+				gError.bit.TopSensor = 1;
+				pStoreErrorMessage(Error_TopSensor);
+			}
+			pCnt1 = 0;
+			gStatus.KSensor_Top.Temp = 0xffff;
 		}
 		return;
 	}
-	pCnt1 = 0;
 	delayUsecond(100);
 	v >>= 3;
-	gStatus.Heater_Top.Temp2 = v * 25;
-	/*total1 -= readings[0][readIndex];
-	
-	readings[0][readIndex] = v * 25;
-	total1 += readings[0][readIndex];
-	gStatus.Heater_Top.Temp = total1 >> 3;*/
+	gStatus.KSensor_Top.Temp2 = v * 25;
 
 	CS_BOTTOM = 0;
 	delayUsecond(10);
@@ -198,24 +200,29 @@ void readTemperature(void)
 	v = spiread();
 	v <<= 8;
 	v |= spiread();
-	
 	CS_BOTTOM = 1;
 	if(v & 0x04){
 		if(++pCnt2 > 2){
-//			gStatus.status = STATUS_ERR;
-			gStatus.Heater_Bottom.Temp = 0xffff;
+			gStatus.status = STATUS_ERR;
+			if(gError.bit.BottomSensor == 0)
+			{
+				errorProccess();
+				gError.bit.BottomSensor = 1;
+				pStoreErrorMessage(Error_BottomSensor);
+			}
+			gStatus.KSensor_Bottom.Temp = 0xffff;
+			pCnt2 = 0;
 		}
 		return;
 	}
-	pCnt2 = 0;
 	v >>= 3;
-	gStatus.Heater_Bottom.Temp2 = v * 25;
+	gStatus.KSensor_Bottom.Temp = v * 25;
 
 	/*total2 -= readings[1][readIndex];
 	
 	readings[1][readIndex] = v * 25;
 	total2 += readings[1][readIndex];
-	gStatus.Heater_Bottom.Temp = total2 >> 3;
+	gStatus.KSensor_Bottom.Temp = total2 >> 3;
 	
 	if(++readIndex >= numReadings)readIndex = 0;*/
 }
@@ -236,68 +243,34 @@ int pidControlTop(void)
 	double output,setpoint,error,derivate;
 	int num;
 	if(gStatus.status < STATUS_IDLE)return 0;
-	setpoint = gStatus.Heater_Top.Comp;
-    error = (setpoint - gStatus.Heater_Top.Temp)/100;
+	setpoint = gStatus.Comp;
+    error = (setpoint - gStatus.KSensor_Top.Temp)/100;
 	pDispVar2 = (int)error;
-	SSR_TOP.PID.integral += error;
-	num = SSR_TOP.PID.integral;
+	SSR.PID.integral += error;
+	num = SSR.PID.integral;
 		
-	if(gStatus.Heater_Top.Comp > gStatus.Heater_Top.Temp)
+	if(gStatus.Comp > gStatus.KSensor_Top.Temp)
 	{
-		if(num < 20)SSR_TOP.PID.integral = 20;
-		else if(num > 50)SSR_TOP.PID.integral = 50;
+		if(num < 20)SSR.PID.integral = 20;
+		else if(num > 50)SSR.PID.integral = 50;
 	}
 	else
 	{
-		if(num > 40)SSR_TOP.PID.integral = 40;
-		else if(num < 30)SSR_TOP.PID.integral = 30;
+		if(num > 40)SSR.PID.integral = 40;
+		else if(num < 30)SSR.PID.integral = 30;
 	}
-	derivate = error - SSR_TOP.PID.prev_error;
+	derivate = error - SSR.PID.prev_error;
     // PID 제어 계산
-    output = Kp * error + Ki * SSR_TOP.PID.integral + Kd * derivate;
+    output = Kp * error + Ki * SSR.PID.integral + Kd * derivate;
 	num = (int)output*10;
 	pDispVar = num;
-    SSR_TOP.PID.prev_error = error;
+    SSR.PID.prev_error = error;
 	// 음수 출력이면 0으로 처리
 	if(num < 2)return 0;	
     if (num > 100) {
         num = 100;
     }
 	num = num * 420 / 100;
-    return (int)num;
-}
-int pidControlBottom(void)
-{
-	double output,setpoint,error,derivate;
-	int num;
-	if(gStatus.status < STATUS_IDLE)return 0;
-	setpoint = gStatus.Heater_Bottom.Comp;
-    error = (setpoint - gStatus.Heater_Bottom.Temp)/100;
-	if(SSR_BOTTOM.PID.value < 420)SSR_BOTTOM.PID.integral += error;
-	else SSR_BOTTOM.PID.integral = 0;
-	num = SSR_BOTTOM.PID.integral;
-		
-	/*if(gStatus.Heater_Bottom.Comp > gStatus.Heater_Bottom.Temp)
-	{
-		if(num < 15)SSR_BOTTOM.PID.integral = 20;
-		else if(num > 50)SSR_BOTTOM.PID.integral = 50;
-	}
-	else
-	{
-		if(num > 40)SSR_BOTTOM.PID.integral = 40;
-		else if(num < 10)SSR_BOTTOM.PID.integral = 10;
-	}*/
-	derivate = error - SSR_BOTTOM.PID.prev_error;
-    // PID 제어 계산
-    output = Kp * error + Ki * SSR_BOTTOM.PID.integral + Kd * derivate;
-	num = (int)output;
-	SSR_BOTTOM.PID.prev_error = error;
-	// 음수 출력이면 0으로 처리
-	if(num < 2)return 0;	
-    if (num > 420) {
-        num = 420;
-    }
-	//num = num * 420 / 100;
     return (int)num;
 }
 void gSetStatus(void)
@@ -309,46 +282,57 @@ void gSetStatus(void)
 		case STATUS_IDLE:
 			if(gStatus.warmupComplete == 1)
 			{
-				comp = gParameter.TopTemp * 0.8;
-				comp2 = gParameter.BottomTemp * 0.8;
+				comp = gParameter.Temperature * 0.8;
+				comp2 = gParameter.Temperature * 0.8;
 			
-				if(gStatus.Heater_Top.Temp > comp)pTemp = 1;
-				if(gStatus.Heater_Bottom.Temp > comp2)pTemp &= 1;
+				if(gStatus.KSensor_Top.Temp > comp)pTemp = 1;
+				if(gStatus.KSensor_Bottom.Temp > comp2)pTemp &= 1;
 				if(pTemp)gStatus.status = STATUS_ON;
 			}
 			break;
 		case STATUS_READY:
 		case STATUS_ON:
-			comp = gParameter.TopTemp + 6000;
-			comp2 = gParameter.BottomTemp + 6000;
-//			if(gStatus.Heater_Top.Temp > comp)pTemp = 1;
-			if(gStatus.Heater_Bottom.Temp > comp2)pTemp |= 1;
+			comp = gParameter.Temperature + 3000;
+			comp2 = gParameter.Temperature + 3000;
+			if(gStatus.KSensor_Top.Temp > comp)pTemp = 1;
+			if(gStatus.KSensor_Bottom.Temp > comp2)pTemp |= 1;
 			if(pTemp){
 				gStatus.status = STATUS_ERR;
 				//TODO Error Action
-				
+				gError.bit.OverTemp = 1;
+				ssrOff();
+				pStoreErrorMessage(Error_Over_Temp);
 				return;
 			}
-			comp = gParameter.TopTemp * 0.8;
-			comp2 = gParameter.BottomTemp * 0.8;
-//			if(gStatus.Heater_Top.Temp < comp)pTemp = 1;
-			if(gStatus.Heater_Bottom.Temp < comp2)pTemp |= 1;
+			comp = gParameter.Temperature * 0.8;
+			comp2 = gParameter.Temperature * 0.8;
+//			if(gStatus.KSensor_Top.Temp < comp)pTemp = 1;
+			if(gStatus.KSensor_Bottom.Temp < comp2)pTemp |= 1;
 			if(pTemp){
 				gStatus.status = STATUS_IDLE;
 			}
 			break;
 	}
 	if(gStatus.warmupArrived == 0){
-		if(gStatus.Heater_Top.Temp >= gParameter.WarmupTemp){
+		comp = gParameter.Temperature * 0.8;
+		comp2 = gParameter.Temperature * 0.8;
+	
+		if(gStatus.KSensor_Top.Temp > comp)pTemp = 1;
+		if(gStatus.KSensor_Bottom.Temp > comp2)pTemp &= 1;
+		if(pTemp)
+		{
 			gStatus.warmupArrived = 1;
+			gStatus.warmupComplete = 1;
 			gStatus.warmupTimer = gWarmupTimer;
 		}
 	}
 }
+static short TempArr[256] = {0};
+static uint8_t tIdx = 0;
 void pSetTemperature(void)
 {
 	static uint8_t num = 0;
-	uint8_t i;
+	uint8_t i,j = 0;
 	uint16_t val,basic;
 	
 	switch(num)
@@ -360,14 +344,16 @@ void pSetTemperature(void)
 			break;
 		case 3:
 			readTemperature();
-			pTempArrTop.Rec[0] = gStatus.Heater_Top.Temp2;
-			pTempArrBottom.Rec[0] = gStatus.Heater_Bottom.Temp2;
+			pTempArrTop.Rec[0] = gStatus.KSensor_Top.Temp2;
+			pTempArrBottom.Rec[0] = gStatus.KSensor_Bottom.Temp2;
 			num++;
+			j = 1;
 			break;
 		default:
 			readTemperature();
-			pTempArrTop.Rec[1] = gStatus.Heater_Top.Temp2;
-			pTempArrBottom.Rec[1] = gStatus.Heater_Bottom.Temp2;
+			j = 1;
+			pTempArrTop.Rec[1] = gStatus.KSensor_Top.Temp2;
+			pTempArrBottom.Rec[1] = gStatus.KSensor_Bottom.Temp2;
 			pTempArrTop.index = 0;
 			pTempArrBottom.index = 0;
 			for(i=0;i!=2;i++)
@@ -398,9 +384,9 @@ void pSetTemperature(void)
 			if(i == 2)
 			{
 				pTempArrTop.prev_temp = pTempArrTop.Rec[1];
-				gStatus.Heater_Top.Temp = pTempArrTop.Rec[1];
+				gStatus.KSensor_Top.Temp = pTempArrTop.Rec[1];
 				pTempArrBottom.prev_temp = pTempArrBottom.Rec[1];
-				gStatus.Heater_Bottom.Temp = pTempArrBottom.Rec[1];
+				gStatus.KSensor_Bottom.Temp = pTempArrBottom.Rec[1];
 			}
 			else if(i == 1)
 			{
@@ -414,5 +400,13 @@ void pSetTemperature(void)
 			}
 			num = 0;
 			break;
+	}
+	if(j == 1)
+	{
+		for(i=0;i<0xff;i++)
+		{
+			TempArr[i] = TempArr[i+1];
+		}
+		TempArr[i] = gStatus.KSensor_Top.Temp;
 	}
 }

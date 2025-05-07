@@ -40,10 +40,10 @@ void hwInit(void)
 	tm67set();
 	enable_irq();			/* enable interrupt (set IE)	*/
 	
+	eepromInit();
 	gpioInit();
 	uartInit();
-	ssrControl(SSR_INVERTER, ON);
-	ssrControl(SSR_SCR, ON);
+	ssrControl(SSR_SSR, ON);
 	delay(2000);
 	pLcd_Init();
 	pLcd_UpdateDisplay();
@@ -53,8 +53,8 @@ void hwInit(void)
 	pLcd_UpdateDisplay();
 	modbusInit();
 	clear_WDT();
-	eepromInit();
-	
+	mototInit();
+	adcInit();
 	keyInit();
 	cliInit();
 	pn_EEP_Load();
@@ -65,6 +65,7 @@ void hwInit(void)
 //	HX711_ADC PT100_BOTTOM;
 	spiInit();
 #endif
+	
 	delay(1000);
 	gDispSub = LCD_MAIN_STATUS_0;
 	gDispMode = LCD_MAIN_INIT;

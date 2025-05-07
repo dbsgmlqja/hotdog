@@ -4,13 +4,25 @@
 void gpioInit(void)
 {
 	P2DIR |= 0x04;
-	P4DIR |= 0x80;
-	P5DIR |= 0x03;
-	P8DIR |= 0x04;
+	P9DIR |= 0x02;
+	P6DIR |= 0x11;
+	P6OUT &= ~0x10;
 	P2OUT &= ~0x04;
-	P4OUT &= ~0x80;
-	P5OUT &= ~0x03;
-	P8OUT &= ~0x04;
+	P9OUT &= ~0x02;
+}
+void errorProccess(void)
+{
+	ssrControl(1, 0);
+	P24RELAY = 0;
+}
+void errorRelease(void)
+{
+	ssrControl(1, 1);
+	P24RELAY = 1;
+}
+void directionControl(uint8_t state)
+{
+	MDir = state;
 }
 void ssrControl(uint8_t no, uint8_t state)
 {
@@ -21,15 +33,6 @@ void ssrControl(uint8_t no, uint8_t state)
 			break;
 		case 2:
 			SSR2_OUT = state;
-			break;
-		case 3:
-			SSR3_OUT = state;
-			break;
-		case 4:
-			SSR4_OUT = state;
-			break;
-		case 5:
-			SSR5_OUT = state;
 			break;
 	}
 }

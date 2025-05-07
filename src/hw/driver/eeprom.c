@@ -7,7 +7,7 @@
 #ifdef _USE_HW_CLI
 void cliEeprom(cli_args_t *args);
 #endif
-#define EEP_ID 0xCD
+#define EEP_ID 0xDD
 #define EEPROM_MAX_SIZE   2048
 #define PAGE_SIZE	16
 #define COUNTER_ADDR 0x60
@@ -16,17 +16,16 @@ void cliEeprom(cli_args_t *args);
 #define FAULT_ADDR 0x90
 static uint8_t gTest;
 static uint8_t is_init = 0;
-
+extern uint16_t gGetPwmValue(void);
 const uint16_t EEP_HEAT_ParaTBL[][3]={ 
-	{2000,	35000,	27500},		/* P0	FP0	TEMP1*/
-	{2000,	35000,	27500},		/* P1	FP1	TEMP2*/
-	{60,	 1800,	  600},		/* 2 Operating Time */
+	{10000,	35000,	18000},		/* P0	FP0	TEMP1*/
 	{0,	 60,	  25},	/* 3 Warmup Time */
 	{10000,	 32000,	  30000},	/* 3 Warmup Temp */
 };
 const uint16_t EEP_Inverter_ParaTBL[][3]={ 
-	{5,	6000,	6000},			/* P0	FP0	Foward Frequency */
-//	{5,	6000,	3000},			/* P1	FP1	Reverse Frequncy */
+	{30,	100,	80},			/* P0	FP0	Foward Frequency */
+	{30,	100,	70},			/* P1	FP1	Reverse Frequncy */
+	{ 0,	  1,	 1},
 };
 const uint8_t EEP_ERASE_DATA[16] = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
@@ -202,7 +201,7 @@ void pn_EEP_Load(void)
 		i2cWriteBytes(DEVICE_ADDR, PARAMETER_ADDR, (uint8_t *)&gParameter, EEP_END * 2, 10);
 		
 		Ptr = (uint16_t *)&gIParameter;
-		for(i=0;i!=EEP_END;i++){
+		for(i=0;i!=EEP_INV_END;i++){
 			*Ptr++ = EEP_Inverter_ParaTBL[i][2];
 		}
 		i2cWriteBytes(DEVICE_ADDR, IPARAMETER_ADDR, (uint8_t *)&gIParameter, EEP_INV_END * 2, 10);
@@ -253,6 +252,7 @@ void pn_Load_Parameters(void)
 {
 	uint8_t index;
 	uint16_t *Ptr;
+	uint16_t var;
 	
 	Ptr = (uint16_t *)&gParameter;
 	gDispParameter.Value = *Ptr;
@@ -261,13 +261,24 @@ void pn_Load_Parameters(void)
 	gDispParameter.Max = EEP_HEAT_ParaTBL[index][1];
 	if(gParameter.WarmupTime > 0)
 	{
-		gStatus.Heater_Top.Comp = gParameter.WarmupTemp;
-		gStatus.Heater_Bottom.Comp = gParameter.WarmupTemp;
+		gStatus.Comp = gParameter.WarmupTemp;
 	}
 	else
 	{
-		gStatus.Heater_Top.Comp = gParameter.TopTemp;
-		gStatus.Heater_Bottom.Comp = gParameter.BottomTemp;
+		gStatus.Comp = gParameter.Temperature;
+	}
+	var = gGetPwmValue();
+	gFW_PWM = (var * gIParameter.F_Freq / 100) - 1;
+	gRV_PWM = (var * gIParameter.R_Freq / 100) - 1;
+	if(gIParameter.Dir == 0)
+	{
+		MotorStatus.FDirection = 1;
+		MotorStatus.RDirection = 0;
+	}
+	else
+	{
+		MotorStatus.FDirection = 0;
+		MotorStatus.RDirection = 1;
 	}
 }
 
@@ -283,9 +294,9 @@ void pn_EEP_SaveCheck(void)
 	pre_time = millis();
 	if(gEEP_save == 1)
 	{
+		//TDDO gEEP_time check
 		if(pre_time - gEEP_time > 2000){
-			gParameter.TopTemp = gStatus.Heater_Top.Comp;
-			gParameter.BottomTemp = gStatus.Heater_Bottom.Comp;
+			gParameter.Temperature = gStatus.Comp;
 			i2cWriteBytes(DEVICE_ADDR, PARAMETER_ADDR, (uint8_t *)&gParameter, EEP_END *2, 10);
 			gEEP_save = 0;
 		}

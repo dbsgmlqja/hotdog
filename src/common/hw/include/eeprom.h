@@ -4,15 +4,14 @@
 #ifdef _USE_HW_EEPROM
 enum{
 	EEP_TOP_TEMP,
-	EEP_BOTTOM_TEMP,
-	EEP_TIME,
 	EEP_WARMUP_TIME,
 	EEP_WARMUP_TEMP,
 	EEP_END
 };
 enum{
 	EEP_INV_F_FREQ,
-//	EEP_INV_R_FREQ,
+	EEP_INV_R_FREQ,
+	EEP_INV_DIR,
 	EEP_INV_END
 };
 uint8_t eepromInit(void);

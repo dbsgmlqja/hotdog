@@ -46,18 +46,20 @@ void p1msHandlingTimer(void)
 		}
 	}*/
 }
+void pMotorMakeFreq(void);
 void p10msHandlingTimer(void)
 {
 	if((IntTimer%10) == 0){
 		gKeyScanFlag = 1;
 		if(gKey.RepeatTimer != 0) --gKey.RepeatTimer;
 		if(gSaveDisplayTimer != 0) --gSaveDisplayTimer;
+		pMotorMakeFreq();
 	}
 }
 void p100msHandlingTimer(void)
 {
 	if((IntTimer%100) == 0){
-		gModBus.p500msFlag = 1;
+		
 		
 		gLCD_Update_Req = 1;
 	}
@@ -65,7 +67,7 @@ void p100msHandlingTimer(void)
 void p200msHandlingTimer(void)
 {
 	if((IntTimer%200) == 0){
-	
+		gModBus.p500msFlag = 1;
 	}
 }
 void p500msHandlingTimer(void)
@@ -84,10 +86,11 @@ void p500msHandlingTimer(void)
 		}
 	}
 }
+static uint16_t pDispVar;
 void p1msTimer(void)
 {
 	uint32_t pTime,pTime2,s1end,s2end;
-	uint16_t pTemp,pTemp2,tempDiff;
+	uint16_t pTemp,tempDiff;
 	p1msHandlingTimer();
 	p10msHandlingTimer();
 	p100msHandlingTimer();
@@ -96,30 +99,99 @@ void p1msTimer(void)
 	if(++IntTimer >= 1000){
 		IntTimer = 0;
 		//gModBus.p500msFlag = 1;
-		if(gStatus.warmupComplete == 0){
+		if((gStatus.warmupComplete == 0) && (gStatus.mainLoop == 1)){
 			pTime = gParameter.WarmupTime * 60;
 			if(gWarmupTimer < pTime){
 				if(gStatus.status == STATUS_IDLE){
 					gWarmupTimer++;
 					if(gStatus.warmupArrived == 1)
 					{
-						tempDiff = (gParameter.WarmupTemp - gParameter.TopTemp) / 3;
+						tempDiff = (gParameter.WarmupTemp - gParameter.Temperature) / 3;
 						pTime2 = gWarmupTimer - gStatus.warmupTimer;
 						s1end = gStatus.warmupTimer + (pTime - gWarmupTimer) / 3;
 						s2end = gStatus.warmupTimer + (pTime - gWarmupTimer) * 2 / 3;
-						if(gWarmupTimer < s1end) gStatus.Heater_Top.Comp = gParameter.WarmupTemp - tempDiff;
-						else if(gWarmupTimer < s2end)gStatus.Heater_Top.Comp = gParameter.WarmupTemp - tempDiff * 2;
-						else gStatus.Heater_Top.Comp = gParameter.WarmupTemp - tempDiff * 3;
+						if(gWarmupTimer < s1end) gStatus.Comp = gParameter.WarmupTemp - tempDiff;
+						else if(gWarmupTimer < s2end)gStatus.Comp = gParameter.WarmupTemp - tempDiff * 2;
+						else gStatus.Comp = gParameter.WarmupTemp - tempDiff * 3;
 					}
 				}
 			}
 			else
 			{
 				gStatus.warmupComplete = 1;
-				gStatus.Heater_Top.Comp = gParameter.TopTemp;
-				gStatus.Heater_Bottom.Comp = gParameter.BottomTemp;
+				gStatus.Comp = gParameter.Temperature;
 				gStatus.status = STATUS_READY;
 			}
 		}
+		//MotorSpeed
+		pTemp = TM18BC;
+		pDispVar = TM18BC;
+		gMotorSpeed = pTemp * 5;
+		if(MotorStatus.Direction == DIR_REVERSE) gMotorSpeed *= -1;
+		TM18MD1 |= 0x0040;
+		TM18MD1 &= ~0x0040;
 	}
 }
+static pAccTime = 100;
+void pMotorMakeFreq(void)
+{
+	uint16_t pTemp;
+	if(gMotorStatus == MOTOR_OFF)
+	{
+		PWMCMP1A = 0;
+		return;
+	}
+	if(MotorStatus.Direction == DIR_FORWARD)gSetPWM = gFW_PWM;
+	else gSetPWM = gRV_PWM;
+	switch(gMotorStatus)
+	{
+		case MAX_ZONE:
+			pTemp = PWMCMP1A;
+			if(PWMCMP1A < gSetPWM)gWorkPWM = gSetPWM;
+			break;
+
+		case ACC_ZONE:	
+			++gFreqCounter;
+			pTemp = (gSetPWM * gFreqCounter)/pAccTime;
+			if(pTemp >= gSetPWM){	
+				gWorkPWM = gSetPWM;
+				gFreqCounter = 0;
+				gMotorStatus = MAX_ZONE;
+			}
+			else gWorkPWM = pTemp;
+			if(pAccTime <= gFreqCounter)
+			{
+				gFreqCounter = 0;
+				pTemp = gSetPWM;
+				gMotorStatus = MAX_ZONE;
+			}
+			
+			
+			break;
+
+		case DEC_ZONE:
+		
+			++gFreqCounter;
+			pTemp = gNowPWM - (gNowPWM * gFreqCounter)/pAccTime;
+			if(pAccTime <= gFreqCounter)
+			{
+				gFreqCounter = 0;
+				gWorkPWM = 0;
+				gMotorTime = millis();
+				gMotorStatus = MOTOR_OFF;
+			}
+			else
+			{
+				if(pTemp <= 0){	
+					gWorkPWM = 0;
+					gFreqCounter = 0;
+					gMotorTime = millis();
+					gMotorStatus = MOTOR_OFF;
+				}
+				else gWorkPWM = pTemp;
+			}
+			break;
+	}
+	PWMCMP1A = gWorkPWM;
+}
+

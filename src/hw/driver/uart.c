@@ -40,7 +40,7 @@ void uartInit(void)
 	SC1MD1 |= 0x30;
 	TM00MD |= 0x80;
 	
-	G43ICR = 0x4100;
+	G43ICR = 0x4100;  //Serial 1 : Cli
 	uart_tbl[1].is_open = 1;
 	qbufferCreate(&uart_tbl[1].qbuffer_rx, (uint8_t *)&uart_tbl[1].rx_buf, UART_RX_BUF_LENGTH);
 	

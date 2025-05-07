@@ -8,10 +8,7 @@
 #define REVERSE_KEY_IN 	((*(RB_BTF*)&PCIN).p1)
 #define CONVAYOR_KEY_IN ((*(RB_BTF*)&PCIN).p2)
 #define EMG_KEY_IN 		((*(RB_BTF*)&PCIN).p3)
-#define MOTOR_KEY_IN	((*(RB_BTF*)&PDIN).p0)
 #define HEATER_KEY_IN	((*(RB_BTF*)&PDIN).p1)
-#define MOTOR2_KEY_IN	((*(RB_BTF*)&P6IN).p5)
-#define AM_KEY_IN		((*(RB_BTF*)&P6IN).p1)
 
 extern void pLcd_UpdateDisplay(void);
 extern void pBeep(uint8_t Cnt, uint8_t sl);
@@ -124,102 +121,10 @@ uint8_t keyGetPressed(uint8_t ch)
 	}
 	return ret;
 }
-void pAMKeyScan(void)
-{
-	static uint8_t RevKeyOn = 0;
-	uint8_t pKeyIn = 0;
-	
-	if(keyObjGetPressed(&btn_am, 60) == true)
-	{
-		if(btn_am.state == 2)
-		{
-			gSwitch.AutoPreTime = millis();
-			btn_am.pre_time = millis();
-			if(RevKeyOn == 0)
-			{
-				RevKeyOn = 1;
-				if(gInverterStatus.bit.stop == 0)
-				{
-					pKeyIn = 0x01;
-				}
-				if(gStatus.status > STATUS_INIT)
-				{
-					pKeyIn |= 0x02;
-				}
-				if(SSR3_OUT == 1)
-				{
-					pKeyIn |= 0x08;
-				}
-				if(SSR4_OUT == 1)
-				{
-					pKeyIn |= 0x10;
-				}
-				if(pKeyIn == 0x00)
-				{
-					// Inverter On
-					gInverterStatus.bit.stop = 0;
-					gModBus.no = MODBUS_INVERTER;
-					gModBus.rxMode = gModBus.mode;
-					if((gModBus.status > MODBUS_READY) && (gModBus.rxMode == 0xFF)) gModBus.rxMode = gModBus.mode;
-					gModBus.mode = MODBUS_MODE_COMMAND;
-					gSetCommand(MODBUS_INVERTER, 0x0005, 0x0002, 1);
-					ledOn(LED_AM);
-					ledOn(LED_CONVAYOR);
-					
-					// Heater On
-					gStatus.status = STATUS_IDLE;
-					ssrOn(MODBUS_SSR_TOP);
-					ssrOn(MODBUS_SSR_BOTTOM);
-					
-					// Motor1 On
-					ssrControl(SSR_MOTOR1, ON);
-					ledOn(_DEF_LED4);
-					
-					// Motor2 On
-					ssrControl(SSR_MOTOR2, ON);
-					ledOn(LED_MOTOR2);
-				}
-				else
-				{
-					if(pKeyIn & 0x01)
-					{
-						gModBus.no = MODBUS_INVERTER;
-						if((gModBus.status > MODBUS_READY) && (gModBus.rxMode == 0xFF)) gModBus.rxMode = gModBus.mode;
-						gModBus.mode = MODBUS_MODE_COMMAND;
-						gSetCommand(MODBUS_INVERTER, 0x0005, 0x0001, 1);
-						ledOff(_DEF_LED3);
-					}
-					if(pKeyIn & 0x02)
-					{
-						ssrOff(MODBUS_SSR_TOP);
-						ssrOff(MODBUS_SSR_BOTTOM);
-						gStatus.status = STATUS_INIT;
-					}
-					if(pKeyIn & 0x08)
-					{
-						ssrControl(SSR_MOTOR1, OFF);
-						ledOff(_DEF_LED4);
-					}
-					if(pKeyIn & 0x10)
-					{
-						ssrControl(SSR_MOTOR2, OFF);
-						ledOff(LED_MOTOR2);
-					}
-					ledOff(_DEF_LED2);
-				}
-			}
-		}
-	}
-	else
-	{
-		RevKeyOn = 0;
-	}
-}
 void pReverseKeyScan(void)
 {
 	static uint8_t RevKeyOn = 0;
 	uint8_t KeyIn = 0;
-	uint32_t pre_time;
 	
 	if(keyObjGetPressed(&btn_reverse, 60) == true)
 	{
@@ -234,53 +139,41 @@ void pReverseKeyScan(void)
 			if(RevKeyOn == 0)
 			{
 				RevKeyOn = 1;
-				if(gInverterStatus.bit.fowardRun == 1)
+				if((gMotorStatus != MOTOR_OFF) && (MotorStatus.Direction == DIR_FORWARD))
 				{
 					pBeep(3, 0);
 					return;
 				}
 				KeyIn = 1;
-				if(gInverterStatus.bit.stop == 1){
-					/*pre_time = millis();
-					while(gModBus.status == MODBUS_RECEIVE)
-					{
-						if(millis() - pre_time > 20)break;
-						clear_WDT();
-					}*/
-					gModBus.no = MODBUS_INVERTER;
-					gModBus.mode = MODBUS_MODE_COMMAND;
-					//gModBus.p500msFlag = 1;
-					gSetCommand(MODBUS_INVERTER, 0x0005, 0x0004, 1);
-					/*pre_time = millis();
-					while(gModBus.status == MODBUS_RECEIVE)
-					{
-						if(millis() - pre_time > 20)break;
-						clear_WDT();
-					}*/
-					modbusTransmit();
-					ledOn(_DEF_LED2);
-				}
-				else
+				if(gMotorStatus == MOTOR_OFF)
 				{
-					
+					gFreqCounter = 0;
+					MotorStatus.Direction = DIR_REVERSE;
+					directionControl(MotorStatus.RDirection);
+					gMotorTime = millis();
+					gMotorStatus = ACC_ZONE;
 				}
+				ledOn(_DEF_LED2);
 			}
 		}
 	}
 	else
 	{
 		RevKeyOn = 0;
-		if(gInverterStatus.bit.reverseRun == 1)
+		if(MotorStatus.Direction == DIR_REVERSE)
 		{
-			gSetCommand(MODBUS_INVERTER, 0x0005, 0x0001, 1);
-			ledOff(_DEF_LED2);
-			
+			if(gMotorStatus == MAX_ZONE)
+			{
+				gFreqCounter = 0;
+				gNowPWM = gWorkPWM;
+				gMotorStatus = DEC_ZONE;
+			}
+			else if(gMotorStatus == MOTOR_OFF)
+			{
+				gWorkPWM = 0;
+			}
 		}
-		else
-		{
-			ledOff(_DEF_LED2);
-		}
-		
+		if((gError.All == 0) && (gMotorStatus == MOTOR_OFF))ledOff(_DEF_LED2);
 	}
 	
 		
@@ -290,7 +183,7 @@ void pReverseKeyScan(void)
 void pConvayorKeyScan(void)
 {
 	static uint8_t IncKeyOn = 0;
-	uint8_t check;
+	
 	if(keyObjGetPressed(&btn_convayor, 60) == true)
 	{
 		if(btn_convayor.state == 2)
@@ -300,25 +193,31 @@ void pConvayorKeyScan(void)
 			if(IncKeyOn == 0)
 			{
 				IncKeyOn = 1;
-				if(gInverterStatus.bit.reverseRun == 1)
+				if((MotorStatus.Direction == DIR_REVERSE) && (gMotorStatus != MOTOR_OFF))
 				{
 					pBeep(3, 0);
 					return;
 				}
-				if((gInverterStatus.bit.stop == 1) || (gInverterStatus.All == 0))
+				switch(gMotorStatus)
 				{
-					ledOn(_DEF_LED3);
-					gSetCommand(MODBUS_INVERTER, 0x0005, 0x0002, 1);
-				}
-				else
-				{
-					check = gGetCommand(MODBUS_INVERTER);
-					if(check == 0){
+					case MOTOR_OFF:
+						gFreqCounter = 0;
+						MotorStatus.Direction = DIR_FORWARD;
+						directionControl(MotorStatus.FDirection);
+						gMotorTime = millis();
+						gMotorStatus = ACC_ZONE;
+						ledOn(_DEF_LED3);
+						break;
+					case ACC_ZONE:
+					case DEC_ZONE:
+					case MAX_ZONE:
+						gFreqCounter = 0;
+						gNowPWM = gWorkPWM;
+						gMotorStatus = DEC_ZONE;
 						ledOff(_DEF_LED3);
-						gSetCommand(MODBUS_INVERTER, 0x0005, 0x0001, 1);
-					}
-					else gSetCommand(MODBUS_INVERTER, 0x0000, 0x0000, false);
+						break;
 				}
+				
 			}
 		}
 	}
@@ -339,31 +238,22 @@ void gEmgKeyScan(void)
 			{
 				StartKeyContinue = 1;
 				gError.bit.EmergencyOn = 1;
-				ssrControl(SSR_INVERTER, OFF);
-				ssrControl(SSR_SCR, OFF);
-				ssrControl(SSR_MOTOR1, OFF);
-				ssrControl(SSR_MOTOR2, OFF);
+				errorProccess();
 				ledOff(_DEF_LED4);
 				ledOff(_DEF_LED2);
-				if(gInverterStatus.bit.stop == 0)
+				if(gMotorStatus != MOTOR_OFF)
 				{
 					ledOff(_DEF_LED3);
-					gSetCommand(MODBUS_INVERTER, 0x0005, 1, 1);
+					gMotorStatus = DEC_ZONE;
 				}
 				if(gStatus.status > STATUS_INIT){
 					gStatus.status = STATUS_INIT;
 					gStatus.Start = 0;
-					SSR_TOP.output = 0;
-					SSR_BOTTOM.output = 0;
-					SSR_TOP.outVoltage = 0;
-					SSR_BOTTOM.outVoltage = 0;
-					//TODO inverter emergency out on
+					SSR.output = 0;
+					SSR.outVoltage = 0;
 					
-					/*
-					gSetCommand(MODBUS_SSR_TOP, 0x0002, 0, 1);
-					gSetCommand(MODBUS_SSR_BOTTOM, 0x0002, 0, 1);
-					gModBus.no = MODBUS_INVERTER;
-					gModBus.mode = MODBUS_MODE_COMMAND;*/
+					gSetCommand(0x0002, 0, 1);
+					gModBus.mode = MODBUS_MODE_COMMAND;
 					pBeep(3, 0);
 					
 				}
@@ -382,80 +272,24 @@ void gEmgKeyScan(void)
 		if(btn_emg.state == 0){
 			StartKeyContinue = 0;
 			if(gError.bit.EmergencyOn){
-				ssrControl(SSR_INVERTER, ON);
-				ssrControl(SSR_SCR, ON);
 				gError.bit.EmergencyOn = 0;
-				/*display reflash*/
-				gDisplay.Request = DISPLAY_REQUEST_ON;
-				gDisplay.Lines = TOP_LINE | BTM_LINE;
-				pLcd_UpdateDisplay();
-				delay(2000);
-				gReleaseError(MODBUS_INVERTER, MODBUS_MODE_COMMAND);
-				if(modbusConnectCheck(MODBUS_SSR_TOP) == 1);
-				if(modbusConnectCheck(MODBUS_SSR_BOTTOM) == 1);
-				ledOff(LED_CONVAYOR);
-				ledOff(LED_MOTOR1);
-				ledOff(LED_MOTOR2);
-				gSetCommand(MODBUS_INVERTER, 0x0004, gIParameter.F_Freq, 1);
-			}
-		}
-		gError.bit.EmergencyOn = 0;
-	}
-}
-void gMotorKeyScan(void)
-{
-	static uint8_t ModeKeyOn = 0;
-	if(keyObjGetPressed(&btn_motor, 60) == true)
-	{
-		if(btn_motor.state == 2){
-			btn_motor.pre_time = millis();
-			if(ModeKeyOn == 0)
-			{
-				ModeKeyOn = 1;
-				if(SSR3_OUT == 0)
+				if(gError.All == 0)
 				{
-					ssrControl(SSR_MOTOR1, ON);
-					ledOn(LED_MOTOR1);
-				}
-				else
-				{
-					ssrControl(SSR_MOTOR1, OFF);
+					errorRelease();
+					
+					/*display reflash*/
+					gDisplay.Request = DISPLAY_REQUEST_ON;
+					gDisplay.Lines = TOP_LINE | BTM_LINE;
+					pLcd_UpdateDisplay();
+					delay(2000);
+					gError.bit.ssrCommError = modbusConnectCheck();
+					ledOff(LED_CONVAYOR);
 					ledOff(LED_MOTOR1);
-				}
-			}
-		}
-	}
-	else
-	{
-		ModeKeyOn = 0;
-	}
-}
-void gMotor2KeyScan(void)
-{
-	static uint8_t ModeKeyOn = 0;
-	if(keyObjGetPressed(&btn_motor2, 60) == true)
-	{
-		if(btn_motor2.state == 2){
-			btn_motor2.pre_time = millis();
-			if(ModeKeyOn == 0)
-			{
-				ModeKeyOn = 1;
-				if(SSR4_OUT == 0)
-				{
-					ssrControl(SSR_MOTOR2, ON);
-					ledOn(LED_MOTOR2);
-				}
-				else
-				{
-					ssrControl(SSR_MOTOR2, OFF);
 					ledOff(LED_MOTOR2);
 				}
 			}
 		}
-	}
-	else
-	{
-		ModeKeyOn = 0;
+		gError.bit.EmergencyOn = 0;
 	}
 }
 void gHeaterKeyScan(void)
@@ -473,29 +307,23 @@ void gHeaterKeyScan(void)
 				if(gStatus.status != STATUS_ERR)
 				{
 					if(gStatus.status == STATUS_INIT){
-						pVar1 = gStatus.Heater_Top.Comp * 0.8;
-						pVar2 = gStatus.Heater_Bottom.Comp * 0.8;
-						if((gStatus.warmupComplete == 0) || (pVar1 > gStatus.Heater_Top.Temp) || (pVar2 > gStatus.Heater_Bottom.Temp))	gStatus.status = STATUS_IDLE;
+						pVar1 = gStatus.Comp * 0.8;
+						if((gStatus.warmupComplete == 0) || (pVar1 > gStatus.KSensor_Top.Temp) || (pVar1 > gStatus.KSensor_Bottom.Temp))	gStatus.status = STATUS_IDLE;
 						else gStatus.status = STATUS_READY;
-						SSR_TOP.PID.integral = 0;
-						SSR_TOP.PID.prev_error = 0;
-						SSR_BOTTOM.PID.integral = 0;
-						SSR_BOTTOM.PID.prev_error = 0;
+						SSR.PID.integral = 0;
+						SSR.PID.prev_error = 0;
 						
 						gModBus.no = MODBUS_SSR_TOP;
 						if((gModBus.status > MODBUS_READY) && (gModBus.rxMode == 0xFF)) gModBus.rxMode = gModBus.mode;
 						gModBus.mode = MODBUS_MODE_COMMAND;
-						gSetCommand(MODBUS_SSR_TOP, 0x0002, 1, 1);
-						gSetCommand(MODBUS_SSR_BOTTOM, 0x0002, 1, 1);
+						gSetCommand(0x0002, 1, 1);//gSetCommand(MODBUS_SSR_TOP, 0x0002, 1, 1);
 					}
 					else
 					{
 						gStatus.status = STATUS_INIT;
-						gModBus.no = MODBUS_SSR_TOP;
 						if((gModBus.status > MODBUS_READY) && (gModBus.rxMode == 0xFF)) gModBus.rxMode = gModBus.mode;
 						gModBus.mode = MODBUS_MODE_COMMAND;
-						gSetCommand(MODBUS_SSR_TOP, 0x0002, 0, 1);
-						gSetCommand(MODBUS_SSR_BOTTOM, 0x0002, 0, 1);
+						gSetCommand( 0x0002, 0, 1);
 					}
 				}
 			}
@@ -509,12 +337,9 @@ void gHeaterKeyScan(void)
 void gKeyScan(void)
 {
 	if(gError.All > 0)return;
-	gMotorKeyScan();
-	gMotor2KeyScan();
 	gHeaterKeyScan();
 	gEmgKeyScan();
 	pReverseKeyScan();
-	pAMKeyScan();
 	pConvayorKeyScan();
 }
 
@@ -683,11 +508,14 @@ void pLKey_Menu(void)
 			break;
 		case LCD_MAIN_HEAT_SET:
 		case LCD_MAIN_INV_SET:
+		case LCD_MAIN_FAULT:
+		case LCD_MAIN_INITIALIZE:
+			gDispSub = gDispMode - 1;
 			gDispMode = LCD_MAIN_MENU;
-			gDispSub = LCD_MAIN_STATUS_0;
 			gDisplay.Request = DISPLAY_REQUEST_ON;
 			gDisplay.Lines = TOP_LINE | BTM_LINE;
 			break;
+			
 		default:
 			gDispMode = LCD_MAIN_INIT;
 			gDispSub = LCD_MAIN_STATUS_0;
@@ -705,44 +533,22 @@ void pLKey_Set(void)
 	{
 		if(gError.bit.EmergencyOn == 0)
 		{
-			if((gError.bit.inverterCommError == 1) || (gError.bit.ssr1CommError == 1) || (gError.bit.ssr2CommError == 1))
+			if(gError.bit.ssrCommError == 1)
 			{
-				if(gError.bit.inverterCommError == 1)
+				if(modbusConnectCheck() == 1)
 				{
-					if(modbusConnectCheck(MODBUS_INVERTER) == 1)
-					{
-						pBeep(2, 0);
-						gReleaseError(MODBUS_INVERTER, 0);
-						gError.bit.inverterCommError = 0;
-					}
-					else pBeep(3,0);
+					pBeep(2, 0);
+					gReleaseError(0);
+					gError.bit.ssrCommError = 0;
 				}
-				if(gError.bit.ssr1CommError == 1)
-				{
-					if(modbusConnectCheck(MODBUS_SSR_TOP) == 1)
-					{
-						pBeep(2, 0);
-						gReleaseError(MODBUS_SSR_TOP, 0);
-						gError.bit.ssr1CommError = 0;
-					}
-					else pBeep(3,0);
-				}
-				if(gError.bit.ssr2CommError == 1)
-				{
-					if(modbusConnectCheck(MODBUS_SSR_BOTTOM) == 1)
-					{
-						pBeep(2, 0);
-						gReleaseError(MODBUS_SSR_BOTTOM, 0);
-						gError.bit.ssr2CommError = 0;
-					}
-					else pBeep(3,0);
-				}
+				else pBeep(3,0);
+				
 				return;
 			}
 			
-			if(SSR_TOP.error)
+			if(SSR.error)
 			{
-				
+				//TODO
 			}
 		}
 	}
@@ -755,7 +561,7 @@ void pLKey_Set(void)
 		{
 			case LCD_SUB_MAIN_HEAT:
 				gDispMode = LCD_MAIN_HEAT_SET;
-				gDispSub = LCD_SUB_HEAT_TOP;
+				gDispSub = LCD_SUB_HEAT_TEMPERATURE;
 				break;
 
 			case LCD_SUB_MAIN_INV:
@@ -770,12 +576,12 @@ void pLKey_Set(void)
 
 			case LCD_SUB_MAIN_INITIALIZE:
 				gDispMode = LCD_MAIN_INITIALIZE;
-			
+				gDispSub = LCD_SUB_INITILIZE;
 				break;
 
 			case LCD_SUB_MAIN_FAULTSCAN:
 				gDispMode = LCD_MAIN_FAULT;
-				gDispSub = LCD_SUB_HEAT_TOP;
+				gDispSub = LCD_SUB_HEAT_TEMPERATURE;
 				break;
 
 		}
@@ -784,22 +590,16 @@ void pLKey_Set(void)
 	}
 	else if(gDispMode == LCD_MAIN_HEAT_SET){
 		pBeep(1,0);
-		if(gDispSub == LCD_SUB_HEAT_BOTTOM)
-		{
-			gDispMode = LCD_MAIN_HEAT_SET_BOTTOM_SUB;
-			gDispSub = LCD_SUB_HEAT_TOP;
-		}
-		else if(gDispSub == LCD_SUB_HEAT_WARMUP)
+		if(gDispSub == LCD_SUB_HEAT_WARMUP)
 		{
 			gDispMode = LCD_MAIN_HEAT_SET_WARMUP;
-			gDispSub = LCD_SUB_HEAT_TOP;
+			gDispSub = LCD_SUB_HEAT_TEMPERATURE;
 		}
 		else
 		{
 			gDispMode = LCD_MAIN_HEAT_SET_TOP_SUB;
-			gDispSub = LCD_SUB_HEAT_TOP;
+			gDispSub = LCD_SUB_HEAT_TEMPERATURE;
 			Ptr16 = (uint16_t *)&gParameter;
-			Ptr16 += gDispSub;
 	 		
 			gDispParameter.Value = *Ptr16;
 					//@150423 by Bang
@@ -829,11 +629,11 @@ void pLKey_Set(void)
 		gDispMode = LCD_MAIN_HEAT_SET_WARMUP_SUB;
 		gDispSub = LCD_SUB_WARMUP_TIME;
 		Ptr16 = (uint16_t *)&gParameter;
-		Ptr16 += gDispParameter.prev_sub + 3;
+		Ptr16 += (gDispParameter.prev_sub + 1);
 		
 		gDispParameter.Value = *Ptr16;
-		gDispParameter.Min = EEP_HEAT_ParaTBL[gDispParameter.prev_sub+3][0];
-		gDispParameter.Max = EEP_HEAT_ParaTBL[gDispParameter.prev_sub+3][1];
+		gDispParameter.Min = EEP_HEAT_ParaTBL[gDispParameter.prev_sub+1][0];
+		gDispParameter.Max = EEP_HEAT_ParaTBL[gDispParameter.prev_sub+1][1];
 		gDisplay.Request = DISPLAY_REQUEST_ON;
 		gDisplay.Lines = TOP_LINE | BTM_LINE;
 	}
@@ -858,22 +658,12 @@ void pLKey_Set(void)
 	else if(gDispMode == LCD_MAIN_HEAT_SET_TOP_SUB){
 		pBeep(1,0);
 		/* Parameter Save */
-		gParameter.TopTemp = gDispParameter.Value;
+		gParameter.Temperature = gDispParameter.Value;
 		
 		pn_EEP_WriteBytes(0x10, (uint8_t *)&gDispParameter.Value,/* LCD_SUB_INV_END*/2);
-		if(gStatus.warmupComplete == 1)gStatus.Heater_Top.Comp = gParameter.TopTemp;
-		
-		gDisplay.Request = DISPLAY_REQUEST_ON;
-		gDispMode = LCD_MAIN_HEAT_SET;
-		gDisplay.Lines = TOP_LINE | BTM_LINE;
-	}
-	else if(gDispMode == LCD_MAIN_HEAT_SET_BOTTOM_SUB){
-		pBeep(1,0);
-		/* Parameter Save */
-		gParameter.BottomTemp = gDispParameter.Value;
-		
-		pn_EEP_WriteBytes(0x12, (uint8_t *)&gDispParameter.Value,/* LCD_SUB_INV_END*/2);
-		if(gStatus.warmupComplete == 1)gStatus.Heater_Bottom.Comp = gParameter.BottomTemp;
+		if(gStatus.warmupComplete == 1){
+			gStatus.Comp = gParameter.Temperature;
+		}
 		
 		gDisplay.Request = DISPLAY_REQUEST_ON;
 		gDispMode = LCD_MAIN_HEAT_SET;
@@ -887,17 +677,16 @@ void pLKey_Set(void)
 			/* Parameter Save */
 			gParameter.WarmupTemp = gDispParameter.Value;
 			if((gStatus.warmupComplete == 0) && (gStatus.warmupArrived == 0)){
-				gStatus.Heater_Top.Comp = gDispParameter.Value;
-				gStatus.Heater_Bottom.Comp = gDispParameter.Value;
+				gStatus.Comp = gDispParameter.Value;
 			}
-			pn_EEP_WriteBytes(0x18, (uint8_t *)&gDispParameter.Value,/* LCD_SUB_INV_END*/2);
+			pn_EEP_WriteBytes(0x10 + (EEP_WARMUP_TEMP * 2), (uint8_t *)&gDispParameter.Value,/* LCD_SUB_INV_END*/2);
 		}
 		else
 		{
 			/* Parameter Save */
 			gParameter.WarmupTime = gDispParameter.Value;
 			
-			pn_EEP_WriteBytes(0x16, (uint8_t *)&gDispParameter.Value,/* LCD_SUB_INV_END*/2);
+			pn_EEP_WriteBytes(0x10 + (EEP_WARMUP_TIME * 2), (uint8_t *)&gDispParameter.Value,/* LCD_SUB_INV_END*/2);
 		}
 		gDisplay.Request = DISPLAY_REQUEST_ON;
 		gDispMode = LCD_MAIN_HEAT_SET_WARMUP;
@@ -912,15 +701,8 @@ void pLKey_Set(void)
 		*Ptr16 = gDispParameter.Value;
 		
 		pn_EEP_WriteBytes(0x30 + gDispSub *2, (uint8_t *)&gDispParameter.Value,/* LCD_SUB_INV_END*/2);
-		if(gDispSub == LCD_SUB_INV_F_FREQ)
-		{
-			gSetCommand(MODBUS_INVERTER, 0x0004, gDispParameter.Value, 1);
-		}
-		else
-		{
-			if(gInverterStatus.bit.reverseRun == 1)gSetCommand(MODBUS_INVERTER, 0x0004, gDispParameter.Value, 1);
-		}
-//		pn_Load_Parameters();
+		
+		pn_Load_Parameters();
 		
 		gDisplay.Request = DISPLAY_REQUEST_ON;
 		gDispMode = LCD_MAIN_INV_SET;
@@ -928,9 +710,16 @@ void pLKey_Set(void)
 	}
 	else if(gDispMode == LCD_MAIN_INITIALIZE){
 		pBeep(2, 0);
-		/* Doortype Save 150428 by Bang */
-		
-		pBeep(2, 0);
+		//ID ERASE
+		pn_EepromWriteByte(0x00,0x00);
+		pn_EEP_Load();
+
+		gDispMode = LCD_MAIN_MENU;
+		gDispSub = LCD_SUB_MAIN_INITIALIZE;
+				
+		gDisplay.Request = DISPLAY_REQUEST_ON;
+		gDisplay.Lines = TOP_LINE | BTM_LINE;
+		pBeep(2,0);
 	}
 	else if(gDispMode == LCD_MAIN_FAULT)
 	{
@@ -957,6 +746,14 @@ void pLKey_Set(void)
 		}
 		gDisplay.Lines = TOP_LINE | BTM_LINE;
 	}
+	else if(gDispMode == LCD_MAIN_FAULT_SUB)
+	{
+		pBeep(1, 0);
+		gDispMode = LCD_MAIN_FAULT;
+		gDispSub = LCD_SUB_FAULT_READ;
+		gDisplay.Request = DISPLAY_REQUEST_ON;
+		gDisplay.Lines = TOP_LINE | BTM_LINE;
+	}
 }
 void pLKey_Up(void)
 {
@@ -966,20 +763,14 @@ void pLKey_Up(void)
 			switch(gDispSub)
 			{
 				case LCD_MAIN_STATUS_0:
-					gSetMonitor(MODBUS_INVERTER, INV_MONITOR_ADDR, 1);
 					gDispSub++;
 					break;
 				case LCD_MAIN_STATUS_1:
-					gSetMonitor(MODBUS_INVERTER, INV_MONITOR_ADDR, 0);
-					gSetMonitor(MODBUS_SSR_TOP, 0x0000, 1);
-					gSetMonitor(MODBUS_SSR_BOTTOM, 0x0000, 1);
+					gSetMonitor(0x0000, 1);
 					gDispSub++;
 					break;
 				default:
 					gDispSub = LCD_MAIN_STATUS_0;
-					gSetMonitor(MODBUS_INVERTER, INV_MONITOR_ADDR, 0);
-					gSetMonitor(MODBUS_SSR_TOP, 0x0000, 1);
-					gSetMonitor(MODBUS_SSR_BOTTOM, 0x0000, 1);
 					break;
 			}
 			
@@ -999,7 +790,7 @@ void pLKey_Up(void)
 
 		case LCD_MAIN_HEAT_SET:
 			
-			if(++gDispSub >= LCD_SUB_HEAT_END)		gDispSub = LCD_SUB_HEAT_TOP;
+			if(++gDispSub >= LCD_SUB_HEAT_END)		gDispSub = LCD_SUB_HEAT_TEMPERATURE;
 			
 			gDisplay.Request = DISPLAY_REQUEST_ON;
 			gDisplay.Lines |= BTM_LINE;
@@ -1058,11 +849,21 @@ void pLKey_Up(void)
 			}
 			break;
 		case LCD_MAIN_HEAT_SET_TOP_SUB:
-		case LCD_MAIN_HEAT_SET_BOTTOM_SUB:
-		
-		case LCD_MAIN_INV_SET_SUB:
 			if(gDispParameter.Value <= (gDispParameter.Max - 100)){
 				gDispParameter.Value += 100;
+				
+				if(gDispParameter.Value < gDispParameter.Min){
+					gDispParameter.Value = gDispParameter.Min;
+				}
+				gDisplay.Request = DISPLAY_REQUEST_ON;
+				gDisplay.Lines |= BTM_LINE;
+			}
+			if((gKey.RepeatTimer) && (!gKey.RepeatKeyIn))	pBeep(1,0);
+		
+			break;
+		case LCD_MAIN_INV_SET_SUB:
+			if(gDispParameter.Value < gDispParameter.Max){
+				gDispParameter.Value++;
 				
 				if(gDispParameter.Value < gDispParameter.Min){
 					gDispParameter.Value = gDispParameter.Min;
@@ -1117,20 +918,13 @@ void pLKey_Down(void)
 			{
 				case LCD_MAIN_STATUS_0:
 					gDispSub = LCD_MAIN_STATUS_2;
-					gSetMonitor(MODBUS_SSR_TOP, 0x0000, 1);
-					gSetMonitor(MODBUS_SSR_BOTTOM, 0x0000, 1);
+					gSetMonitor(0x0000, 1);
 					break;
 				case LCD_MAIN_STATUS_2:
 					gDispSub = LCD_MAIN_STATUS_1;
-					gSetMonitor(MODBUS_INVERTER, INV_MONITOR_ADDR, 1);
-					gSetMonitor(MODBUS_SSR_TOP, 0x0004, 0);
-					gSetMonitor(MODBUS_SSR_BOTTOM, 0x0004, 0);
 					break;
 				default:
 					gDispSub = LCD_MAIN_STATUS_0;
-					gSetMonitor(MODBUS_INVERTER, INV_MONITOR_ADDR, 0);
-					gSetMonitor(MODBUS_SSR_TOP, 0x0000, 1);
-					gSetMonitor(MODBUS_SSR_BOTTOM, 0x0000, 1);
 					break;
 			}
 			
@@ -1150,7 +944,7 @@ void pLKey_Down(void)
 					
 		case LCD_MAIN_HEAT_SET:
 			
-			if(gDispSub == LCD_SUB_HEAT_TOP)	gDispSub = LCD_SUB_HEAT_END-1;
+			if(gDispSub == LCD_SUB_HEAT_TEMPERATURE)	gDispSub = LCD_SUB_HEAT_END-1;
 			else									gDispSub--;
 			
 
@@ -1208,10 +1002,21 @@ void pLKey_Down(void)
 			
 			//break;
 		case LCD_MAIN_HEAT_SET_TOP_SUB:
-		case LCD_MAIN_HEAT_SET_BOTTOM_SUB:
-		case LCD_MAIN_INV_SET_SUB:
 			if(gDispParameter.Value >= (gDispParameter.Min + 100)){
 				gDispParameter.Value -= 100;
+				
+				if(gDispParameter.Value > gDispParameter.Max){
+					gDispParameter.Value = gDispParameter.Max;
+				}
+				gDisplay.Request = DISPLAY_REQUEST_ON;
+				gDisplay.Lines |= BTM_LINE;
+			}
+			if((gKey.RepeatTimer) && (!gKey.RepeatKeyIn))	pBeep(1,0);
+			break;
+		
+		case LCD_MAIN_INV_SET_SUB:
+			if(gDispParameter.Value > gDispParameter.Min){
+				gDispParameter.Value--;
 				
 				if(gDispParameter.Value > gDispParameter.Max){
 					gDispParameter.Value = gDispParameter.Max;

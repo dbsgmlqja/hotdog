@@ -23,6 +23,7 @@
 #include "MAX6675.h"
 #include "modbus.h"
 #include "ssr.h"
+#include "motor.h"
 #if (_USE_TEMP_SENSOR == PT100)
 #include "spi.h"
 #endif

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<DF05_Bakery
+<DF05_Hotdog
 	ProjSeries="103S"
-	ProjName="DF05_Bakery"
-	ProjDir="D:\Firmware\DF05K\Bakery\DF\"
-	MaxFileId="113"
+	ProjName="DF05_Hotdog"
+	ProjDir="D:\Firmware\DF05K\HOTDOG\DF\"
+	MaxFileId="117"
 	ProjectInitializing="1"
-	ProjId="1"
-	TimeStamp="0x6710c9c6"
+	ProjId="4"
+	TimeStamp="0x6815a2fe"
 	BuiltInCCName="CC103S.EXE"
 	BuiltInAsmName="AS103S.EXE"
 	BuiltInLinkName="LD103S.EXE"
@@ -538,26 +538,6 @@ ODB_OCD_TYPE     : 1;"
 				Encode=""
 				LineEnd=""
 			/>
-			<96
-				FolderID="28"
-				BldTarget="true"
-				ViewFlag=""
-				FileName="modbus.c"
-				FilePath="..\..\WAFFLE_temp\src\hw\driver\"
-				Encode=""
-				LineEnd=""
-				FileType="c"
-			/>
-			<97
-				FolderID="26"
-				BldTarget="false"
-				ViewFlag=""
-				FileName="modbus.h"
-				FilePath="..\..\WAFFLE_temp\src\common\hw\include\"
-				Encode=""
-				LineEnd=""
-				FileType="h"
-			/>
 			<98
 				FolderID="28"
 				BldTarget="true"
@@ -676,11 +656,49 @@ ODB_OCD_TYPE     : 1;"
 				LineEnd=""
 				FileType="h"
 			/>
+			<114
+				FolderID="28"
+				BldTarget="true"
+				ViewFlag=""
+				FileName="motor.c"
+				FilePath="..\src\hw\driver\"
+				Encode=""
+				LineEnd=""
+				FileType="c"
+			/>
+			<115
+				FolderID="26"
+				BldTarget=""
+				ViewFlag=""
+				FileName="motor.h"
+				FilePath="..\src\common\hw\include\"
+				Encode=""
+				LineEnd=""
+			/>
+			<116
+				FolderID="28"
+				BldTarget="true"
+				ViewFlag=""
+				FileName="modbus.c"
+				FilePath="..\src\hw\driver\"
+				Encode=""
+				LineEnd=""
+				FileType="c"
+			/>
+			<117
+				FolderID="26"
+				BldTarget=""
+				ViewFlag=""
+				FileName="modbus.h"
+				FilePath="..\src\common\hw\include\"
+				Encode=""
+				LineEnd=""
+			/>
 		</SrcFileList>
 		<MakeFileList
 			MaxId="1"
 			CurMakefileId="1"
-			CurMakefileKey="118225802"
+			CurMakefileKey="137245052"
 			TargetType="ODB"
 			CpuType="103DF05K"
 			CoreType="103S"
@@ -727,13 +745,14 @@ eeprom.c
 swtimer.c
 buzzer.c
 MAX6675.c
-modbus.c
 display.c
 LCD_CTRL.c
 gpio.c
 ssr.c
 hx711.c
 spi.c
+motor.c
+modbus.c
 "
 				FlagAutoBuild="True"
 				FlagSrcTimeStampCheck="False"
@@ -761,7 +780,7 @@ spi.c
 				FlagContinueOnError="False"
 				FlagUseXCV="True"
 				FlagUseCRCCalc="False"
-				FLAGS_XCV="-i -o&quot;D:\Firmware\DF05K\Bakery\OUTPUT\DF05K_BAKERY.hex&quot; "
+				FLAGS_XCV="-i -o&quot;D:\Firmware\DF05K\HOTDOG\OUTPUT\Hotdog.hex&quot; "
 				FILE_EMPTY="false"
 				MaxFileId="95"
 			>
@@ -1389,4 +1408,4 @@ spi.c
 			SimDelayTime="0.1s"
 		/>
 	</DebugOption>
-</DF05_Bakery>
+</DF05_Hotdog>

@@ -19,31 +19,12 @@ void apMain(void)
 {
 	uint32_t pre_time,pre_time2;
 	uint8_t check = 0;
-	static uint8_t readyTop = 0;
-	static uint8_t readyBottom = 0;
 	static pNo = 0;
 	float pTemperature;
 	float R;
   	float T;
 	//Hardware check and setting
 	// 0. Inverter Set
-	pre_time = millis();
-	while(gModBus.status == MODBUS_RECEIVE)
-	{
-		if(millis() - pre_time > 30)break;
-		clear_WDT();
-	}
-	gSetCommand(MODBUS_INVERTER, 0x0005, 0x0001, true);
-	gModBus.p500msFlag = 1;
-	gModBus.status = MODBUS_READY;
-	gModBus.rxMode = gModBus.mode;
-	gModBus.mode = MODBUS_MODE_COMMAND;
-	modbusTransmit();
-	gModBus.mode = 0;;
-	delay(100);
-	gSetMonitor(MODBUS_INVERTER, INV_MONITOR_ADDR, 1);
-	gSetCommand(MODBUS_INVERTER, 0x0004, gIParameter.F_Freq, 1);
-	modbusTransmit();
 	// 1. SSR1 output check
 	
 	pre_time = millis();
@@ -52,9 +33,8 @@ void apMain(void)
 		if(millis() - pre_time > 30)break;
 		clear_WDT();
 	}
-	ssrOff(MODBUS_SSR_TOP);
+	ssrOff();
 	gModBus.p500msFlag = 1;
-	gModBus.no = MODBUS_SSR_TOP;
 	gModBus.status = MODBUS_READY;
 	gModBus.mode = MODBUS_MODE_COMMAND;
 	modbusTransmit();
@@ -65,55 +45,18 @@ void apMain(void)
 		if(millis() - pre_time > 30)break;
 		clear_WDT();
 	}
-	gSetMonitor(MODBUS_SSR_TOP , 0x0000, true);
+	gSetMonitor(0x0000, true);
 	gModBus.p500msFlag = 1;
 	gModBus.status = MODBUS_READY;
 	gModBus.mode = MODBUS_MODE_MONITOR;
 	modbusTransmit();
 	gModBus.mode = 0;
 	delay(50);
-	if(SSR_TOP.voltage < 100)check = 1;
+	if(SSR.voltage < 100)check = 1;
 	
-	// 2. SSR2 output check
-	if(check == 1)
-	{
-		pre_time = millis();
-		while(gModBus.status == MODBUS_RECEIVE)
-		{
-			if(millis() - pre_time > 30)break;
-			clear_WDT();
-		}
-#ifdef _USE_HW_BOTTOM_HEATER		
-		ssrOff(MODBUS_SSR_BOTTOM);
-		gModBus.p500msFlag = 1;
-		gModBus.no = MODBUS_SSR_BOTTOM;
-		gModBus.status = MODBUS_READY;
-		gModBus.mode = MODBUS_MODE_COMMAND;
-		modbusTransmit();
-		delay(30);
-		pre_time = millis();
-		while(gModBus.status == MODBUS_RECEIVE)
-		{
-			if(millis() - pre_time > 30)break;
-			clear_WDT();
-		}
-		gSetMonitor(MODBUS_SSR_BOTTOM , 0x0000, true);
-		//gModBus.p500msFlag = 1;
-		gModBus.status = MODBUS_READY;
-		gModBus.mode = MODBUS_MODE_MONITOR;
-		modbusTransmit();
-		gModBus.mode = MODBUS_MODE_COMMAND;
-		delay(50);
-		if(SSR_BOTTOM.voltage < 100)check = 1;
-		else check = 0;
-#endif		
-	}
 	
-	// 3. not proble SSR4 On
-	/*if(check)
-	{*/
-		gStatus.status = STATUS_INIT;
-//	}
+	gStatus.status = STATUS_INIT;
+
 	
 	// 4. Welcome message display
 	
@@ -121,18 +64,15 @@ void apMain(void)
 	
 	
 	delay(300);
-	gSetCommand(MODBUS_INVERTER , 0x0004, gIParameter.F_Freq, true);
-	gModBus.p500msFlag = 1;
-	gModBus.status = MODBUS_READY;
-	gModBus.mode = MODBUS_MODE_COMMAND;
-	modbusTransmit();
-	gModBus.mode = 0;
+	
 	pre_time = millis();
 	pre_time2 = millis();
 	
-	uartPrintf(_DEF_SERIAL1, "Welcome to Bakery machine \n");
+	uartPrintf(_DEF_SERIAL1, "Welcome to HOTDOG Frier \n");
 	pBeep(3, 0);
 	gStatus.mainLoop = 1;
+	P24RELAY = 1;
+	//P6OUT |= 0x10;
 	while(1)
 	{
 	    /* WDT reset */
@@ -140,14 +80,7 @@ void apMain(void)
 #if(_USE_TEMP_SENSOR == PT100)
 		updateSpi();
 #endif
-		/*if((gModBus.status == MODBUS_RECEIVE) && (millis() - gModBus.pre_time >= 100))
-		{
-			gModBus.status = MODBUS_READY;
-			if(++gModBus.no >= MAX_485_CH){
-				gModBus.no = MODBUS_INVERTER;
-				if(++gModBus.mode >= MODBUS_MODE_END)gModBus.mode = MODBUS_MODE_COMMAND;
-			}
-		}*/
+	
 		adc0Read();
 		pLocKeyRead();
 		pLocKeyProcess();
@@ -168,9 +101,9 @@ void apMain(void)
 				gStatus.OldStart = gStatus.Start;
 			}
 			if(ssrUpdate() == 1){
-				pData[0] = gStatus.Heater_Bottom.Temp;
-				pData[1] = (uint16_t)SSR_BOTTOM.PID.integral;
-				pData[2] = SSR_BOTTOM.PID.value;
+				pData[0] = gStatus.KSensor_Top.Temp;
+				pData[1] = (uint16_t)SSR.PID.integral;
+				pData[2] = SSR.PID.value;
 				transInformation((uint16_t *)pData);
 			}
 		
@@ -180,23 +113,8 @@ void apMain(void)
 		{
 			if(gModBus.p500msFlag == 1)
 			{
-				gModBus.no = MODBUS_INVERTER;
-				if(pNo == 0)
-				{
-					gModBus.mode = MODBUS_MODE_ERROR;
-					modbusTransmit();
-					pNo = 1;
-				}
-				else
-				{
-					if(gInverterStatus.bit.stop == 0){
-						gSetCommand(MODBUS_INVERTER, 0x0005, 1, 1);
-						gModBus.mode = MODBUS_MODE_COMMAND;
-						modbusTransmit();
-					}
-					pNo = 0;
-				}
-				gModBus.status = 0;
+				modbusTransmit();
+			
 			}
 		}
 		if(cFlag)
@@ -204,9 +122,10 @@ void apMain(void)
 			cFlag = 0;
 			gSetStatus();
 
-//			uartPrintf(_DEF_SERIAL1,"%d ",(gStatus.Heater_Top.Temp/100));
-//			uartPrintf(_DEF_SERIAL1,"%d \n",(gStatus.Heater_Bottom.Temp/100));
+//			uartPrintf(_DEF_SERIAL1,"%d ",(gStatus.KSensor_Top.Temp/100));
+//			uartPrintf(_DEF_SERIAL1,"%d \n",(gStatus.KSensor_Bottom.Temp/100));
 		}
+		gMotorCheck();
 		gEmgKeyScan();
 		pLcd_UpdateDisplay();
 		pLcd_Init_Seq();
