@@ -19,8 +19,8 @@ static uint8_t is_init = 0;
 extern uint16_t gGetPwmValue(void);
 const uint16_t EEP_HEAT_ParaTBL[][3]={ 
 	{10000,	35000,	18000},		/* P0	FP0	TEMP1*/
-	{0,	 60,	  25},	/* 3 Warmup Time */
-	{10000,	 32000,	  30000},	/* 3 Warmup Temp */
+//	{0,	 60,	  25},	/* 3 Warmup Time */
+//	{10000,	 32000,	  30000},	/* 3 Warmup Temp */
 };
 const uint16_t EEP_Inverter_ParaTBL[][3]={ 
 	{30,	100,	80},			/* P0	FP0	Foward Frequency */

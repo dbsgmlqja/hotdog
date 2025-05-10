@@ -10,8 +10,7 @@ typedef struct{
 }_TempArr;
 void MAX6675_Init(void);
 void readTemperature(void);
-int pidControlTop(void);
-int pidControlBottom(void);
+int pidControl(void);
 void gSetStatus(void);
 void pSetTemperature(void);
 #endif

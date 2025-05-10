@@ -48,11 +48,16 @@ const char LCD_DEBUG_CODE[][COLUMN_MAX]={
 
 const char LCD_MAIN0[][COLUMN_MAX] = {
 	//0   1   2   3   4   5    6   7   8   9   0   1   2   3   4   5
-	{'S',' ',' ',' ',' ',0xDF,'C',' ',' ',' ',' ',' ',' ',' ',' ','R'},
+	{'S',' ',' ',' ',' ',0xDF,'C',' ',' ','R',' ',' ',' ',' ',' ',' '},
 	{"                "},
 	{"SSR1 : xxx.xV[ ]"},
 };
-
+const char LCD_MAIN1[][COLUMN_MAX] = {
+	//0   1   2   3   4   5    6   7   8   9   0   1   2   3   4   5
+	{'W','A','R','M','-','U','P',' ',' ','R',' ',' ',' ',' ',' ',' '},
+	{"                "},
+	{"SSR1 : xxx.xV[ ]"},
+};
 const char EMG_DISPLAY[][COLUMN_MAX]={
 	//0123456789012345
 //	 "   EMERGENCY    ",

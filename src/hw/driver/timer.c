@@ -86,7 +86,6 @@ void p500msHandlingTimer(void)
 		}
 	}
 }
-static uint16_t pDispVar;
 void p1msTimer(void)
 {
 	uint32_t pTime,pTime2,s1end,s2end;
@@ -104,28 +103,32 @@ void p1msTimer(void)
 			if(gWarmupTimer < pTime){
 				if(gStatus.status == STATUS_IDLE){
 					gWarmupTimer++;
-					if(gStatus.warmupArrived == 1)
+					if(gStatus.warmupArrived == 0)
 					{
 						tempDiff = (gParameter.WarmupTemp - gParameter.Temperature) / 3;
 						pTime2 = gWarmupTimer - gStatus.warmupTimer;
-						s1end = gStatus.warmupTimer + (pTime - gWarmupTimer) / 3;
-						s2end = gStatus.warmupTimer + (pTime - gWarmupTimer) * 2 / 3;
-						if(gWarmupTimer < s1end) gStatus.Comp = gParameter.WarmupTemp - tempDiff;
-						else if(gWarmupTimer < s2end)gStatus.Comp = gParameter.WarmupTemp - tempDiff * 2;
-						else gStatus.Comp = gParameter.WarmupTemp - tempDiff * 3;
+						s1end = pTime / 3;
+						s2end = pTime * 2 / 3;
+						if(gWarmupTimer < s1end) gStatus.Comp = gParameter.WarmupTemp;
+						else if(gWarmupTimer < s2end)gStatus.Comp = gParameter.WarmupTemp - tempDiff;
+						else gStatus.Comp = gParameter.WarmupTemp - tempDiff * 2;
 					}
+				}
+				else if(gStatus.status > STATUS_IDLE)
+				{
+					gStatus.warmupComplete = 1;
+					gStatus.Comp = gParameter.Temperature;
 				}
 			}
 			else
 			{
 				gStatus.warmupComplete = 1;
 				gStatus.Comp = gParameter.Temperature;
-				gStatus.status = STATUS_READY;
+				if(gStatus.status == STATUS_IDLE)gStatus.status = STATUS_READY;
 			}
 		}
 		//MotorSpeed
 		pTemp = TM18BC;
-		pDispVar = TM18BC;
 		gMotorSpeed = pTemp * 5;
 		if(MotorStatus.Direction == DIR_REVERSE) gMotorSpeed *= -1;
 		TM18MD1 |= 0x0040;

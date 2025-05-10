@@ -507,13 +507,13 @@ void pLcd_LoadString(uint8_t Line)
 			}
 			break;
 		
-		case LCD_MAIN_HEAT_SET_WARMUP:
+/*		case LCD_MAIN_HEAT_SET_WARMUP:
 			if(Line == 0)	Ptr = (char *)&HEAT_MODE_SUB_TOP[1][0];
 			else	{
 				Ptr = (char *)&WARMUP_MODE_SUB[gDispSub][0];
 
 			}
-			break;
+			break;*/
 		case LCD_MAIN_INV_SET:
 			if(Line == 0)	Ptr = (char *)&MAIN_MENU_TOP[gDispMode][0];
 			else	{
@@ -540,11 +540,11 @@ void pLcd_LoadString(uint8_t Line)
 			if(Line == 0)	Ptr = (char *)&HEAT_MODE_SUB_TOP[0][0];
 			else			Ptr = (char *)&BLANK[0];
 			break;
-		
+/*		
 		case LCD_MAIN_HEAT_SET_WARMUP_SUB:
 			if(Line == 0)	Ptr = (char *)&HEAT_WARMUP_SUB_TOP[gDispParameter.prev_sub][0];
 			else			Ptr = (char *)&BLANK[0];
-			break;
+			break;*/
 		case LCD_MAIN_INV_SET_SUB:
 			if(Line == 0)	Ptr = (char *)&INV_MODE_SUB_TOP[gDispSub][0];
 			else			Ptr = (char *)&BLANK[0];
@@ -666,12 +666,19 @@ void pLcd_LoadString(uint8_t Line)
 				switch(gDispSub)
 				{
 					case LCD_MAIN_STATUS_0:
-						for(i=0;i!=16;i++)Arr[i] = LCD_MAIN0[0][i];
-						pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.Comp/100, (char *)&Arr[2]);
+						/*if((gStatus.status > STATUS_INIT) && (gStatus.warmupComplete == 0))
+						{
+							for(i=0;i!=16;i++)Arr[i] = LCD_MAIN1[0][i];
+						}
+						else
+						{*/
+							for(i=0;i!=16;i++)Arr[i] = LCD_MAIN0[0][i];
+							pLcd_DisplayShort_Format(FORMAT_xxx, gParameter.Temperature/100, (char *)&Arr[2]);
+						//}
 						if(gMotorSpeed >= 0)pTemp = gMotorSpeed;
 						else pTemp = gMotorSpeed * -1;
-						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp, (char *)&Arr[9]);
-						if(gMotorSpeed < 0)Arr[8] = '-';
+						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp, (char *)&Arr[11]);
+						if(gMotorSpeed < 0)Arr[10] = '-';
 						//SSR1, SSR2 동작 표시
 						if((SSR.output == 1) && (SSR.outVoltage > 0))Arr[7] = '*';
 						else Arr[7] = ' ';
@@ -753,14 +760,14 @@ void pLcd_LoadString(uint8_t Line)
 				break;
 			}
 			break;
-		case LCD_MAIN_HEAT_SET_WARMUP_SUB:
+/*		case LCD_MAIN_HEAT_SET_WARMUP_SUB:
 			if(Line == 1){
 				if(gDispParameter.prev_sub == 0)pLcd_DisplayShort_Format(FORMAT_xxx,gDispParameter.Value,(char *)&gLCD_Line[4]);
 				else pLcd_DisplayShort_Format(FORMAT10_xxxPxx,gDispParameter.Value,(char *)&gLCD_Line[4]);
 				for(i=0;i!=5;i++)	gLCD_Line[10+i]=UNIT_HEAT[gDispParameter.prev_sub + 5][i];
 				break;
 			}
-			break;
+			break;*/
 		case LCD_MAIN_INV_SET_SUB:
 			if(Line == 1){
 				if(gDispSub == LCD_SUB_INV_DIR)

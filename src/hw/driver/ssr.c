@@ -43,9 +43,10 @@ uint8_t ssrUpdate(void)
 					gStatus.KSensor_Top.rechTarget = 0;
 				}
 			}
-			gStatus.KSensor_Top.Prev_Temp = gStatus.KSensor_Top.Temp;
-			SSR.PID.value = pidControlTop();
-			
+			compare = gStatus.Comp * 1.05;
+			if(gStatus.KSensor_Bottom.Temp > compare)SSR.PID.value = 0;
+			else SSR.PID.value = pidControl();
+			if(SSR.PID.value >= 420)SSR.PID.integral = 0;
 			if(SSR.output == 1)	gSetCommand(0x0000, SSR.PID.value, 1);
 			else gSetCommand(0x0002, 1, 1);
 			ret = 1;

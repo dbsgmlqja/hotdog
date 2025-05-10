@@ -307,7 +307,7 @@ void gHeaterKeyScan(void)
 				if(gStatus.status != STATUS_ERR)
 				{
 					if(gStatus.status == STATUS_INIT){
-						pVar1 = gStatus.Comp * 0.8;
+						pVar1 = gStatus.Comp * 0.9;
 						if((gStatus.warmupComplete == 0) || (pVar1 > gStatus.KSensor_Top.Temp) || (pVar1 > gStatus.KSensor_Bottom.Temp))	gStatus.status = STATUS_IDLE;
 						else gStatus.status = STATUS_READY;
 						SSR.PID.integral = 0;
@@ -590,13 +590,13 @@ void pLKey_Set(void)
 	}
 	else if(gDispMode == LCD_MAIN_HEAT_SET){
 		pBeep(1,0);
-		if(gDispSub == LCD_SUB_HEAT_WARMUP)
+		/*if(gDispSub == LCD_SUB_HEAT_WARMUP)
 		{
 			gDispMode = LCD_MAIN_HEAT_SET_WARMUP;
 			gDispSub = LCD_SUB_HEAT_TEMPERATURE;
 		}
 		else
-		{
+		{*/
 			gDispMode = LCD_MAIN_HEAT_SET_TOP_SUB;
 			gDispSub = LCD_SUB_HEAT_TEMPERATURE;
 			Ptr16 = (uint16_t *)&gParameter;
@@ -606,7 +606,7 @@ void pLKey_Set(void)
 			gDispParameter.Min = EEP_HEAT_ParaTBL[0][0];
 			gDispParameter.Max = EEP_HEAT_ParaTBL[0][1];
 			
-		}
+//		}
 		/*gDispMode = LCD_MAIN_HEAT_SET_SUB;
 
 		
@@ -623,7 +623,7 @@ void pLKey_Set(void)
 //		gDispMode = LCD_MAIN_HEAT_SET_SUB;
 		gDisplay.Lines = TOP_LINE | BTM_LINE;
 	}
-	else if(gDispMode == LCD_MAIN_HEAT_SET_WARMUP)
+/*	else if(gDispMode == LCD_MAIN_HEAT_SET_WARMUP)
 	{
 		gDispParameter.prev_sub = gDispSub;
 		gDispMode = LCD_MAIN_HEAT_SET_WARMUP_SUB;
@@ -636,7 +636,7 @@ void pLKey_Set(void)
 		gDispParameter.Max = EEP_HEAT_ParaTBL[gDispParameter.prev_sub+1][1];
 		gDisplay.Request = DISPLAY_REQUEST_ON;
 		gDisplay.Lines = TOP_LINE | BTM_LINE;
-	}
+	}*/
 	else if(gDispMode == LCD_MAIN_INV_SET){
 		pBeep(1,0);
 		gDispMode = LCD_MAIN_INV_SET_SUB;
@@ -669,6 +669,7 @@ void pLKey_Set(void)
 		gDispMode = LCD_MAIN_HEAT_SET;
 		gDisplay.Lines = TOP_LINE | BTM_LINE;
 	}
+#if 0
 	else if(gDispMode == LCD_MAIN_HEAT_SET_WARMUP_SUB)
 	{
 		pBeep(1,0);
@@ -693,6 +694,7 @@ void pLKey_Set(void)
 		gDispSub = gDispParameter.prev_sub;
 		gDisplay.Lines = TOP_LINE | BTM_LINE;
 	}
+#endif	
 	else if(gDispMode == LCD_MAIN_INV_SET_SUB){
 		pBeep(1,0);
 		/* Parameter Save */
@@ -796,13 +798,13 @@ void pLKey_Up(void)
 			gDisplay.Lines |= BTM_LINE;
 			pBeep(1,0);
 			break;
-		case LCD_MAIN_HEAT_SET_WARMUP:
+/*		case LCD_MAIN_HEAT_SET_WARMUP:
 			if(++gDispSub >= LCD_SUB_WARMUP_END)	gDispSub = LCD_SUB_WARMUP_TIME;
 			
 			gDisplay.Request = DISPLAY_REQUEST_ON;
 			gDisplay.Lines |= BTM_LINE;
 			pBeep(1,0);
-			break;
+			break;*/
 		case LCD_MAIN_INV_SET:
 			if(++gDispSub >= LCD_SUB_INV_END)		gDispSub = LCD_SUB_INV_F_FREQ;
 			
@@ -820,7 +822,7 @@ void pLKey_Up(void)
 			}
 			if((gKey.RepeatTimer == 0) && (!gKey.RepeatKeyIn))	pBeep(1,0);
 			break;*/
-		case LCD_MAIN_HEAT_SET_WARMUP_SUB:
+		/*case LCD_MAIN_HEAT_SET_WARMUP_SUB:
 			if(gDispParameter.prev_sub == 0)
 			{
 				if(gDispParameter.Value < gDispParameter.Max){
@@ -847,7 +849,7 @@ void pLKey_Up(void)
 				}
 				if((gKey.RepeatTimer) && (!gKey.RepeatKeyIn))	pBeep(1,0);
 			}
-			break;
+			break;*/
 		case LCD_MAIN_HEAT_SET_TOP_SUB:
 			if(gDispParameter.Value <= (gDispParameter.Max - 100)){
 				gDispParameter.Value += 100;
@@ -952,7 +954,7 @@ void pLKey_Down(void)
 			gDisplay.Lines |= BTM_LINE;
 			pBeep(1, 0);
 			break;
-		case LCD_MAIN_HEAT_SET_WARMUP:
+/*		case LCD_MAIN_HEAT_SET_WARMUP:
 			if(gDispSub == LCD_SUB_WARMUP_TIME)	gDispSub = LCD_SUB_WARMUP_END-1;
 			else									gDispSub--;
 			
@@ -960,7 +962,7 @@ void pLKey_Down(void)
 			gDisplay.Request = DISPLAY_REQUEST_ON;
 			gDisplay.Lines |= BTM_LINE;
 			pBeep(1, 0);
-			break;
+			break;*/
 		case LCD_MAIN_INV_SET:
 			if(gDispSub == LCD_SUB_INV_F_FREQ)	gDispSub = LCD_SUB_INV_END - 1;
 			else									gDispSub--;
@@ -970,7 +972,7 @@ void pLKey_Down(void)
 			gDisplay.Lines |= BTM_LINE;
 			pBeep(1, 0);
 			break;
-		case LCD_MAIN_HEAT_SET_WARMUP_SUB:
+		/*case LCD_MAIN_HEAT_SET_WARMUP_SUB:
 			if(gDispParameter.prev_sub == 0)
 			{
 				if(gDispParameter.Value > gDispParameter.Min){
@@ -997,7 +999,7 @@ void pLKey_Down(void)
 				}
 				if((gKey.RepeatTimer) && (!gKey.RepeatKeyIn))	pBeep(1,0);
 			}
-			break;
+			break;*/
 		case LCD_MAIN_HEAT_SET_SUB:
 			
 			//break;

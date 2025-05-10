@@ -54,7 +54,7 @@ Description: WDT overflow
 void int_WDT(void)
 {
 //	gWatchdogSave();
-	
+	systick_ms = 0;
 	while(1){
 		CHIPRSTCTR = 0x01;		/* micom software reset */
 	}
