@@ -1,9 +1,15 @@
 #include "global.h"
 #include "led.h"
 #define	LED1	((*(RB_BTF*)&P9OUT).p3)	//READY LED
-#define	LED2	((*(RB_BTF*)&PCOUT).p4)	//Reverse LED
-#define	LED3	((*(RB_BTF*)&PCOUT).p5)	//Convayor LED
+#if(CUSTOMER == AJUN)
+#define	LED2	((*(RB_BTF*)&PCOUT).p4)	//Convayor LED
+#define	LED3	((*(RB_BTF*)&PCOUT).p5)	//Heater LED
 #define	LED4	((*(RB_BTF*)&PCOUT).p7)	//Heater LED
+#else
+#define	LED2	((*(RB_BTF*)&PCOUT).p5)	//Convayor LED
+#define	LED3	((*(RB_BTF*)&PCOUT).p7)	//Heater LED
+
+#endif
 typedef struct
 {
   uint8_t   on_state;
@@ -14,16 +20,14 @@ led_tbl_t led_tbl[LED_MAX_CH] =
     {0, 1}, // LED1
     {1, 0}, // LED2
     {1, 0}, // LED3
-    {1, 0}, // LED4
 };
 uint8_t ledInit(void)
 {
 	uint8_t i;
 	uint8_t ret = 1;
-	P5DIR |= 0x02;
 	P6DIR |= 0x11;
 	P9DIR |= 0x08;
-	PCDIR |= 0xF0;
+	PCDIR |= 0xB0;
 	for(i=0;i<LED_MAX_CH;i++)ledOff(i);
 	ledOn(LED_READY);
 	return ret;
@@ -41,9 +45,6 @@ void ledOn(uint8_t ch)
 		case _DEF_LED3:
 			LED3 = led_tbl[ch].on_state;
 			break;
-		case _DEF_LED4:
-			LED4 = led_tbl[ch].on_state;
-			break;
 	}
 }
 void ledOff(uint8_t ch)
@@ -58,9 +59,6 @@ void ledOff(uint8_t ch)
 			break;
 		case _DEF_LED3:
 			LED3 = led_tbl[ch].off_state;
-			break;
-		case _DEF_LED4:
-			LED4 = led_tbl[ch].off_state;
 			break;
 	}
 }
@@ -77,9 +75,6 @@ void ledToggle(uint8_t ch)
 		case _DEF_LED3:
 			LED3 ^= 1;
 			break;
-		case _DEF_LED4:
-			LED4 ^= 1;
-			break;
 	}
 }
 void ledStatus(void)
@@ -92,13 +87,11 @@ void ledStatus(void)
 			ledOff(_DEF_LED1);
 			ledOff(_DEF_LED2);
 			ledOff(_DEF_LED3);
-			ledOff(_DEF_LED4);
 		}
 		else{
 			ledOn(_DEF_LED1);
 			ledOn(_DEF_LED2);
 			ledOn(_DEF_LED3);
-			ledOn(_DEF_LED4);
 		}
 	}
 	else{
@@ -107,24 +100,22 @@ void ledStatus(void)
 		{
 			case STATUS_IDLE:
 				led_time = millis() % 1000;
-				if(led_time > 500)ledOn(_DEF_LED4);
-				else ledOff(_DEF_LED4);
+				if(led_time > 500)ledOn(LED_HEATER);
+				else ledOff(LED_HEATER);
 				break;
 			case STATUS_READY:
 			case STATUS_ON:
-				ledOn(_DEF_LED4);
+				ledOn(LED_HEATER);
 				break;
 			case STATUS_ERR:
 				led_time = millis() % 200;
-				if(led_time > 100)ledOn(_DEF_LED4);
-				else ledOff(_DEF_LED4);
+				if(led_time > 100)ledOn(LED_HEATER);
+				else ledOff(LED_HEATER);
 				break;
 			default:
-				ledOff(_DEF_LED4);
+				ledOff(LED_HEATER);
 		}
-		led_time = millis() - gSwitch.AutoPreTime;
 		interval = millis() - gSwitch.InvPreTime;
-		if((led_time > 2000) && (interval > 2000) && (gInverterStatus.bit.stop == 1))ledOff(LED_AM);
 	}
 }
 

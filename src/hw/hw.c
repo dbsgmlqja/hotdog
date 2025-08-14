@@ -58,14 +58,8 @@ void hwInit(void)
 	keyInit();
 	cliInit();
 	pn_EEP_Load();
-#if(_USE_TEMP_SENSOR == RT02)
 	MAX6675_Init();
-#else
-//	HX711_ADC PT100_TOP;
-//	HX711_ADC PT100_BOTTOM;
-	spiInit();
-#endif
-	
+	ssrInit();
 	delay(1000);
 	gDispSub = LCD_MAIN_STATUS_0;
 	gDispMode = LCD_MAIN_INIT;

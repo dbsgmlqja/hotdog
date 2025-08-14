@@ -18,7 +18,6 @@ uint8_t keyObjGetPressed(key_obj_t *p_obj, uint32_t pressed_time);
 uint8_t keyGetPressed(uint8_t ch);
 void gHeaterKeyScan(void);
 void gEmgKeyScan(void);
-void pReverseKeyScan(void);
 void pConvayorKeyScan(void);
 void gKeyScan(void);
 void pLocKeyRead(void);

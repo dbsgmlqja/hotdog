@@ -24,6 +24,7 @@
 #include "modbus.h"
 #include "ssr.h"
 #include "motor.h"
+#include "Pid.h"
 #if (_USE_TEMP_SENSOR == PT100)
 #include "spi.h"
 #endif

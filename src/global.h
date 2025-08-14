@@ -17,6 +17,9 @@
 #ifndef OFF
 #define OFF 0
 #endif
+#define TELECS (1)
+#define AJUN 	(0)
+#define CUSTOMER TELECS
 /**************************************************************/
 /*  Fixed Parameter List                                      */
 /**************************************************************/
@@ -143,8 +146,7 @@ enum{
 	DIR_END
 };
 enum{
-	LCD_SUB_INV_F_FREQ,
-	LCD_SUB_INV_R_FREQ,
+	LCD_SUB_INV_FREQ,
 	LCD_SUB_INV_DIR,
 	LCD_SUB_INV_END
 };
@@ -173,9 +175,6 @@ enum{
 /*===================================================================*/
 typedef struct{
 	uint16_t Temperature;
-//	uint16_t Time;
-	uint16_t WarmupTime;
-	uint16_t WarmupTemp;
 }_Parameter;
 typedef struct{
 	uint16_t Temp1;
@@ -194,8 +193,6 @@ typedef struct{
 	uint8_t OldStart;
 	uint8_t Start;
 	uint8_t mainLoop;
-	uint8_t warmupComplete;
-	uint8_t warmupArrived;
 	uint8_t status;
 	uint8_t oldstatus;
 	uint16_t OpTime;
@@ -204,8 +201,6 @@ typedef struct{
 	uint16_t Temp1;
 	uint16_t Temp2;
 	uint32_t pre_time;
-	uint32_t warmupTimer;
-	
 	_KSensor KSensor_Top;
 	_KSensor KSensor_Bottom;
 	
@@ -292,7 +287,12 @@ typedef struct{
 	uint32_t rxTime;
 	uint32_t txTime;
 }USART_User_InitTypeDef;
-
+typedef struct{
+	
+	uint8_t Enable;
+	uint32_t startTime;
+	uint8_t State;
+}_Buzzer;
 typedef struct{
 	uint8_t p500msFlag;
 	uint8_t no;
@@ -330,39 +330,19 @@ typedef struct{
 }_Key;
 typedef struct{
 	uint32_t InvPreTime;
-	uint32_t ReversePreTime;
 	uint32_t HeaterPreTime;
-	uint32_t Motor1PreTime;
-	uint32_t Motor2PreTime;
-	uint32_t AutoPreTime;
 }_Switch;
 typedef struct{
-	uint16_t P;
-	uint16_t I;
-	uint16_t D;
-	uint16_t value;
-	double prev_error;
-	double integral;
-}_PID;
-typedef struct{
-	uint16_t F_Freq;
-	uint16_t R_Freq;
+	uint16_t Freq;
 	uint16_t Dir;
 }_IParameter;
-typedef struct{
-	uint8_t Direction;
-	uint8_t FDirection;
-	uint8_t RDirection;
-}_MotorStatus;
 typedef struct{
 	uint8_t error;
 	uint8_t output;
 	uint16_t voltage;
 	uint16_t outVoltage;
 	uint16_t temperature;
-	_PID PID;
 }_SSR;
-EXT _MotorStatus MotorStatus;
 EXT _Error gError;
 EXT _Switch gSwitch;
 EXT _InverterError gInverterError;
@@ -376,7 +356,7 @@ EXT _Parameter gParameter;
 EXT _IParameter gIParameter;
 EXT _Para gDispParameter;
 EXT _Disp gDisplay;
-
+EXT _Buzzer gBuzzer;
 EXT _SSR SSR;
 EXT _DebugVar gDebugVar;
 //EXT _Status Status;
@@ -393,6 +373,7 @@ EXT uint8_t gLCD_Refresh_Timer,gLCD_Mode_Backup,gLCD_Update_Req;
 EXT uint8_t gLCD_Line[16];
 EXT uint8_t gDispMode;
 EXT uint8_t gDispSub;
+EXT uint8_t gMotorDirection;
 EXT uint8_t gSSR1Error,gSSR2Error;
 //Key Variable
 EXT uint8_t gKeyScanFlag;
@@ -408,7 +389,7 @@ EXT uint8_t gEEP_InitMode;
 /*===================================================================*/
 EXT uint16_t gWorkFreq,gSSR1output, gSSR2output;
 EXT uint16_t gSaveDisplayTimer;
-EXT uint16_t gWorkPWM, gSetPWM,gNowPWM,gFW_PWM,gRV_PWM;
+EXT uint16_t gWorkPWM, gSetPWM,gNowPWM,gFW_PWM;
 EXT uint16_t gFreqCounter;
 EXT short gMotorSpeed;
 /*===================================================================*/

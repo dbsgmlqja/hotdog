@@ -5,4 +5,7 @@
 
 void buzzerInit(void);
 void pBeep(uint8_t Cnt,uint8_t sl);
+
+void buzzer_start(void);
+void buzzer_stop(void);
 #endif

@@ -3,10 +3,10 @@
 	ProjSeries="103S"
 	ProjName="DF05_Hotdog"
 	ProjDir="D:\Firmware\DF05K\HOTDOG\DF\"
-	MaxFileId="117"
+	MaxFileId="119"
 	ProjectInitializing="1"
-	ProjId="4"
-	TimeStamp="0x6815a2fe"
+	ProjId="1"
+	TimeStamp="0x6815ab42"
 	BuiltInCCName="CC103S.EXE"
 	BuiltInAsmName="AS103S.EXE"
 	BuiltInLinkName="LD103S.EXE"
@@ -694,11 +694,30 @@ ODB_OCD_TYPE     : 1;"
 				Encode=""
 				LineEnd=""
 			/>
+			<118
+				FolderID="28"
+				BldTarget="true"
+				ViewFlag=""
+				FileName="Pid.c"
+				FilePath="..\src\hw\driver\"
+				Encode=""
+				LineEnd=""
+				FileType="c"
+			/>
+			<119
+				FolderID="26"
+				BldTarget=""
+				ViewFlag=""
+				FileName="Pid.h"
+				FilePath="..\src\common\hw\include\"
+				Encode=""
+				LineEnd=""
+			/>
 		</SrcFileList>
 		<MakeFileList
 			MaxId="1"
 			CurMakefileId="1"
-			CurMakefileKey="137245052"
+			CurMakefileKey="127330300"
 			TargetType="ODB"
 			CpuType="103DF05K"
 			CoreType="103S"
@@ -753,6 +772,7 @@ hx711.c
 spi.c
 motor.c
 modbus.c
+Pid.c
 "
 				FlagAutoBuild="True"
 				FlagSrcTimeStampCheck="False"

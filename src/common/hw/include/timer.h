@@ -5,5 +5,6 @@
 
 void timerInit(void);
 void p1msTimer(void);
+
 #endif
 

@@ -117,16 +117,12 @@ const char WARMUP_MODE_SUB[][COLUMN_MAX]={
 };
 const char INV_MODE_SUB_TOP[][COLUMN_MAX]={
 	//0123456789012345
-	{"*FORWARD SPEED *"},
-//	{"* FOWARD SPEED *"},
-	{"*REVERSE SPEED *"},
+	{"* MOTOR SPEED  *"},
 	{"* MOTOR DIR    *"},
 };
 const char INV_MODE_SUB[][COLUMN_MAX]={
 	//0123456789012345
-	{" Forward Speed  "},
-//	{"  Foward Speed  "},
-	{" Reverse Speed  "},
+	{" Motor Speed    "},
 	{" Motor Dir      "},
 };
 
@@ -143,12 +139,6 @@ const char FAULT_MODE_SUB[][COLUMN_MAX]={
 };
 
 
-const char OPTION_MODE_SUB[][COLUMN_MAX]={
-	//0123456789012345
-	{"  Encoder       "},
-	{"  Limit Switch  "},
-	{" Encoder + Limit"},
-};
 
 //@150423 By Bang
 const char FACTORY_MODE_SUB[][COLUMN_MAX]={
@@ -158,12 +148,6 @@ const char FACTORY_MODE_SUB[][COLUMN_MAX]={
 	
 };
 
-//@090826
-const char POS_INIT_MODE_SUB[][COLUMN_MAX]={
-	//0123456789012345
-	{"Pos. Initialize "},
-	{"Pos.Initializing"},
-};
 const char UNIT_HEAT[][6]={
 //0123456789012345
 	{'[',0xDF,'C',']',' ',0x0A},	/*ACC TIME*/
@@ -179,48 +163,8 @@ const char UNIT[][6]={
 	"[%]  ",	/*ACC TIME*/
 	"[%]  ",	/*DEC TIME*/
 	"     ",	/*TORQUE*/
-	"[HZ] ",	/*UP FREQ*/
-	"[HZ] ",	/*DOWN FREQ*/
-	"[SEC]",	/*ULS TIME*/
-	"[%]  ",	/*UP TORQUE*/
-	"[%]  ",	/*DOWN TORQUE*/
-	"[%]  ",	/*OVER LOAD*/
-	"[HP] ",	/*OVER CURR */
-	"[%]  ",	/*OVER VOLT*/
-	"[%]  ",	/*UNDER VOLT*/
-	"[%]  ",	/*BREAK VOLT*/
-	"[HZ] ",	/* STOP FREQ*/
-	"[pls]",  /*Half Position*/
-	"[%]  ",  /*SS SKIP*/
-	"[SEC]",  /*HSENS TIMEOUT*/
-	"[SEC]",  /*LSENS TIMEOUT*/
-	"     ",  /*MOTOR Direction*/
-	"     ",  /*Encoder Phase */
-	"[pls]",  /*Encoder Brake*/
-	"     ",  /*SS SELECT*/
-	"[S]  ",  /*AIR CURTAIN time*/
-	"     ",  /*PRESS SELECT*/
-	"[HZ] ",	/* FREQ*/
 };
 
-#if 0
-const char LOCK_MODE_SUB[][COLUMN_MAX]={
-	//0123456789012345
-	{" INTERLOCK OFF  "},
-};
-#endif
-
-//@150423 By Bang
-const char FACTORY_MODE_TOP[][COLUMN_MAX]={
-	//0123456789012345
-	{"* FACTORY MODE *"},
-	{"* MODEL NO.    *"},
-	
-};
-const char POWER_FAIL_TOP[][COLUMN_MAX]={
-	{" All Data Saved "},
-	{" Power Off      "},
-};
 const char INI_MODE_SUB[][COLUMN_MAX]={
 	//0123456789012345
 	{"  Fault List    "},
@@ -363,29 +307,10 @@ const char LCD_SAVEMODE[][COLUMN_MAX]={
 	Error_Over_Current,
 #endif
 
-const char ERRMSG_LIST[][COLUMN_MAX]={
-	//0123456789012345
-	{" -No Error !    "},
-	{" -Under Voltage "},
-	{" -Over Voltage  "},
-	{" -Over Temp.    "},
-	{" -Over Load     "},
-	{" -Timeout Error "},
-	{" -Over Current  "},
-	{" -Input Error   "},
-	{" -Brake Error   "},
-	{" -IGBT Fault    "}, //@171014
-	{" -Over Load 2   "},	//@180224
-	{" -Encoder Error "},	//@210604
-	{" -Motor Overheat"},	//@210604
-	{" -Door Fell     "},	//@210604
-};
-
 
 const char INVERTER_OP[][COLUMN_MAX] = {
 	//0123456789012345
-	{"FOWARD DIR      "},
-	{"BACKWARD DIR    "},
+	{"MOTOR RUNNING   "},
 	{"MOTOR STOP      "}
 };
 const char SystemLockFault[COLUMN_MAX] =

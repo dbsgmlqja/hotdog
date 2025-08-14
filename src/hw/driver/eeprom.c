@@ -17,14 +17,12 @@ void cliEeprom(cli_args_t *args);
 static uint8_t gTest;
 static uint8_t is_init = 0;
 extern uint16_t gGetPwmValue(void);
+extern void directionControl(uint8_t state);
 const uint16_t EEP_HEAT_ParaTBL[][3]={ 
-	{10000,	35000,	18000},		/* P0	FP0	TEMP1*/
-//	{0,	 60,	  25},	/* 3 Warmup Time */
-//	{10000,	 32000,	  30000},	/* 3 Warmup Temp */
+	{10000,	18000,	16500},		/* P0	FP0	TEMP1*/
 };
 const uint16_t EEP_Inverter_ParaTBL[][3]={ 
 	{30,	100,	80},			/* P0	FP0	Foward Frequency */
-	{30,	100,	70},			/* P1	FP1	Reverse Frequncy */
 	{ 0,	  1,	 1},
 };
 const uint8_t EEP_ERASE_DATA[16] = {
@@ -252,34 +250,18 @@ void pn_Load_Parameters(void)
 {
 	uint8_t index;
 	uint16_t *Ptr;
-	uint16_t var;
 	
 	Ptr = (uint16_t *)&gParameter;
 	gDispParameter.Value = *Ptr;
 	
 	gDispParameter.Min = EEP_HEAT_ParaTBL[index][0];
 	gDispParameter.Max = EEP_HEAT_ParaTBL[index][1];
-	if(gParameter.WarmupTime > 0)
-	{
-		gStatus.Comp = gParameter.WarmupTemp;
-	}
-	else
-	{
-		gStatus.Comp = gParameter.Temperature;
-	}
-	var = gGetPwmValue();
-	gFW_PWM = (var * gIParameter.F_Freq / 100) - 1;
-	gRV_PWM = (var * gIParameter.R_Freq / 100) - 1;
-	if(gIParameter.Dir == 0)
-	{
-		MotorStatus.FDirection = 1;
-		MotorStatus.RDirection = 0;
-	}
-	else
-	{
-		MotorStatus.FDirection = 0;
-		MotorStatus.RDirection = 1;
-	}
+	
+	gStatus.Comp = gParameter.Temperature;
+	
+	gFW_PWM = (4500 * gIParameter.Freq / 100);
+	gMotorDirection = (uint8_t)gIParameter.Dir;
+	directionControl(gMotorDirection);
 }
 
 void pn_EEP_Init_Parameters(void){

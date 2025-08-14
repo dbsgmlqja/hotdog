@@ -1,3 +1,4 @@
+#include "global.h"
 #include "buzzer.h"
 #include "swtimer.h"
 #define	BUZZER	((*(RB_BTF*)&P3OUT).p3)
@@ -11,6 +12,7 @@ void buzzerInit(void)
 {
 	uint8_t bzCH;
 	P3DIR |= 0x08;
+	PCDIR |= 0x80;
 	BUZZER = 0;
 	bzCH = swTimerGetHandle();
 	swtimerSet(bzCH, 500, 1, buzzerISR, NULL);
@@ -67,4 +69,22 @@ void buzzerShortISR(void *arg)
 			if(bzCntLong == 0)BUZZER = 0;
 		}
 	}
+	
+}
+#if(CUSTOMER == AJUN)
+#define SBIT 7
+#else
+#define SBIT 4
+#endif
+// 부저 활성화/비활성화 함수
+void buzzer_start(void)
+{
+    PCOUT |= (1 << SBIT);
+}
+
+void buzzer_stop(void)
+{
+    PCOUT &= ~(1 << SBIT);
+//    PCOUT &= ~(1 << 7);
+//    buzzerState = 0;
 }

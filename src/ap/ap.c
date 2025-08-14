@@ -101,9 +101,7 @@ void apMain(void)
 				gStatus.OldStart = gStatus.Start;
 			}
 			if(ssrUpdate() == 1){
-				pData[0] = gStatus.KSensor_Bottom.Temp;
-				pData[1] = (uint16_t)SSR.PID.integral;
-				pData[2] = SSR.PID.value;
+				getSSRData(pData);
 				transInformation((uint16_t *)pData);
 			}
 		

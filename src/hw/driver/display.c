@@ -230,16 +230,35 @@ void pLcd_DisplayShort_Format(uint8_t Format,uint16_t Val,char *Ptr)
 		//@150508 by Bang
 		case FORMAT_xxxx:
 			Data = Value/10000 + 0x30;
-			*Ptr++ = Data;
+			if(Data == 0x30) *Ptr++ = 0x20;
+			else{
+				IsZero = 0;
+				*Ptr++ = Data;
+			}
 			Value %= 10000;
 			Data = Value/1000 + 0x30;
-			*Ptr++ = Data;
+			if(Data == 0x30){
+				if(IsZero) *Ptr++ = ' ';
+				else *Ptr++ = Data;
+				
+			}
+			else *Ptr++ = Data;
 			Value %= 1000;
 			Data = Value/100 + 0x30;
-			*Ptr++ = Data;
+			if(Data == 0x30){
+				if(IsZero) *Ptr++ = ' ';
+				else *Ptr++ = Data;
+				
+			}
+			else *Ptr++ = Data;
 			Value %= 100;
 			Data = Value/10 + 0x30;
-			*Ptr++ = Data;
+			if(Data == 0x30){
+				if(IsZero) *Ptr++ = ' ';
+				else *Ptr++ = Data;
+				
+			}
+			else *Ptr++ = Data;
 			Value %= 10;
 			*Ptr++ = Value + 0x30;
 			break;
@@ -675,19 +694,17 @@ void pLcd_LoadString(uint8_t Line)
 							for(i=0;i!=16;i++)Arr[i] = LCD_MAIN0[0][i];
 							pLcd_DisplayShort_Format(FORMAT_xxx, gParameter.Temperature/100, (char *)&Arr[2]);
 						//}
-						if(gMotorSpeed >= 0)pTemp = gMotorSpeed;
-						else pTemp = gMotorSpeed * -1;
+						pTemp = gMotorSpeed * 10 / 721
+							;
 						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp, (char *)&Arr[11]);
-						if(gMotorSpeed < 0)Arr[10] = '-';
 						//SSR1, SSR2 동작 표시
 						if((SSR.output == 1) && (SSR.outVoltage > 0))Arr[7] = '*';
 						else Arr[7] = ' ';
 						Ptr = (int8_t *)&Arr[0];
 						break;
 					case LCD_MAIN_STATUS_1:
-						if(gMotorStatus == MOTOR_OFF)i = 2;
-						else if(MotorStatus.Direction == DIR_FORWARD)i = 0;
-						else i = 1;
+						if(gMotorStatus == MOTOR_OFF)i = 1;
+						else i = 0;
 						
 						Ptr = (int8_t *)&INVERTER_OP[i][0];
 						break;
@@ -727,11 +744,10 @@ void pLcd_LoadString(uint8_t Line)
 						break;
 
 					case LCD_MAIN_STATUS_1:		/* Inverter Information */
-						if(gMotorSpeed >= 0)pTemp = gMotorSpeed;
-						else pTemp = gMotorSpeed * -1;
+						pTemp = gMotorSpeed * 10 / 721;
+						
 							
 						pLcd_DisplayShort_Format(FORMAT10_xxxPx,pTemp,(char *)&gLCD_Line[8]);
-						if(gMotorSpeed < 0)gLCD_Line[7] = '-';
 						break;
 
 					case LCD_MAIN_STATUS_2:	

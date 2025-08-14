@@ -3,9 +3,28 @@
 #include "modbus.h"
 #include "MAX6675.h"
 #include "gpio.h"
+#include "Pid.h"
 #define FAN_TEMPERATURE 50
 #define FAN_OUT ((*(RB_BTF*)&P8OUT).p3)
+
+static _PIDS SSR_PID;
+
+extern void buzzer_start(void);
+extern void buzzer_stop(void);
 extern void pStoreErrorMessage(uint8_t Msg);
+void ssrInit(void)
+{
+	SSR_PID.P = 21.0;
+	SSR_PID.I = 0.35;
+	SSR_PID.D = 1.0;
+	SSR_PID.basicLevel = 420;
+	SSR_PID.measurepoint = gStatus.KSensor_Bottom.Temp;
+	SSR_PID.setpoint = gStatus.Comp;
+	if(gStatus.KSensor_Bottom.Temp > 12000)
+	{
+		SSR_PID.integral = (gStatus.KSensor_Bottom.Temp / 44);
+	}
+}
 void ssrOn(void)
 {
 	gSetCommand(0x0002, 1, 1);
@@ -44,10 +63,11 @@ uint8_t ssrUpdate(void)
 				}
 			}
 			compare = gStatus.Comp * 1.05;
-			if(gStatus.KSensor_Bottom.Temp > compare)SSR.PID.value = 0;
-			else SSR.PID.value = pidControl();
-			if(SSR.PID.value >= 420)SSR.PID.integral = 0;
-			if(SSR.output == 1)	gSetCommand(0x0000, SSR.PID.value, 1);
+			SSR_PID.measurepoint = gStatus.KSensor_Bottom.Temp;
+			if(gStatus.KSensor_Bottom.Temp > compare)SSR_PID.value = 0;
+			else getPidControl(&SSR_PID);//SSR.PID.value = pidControl();
+			if(SSR_PID.value >= 420)SSR_PID.integral = 0;
+			if(SSR.output == 1)	gSetCommand(0x0000, SSR_PID.value, 1);
 			else gSetCommand(0x0002, 1, 1);
 			ret = 1;
 		}
@@ -58,7 +78,7 @@ uint8_t ssrUpdate(void)
 		
 		if(gFan == 1)
 		{
-			if(pTemperature < FAN_TEMPERATURE)
+			if(pTemperature < (FAN_TEMPERATURE - 5))
 			{
 				gFan = 0;
 				ssrControl(SSR_FAN, gFan);
@@ -82,9 +102,22 @@ uint8_t ssrUpdate(void)
 		if(error1 > 10){
 			gError.bit.ssrError = 1;
 			error1 = 0;
+			buzzer_start();
 			ssrControl(SSR_FAN, gFan);
 			pStoreErrorMessage(Error_SSR_HW_ERROR);
 		}
 	}
 	return ret;
+}
+void pidPrameterReset(void)
+{
+	SSR_PID.integral = 0;
+	SSR_PID.prev_error = 0;
+}
+
+void getSSRData(uint16_t *data)
+{
+	data[0] = gStatus.KSensor_Bottom.Temp;
+	data[1] = (uint16_t)SSR_PID.integral;
+	data[2] = SSR_PID.value;
 }

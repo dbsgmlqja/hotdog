@@ -5,11 +5,19 @@
 #include "modbus.h"
 #include "gpio.h"
 #include "ssr.h"
+#if(CUSTOMER == AJUN)
 #define REVERSE_KEY_IN 	((*(RB_BTF*)&PCIN).p1)
 #define CONVAYOR_KEY_IN ((*(RB_BTF*)&PCIN).p2)
 #define EMG_KEY_IN 		((*(RB_BTF*)&PCIN).p3)
 #define HEATER_KEY_IN	((*(RB_BTF*)&PDIN).p1)
-
+#else
+#define REVERSE_KEY_IN 	((*(RB_BTF*)&PCIN).p1)
+#define CONVAYOR_KEY_IN ((*(RB_BTF*)&PCIN).p2)
+#define EMG_KEY_IN 		((*(RB_BTF*)&PCIN).p3)
+#define HEATER_KEY_IN	((*(RB_BTF*)&PDIN).p1)
+#endif
+extern void buzzer_start(void);
+extern void buzzer_stop(void);
 extern void pLcd_UpdateDisplay(void);
 extern void pBeep(uint8_t Cnt, uint8_t sl);
 extern uint8_t adcCheck(void);
@@ -30,28 +38,25 @@ key_obj_t btn_heater;
 key_obj_t btn_motor;
 key_obj_t btn_motor2;
 key_obj_t btn_am;
-
-const key_tbl_t key_TBL[7] = {
-	{&PCIN, 0x02, 0x00}, 	//reverse
+#if(CUSTOMER == AJUN)
+const key_tbl_t key_TBL[3] = {
+	{&PCIN, 0x02, 0x00},	//convayor
+	{&PCIN, 0x08, 0x08},	//emg
+	{&PCIN, 0x04, 0x00},	//heater
+};
+#else
+const key_tbl_t key_TBL[3] = {
 	{&PCIN, 0x04, 0x00},	//convayor
 	{&PCIN, 0x08, 0x08},	//emg
-	{&PDIN, 0x01, 0x00},	//motor
 	{&PDIN, 0x02, 0x00},	//heater
-	{&P6IN, 0x20, 0x00},	//motor2
-	{&P6IN, 0x02, 0x00},	//AM
 };
+#endif
 void keyInit(void)
 {
-	keyObjCreate(&btn_reverse, _DEF_REVERSE_KEY, 5000);
 	keyObjCreate(&btn_convayor, _DEF_CONVAYOR_KEY, 100);
 	keyObjCreate(&btn_emg, _DEF_EMG_KEY, 1000);
-	keyObjCreate(&btn_motor, _DEF_MOTOR_KEY, 100);
 	keyObjCreate(&btn_heater, _DEF_HEATER_KEY, 1500);
-	keyObjCreate(&btn_motor2, _DEF_MOTOR2_KEY, 100);
-	keyObjCreate(&btn_am, _DEF_AM_KEY, 100);
 	PCIE |= 0x0E;
-	PDIE |= 0x03;
-	P6IE |= 0x22;
 }
 
 void keyObjCreate(key_obj_t *p_obj, uint8_t ch, uint32_t repeat_time)
@@ -121,65 +126,6 @@ uint8_t keyGetPressed(uint8_t ch)
 	}
 	return ret;
 }
-void pReverseKeyScan(void)
-{
-	static uint8_t RevKeyOn = 0;
-	uint8_t KeyIn = 0;
-	
-	if(keyObjGetPressed(&btn_reverse, 60) == true)
-	{
-		if(btn_reverse.state == 2)
-		{
-			if(millis() - btn_convayor.pre_time < 1000)
-			{
-				pBeep(3, 0);
-				return;
-			}
-			btn_reverse.pre_time = millis();
-			if(RevKeyOn == 0)
-			{
-				RevKeyOn = 1;
-				if((gMotorStatus != MOTOR_OFF) && (MotorStatus.Direction == DIR_FORWARD))
-				{
-					pBeep(3, 0);
-					return;
-				}
-				KeyIn = 1;
-				if(gMotorStatus == MOTOR_OFF)
-				{
-					gFreqCounter = 0;
-					MotorStatus.Direction = DIR_REVERSE;
-					directionControl(MotorStatus.RDirection);
-					gMotorTime = millis();
-					gMotorStatus = ACC_ZONE;
-				}
-				ledOn(_DEF_LED2);
-			}
-		}
-	}
-	else
-	{
-		RevKeyOn = 0;
-		if(MotorStatus.Direction == DIR_REVERSE)
-		{
-			if(gMotorStatus == MAX_ZONE)
-			{
-				gFreqCounter = 0;
-				gNowPWM = gWorkPWM;
-				gMotorStatus = DEC_ZONE;
-			}
-			else if(gMotorStatus == MOTOR_OFF)
-			{
-				gWorkPWM = 0;
-			}
-		}
-		if((gError.All == 0) && (gMotorStatus == MOTOR_OFF))ledOff(_DEF_LED2);
-	}
-	
-		
-	if(KeyIn == 0)return;
-	
-}
 void pConvayorKeyScan(void)
 {
 	static uint8_t IncKeyOn = 0;
@@ -193,20 +139,13 @@ void pConvayorKeyScan(void)
 			if(IncKeyOn == 0)
 			{
 				IncKeyOn = 1;
-				if((MotorStatus.Direction == DIR_REVERSE) && (gMotorStatus != MOTOR_OFF))
-				{
-					pBeep(3, 0);
-					return;
-				}
 				switch(gMotorStatus)
 				{
 					case MOTOR_OFF:
 						gFreqCounter = 0;
-						MotorStatus.Direction = DIR_FORWARD;
-						directionControl(MotorStatus.FDirection);
 						gMotorTime = millis();
-						gMotorStatus = ACC_ZONE;
-						ledOn(_DEF_LED3);
+						gMotorStatus = MAX_ZONE;
+						ledOn(LED_CONVAYOR);
 						break;
 					case ACC_ZONE:
 					case DEC_ZONE:
@@ -214,7 +153,7 @@ void pConvayorKeyScan(void)
 						gFreqCounter = 0;
 						gNowPWM = gWorkPWM;
 						gMotorStatus = DEC_ZONE;
-						ledOff(_DEF_LED3);
+						ledOff(LED_CONVAYOR);
 						break;
 				}
 				
@@ -238,12 +177,13 @@ void gEmgKeyScan(void)
 			{
 				StartKeyContinue = 1;
 				gError.bit.EmergencyOn = 1;
+				buzzer_start();
 				errorProccess();
-				ledOff(_DEF_LED4);
-				ledOff(_DEF_LED2);
+				ledOff(LED_HEATER);
+				ledOff(LED_CONVAYOR);
 				if(gMotorStatus != MOTOR_OFF)
 				{
-					ledOff(_DEF_LED3);
+					ledOff(LED_CONVAYOR);
 					gMotorStatus = DEC_ZONE;
 				}
 				if(gStatus.status > STATUS_INIT){
@@ -273,19 +213,19 @@ void gEmgKeyScan(void)
 			StartKeyContinue = 0;
 			if(gError.bit.EmergencyOn){
 				gError.bit.EmergencyOn = 0;
+				ledOff(LED_HEATER);
+				ledOff(LED_CONVAYOR);
+				
 				if(gError.All == 0)
 				{
 					errorRelease();
-					
+					buzzer_stop();
 					/*display reflash*/
 					gDisplay.Request = DISPLAY_REQUEST_ON;
 					gDisplay.Lines = TOP_LINE | BTM_LINE;
 					pLcd_UpdateDisplay();
 					delay(2000);
 					gError.bit.ssrCommError = modbusConnectCheck();
-					ledOff(LED_CONVAYOR);
-					ledOff(LED_MOTOR1);
-					ledOff(LED_MOTOR2);
 				}
 			}
 		}
@@ -295,7 +235,7 @@ void gEmgKeyScan(void)
 void gHeaterKeyScan(void)
 {
 	static uint8_t HeaterKeyOn = 0;
-	uint16_t pVar1,pVar2;
+	uint16_t pVar1;
 	if(keyObjGetPressed(&btn_heater, 60) == true)
 	{
 		if(btn_heater.state == 2)
@@ -307,11 +247,10 @@ void gHeaterKeyScan(void)
 				if(gStatus.status != STATUS_ERR)
 				{
 					if(gStatus.status == STATUS_INIT){
-						pVar1 = gStatus.Comp * 0.9;
-						if((gStatus.warmupComplete == 0) || (pVar1 > gStatus.KSensor_Top.Temp) || (pVar1 > gStatus.KSensor_Bottom.Temp))	gStatus.status = STATUS_IDLE;
+						pVar1 = gStatus.Comp - 500;
+						if(pVar1 > gStatus.KSensor_Bottom.Temp)	gStatus.status = STATUS_IDLE;
 						else gStatus.status = STATUS_READY;
-						SSR.PID.integral = 0;
-						SSR.PID.prev_error = 0;
+						pidPrameterReset();
 						
 						gModBus.no = MODBUS_SSR_TOP;
 						if((gModBus.status > MODBUS_READY) && (gModBus.rxMode == 0xFF)) gModBus.rxMode = gModBus.mode;
@@ -339,7 +278,6 @@ void gKeyScan(void)
 	if(gError.All > 0)return;
 	gHeaterKeyScan();
 	gEmgKeyScan();
-	pReverseKeyScan();
 	pConvayorKeyScan();
 }
 
@@ -535,7 +473,7 @@ void pLKey_Set(void)
 		{
 			if(gError.bit.ssrCommError == 1)
 			{
-				if(modbusConnectCheck() == 1)
+				if(modbusConnectCheck() == 0)
 				{
 					pBeep(2, 0);
 					gReleaseError(0);
@@ -566,7 +504,7 @@ void pLKey_Set(void)
 
 			case LCD_SUB_MAIN_INV:
 				gDispMode = LCD_MAIN_INV_SET;
-				gDispSub = LCD_SUB_INV_F_FREQ;
+				gDispSub = LCD_SUB_INV_FREQ;
 
 				gDisplay.Request = DISPLAY_REQUEST_ON;
 				gDisplay.Lines = TOP_LINE | BTM_LINE;
@@ -661,9 +599,7 @@ void pLKey_Set(void)
 		gParameter.Temperature = gDispParameter.Value;
 		
 		pn_EEP_WriteBytes(0x10, (uint8_t *)&gDispParameter.Value,/* LCD_SUB_INV_END*/2);
-		if(gStatus.warmupComplete == 1){
-			gStatus.Comp = gParameter.Temperature;
-		}
+		gStatus.Comp = gParameter.Temperature;
 		
 		gDisplay.Request = DISPLAY_REQUEST_ON;
 		gDispMode = LCD_MAIN_HEAT_SET;
@@ -705,7 +641,7 @@ void pLKey_Set(void)
 		pn_EEP_WriteBytes(0x30 + gDispSub *2, (uint8_t *)&gDispParameter.Value,/* LCD_SUB_INV_END*/2);
 		
 		pn_Load_Parameters();
-		
+		gMotorTime = millis();
 		gDisplay.Request = DISPLAY_REQUEST_ON;
 		gDispMode = LCD_MAIN_INV_SET;
 		gDisplay.Lines = TOP_LINE | BTM_LINE;
@@ -806,7 +742,7 @@ void pLKey_Up(void)
 			pBeep(1,0);
 			break;*/
 		case LCD_MAIN_INV_SET:
-			if(++gDispSub >= LCD_SUB_INV_END)		gDispSub = LCD_SUB_INV_F_FREQ;
+			if(++gDispSub >= LCD_SUB_INV_END)		gDispSub = LCD_SUB_INV_FREQ;
 			
 			gDisplay.Request = DISPLAY_REQUEST_ON;
 			gDisplay.Lines |= BTM_LINE;
@@ -964,7 +900,7 @@ void pLKey_Down(void)
 			pBeep(1, 0);
 			break;*/
 		case LCD_MAIN_INV_SET:
-			if(gDispSub == LCD_SUB_INV_F_FREQ)	gDispSub = LCD_SUB_INV_END - 1;
+			if(gDispSub == LCD_SUB_INV_FREQ)	gDispSub = LCD_SUB_INV_END - 1;
 			else									gDispSub--;
 			
 

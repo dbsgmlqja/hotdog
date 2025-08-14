@@ -32,7 +32,7 @@
 #define      HW_MCP2515_MAX_CH      1
 
 #define _USE_HW_LED
-#define      HW_LED_MAX_CH          4
+#define      HW_LED_MAX_CH          3
 
 #define _USE_HW_BOTTOM_HEATER
 
