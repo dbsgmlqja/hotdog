@@ -29,22 +29,6 @@ const char LCD_LOAD[][COLUMN_MAX]={
 	{" RECEIVING DATA "},
 };
 
-const char LCD_DEBUG_KEY[][COLUMN_MAX]={
-	//Welcome to
-	//Door System
-	//0123456789012345
-	{"KEY ADC0 : xxx  "},
-	{"KEY ADC1 : xxx  "},
-};
-
-const char LCD_DEBUG_CODE[][COLUMN_MAX]={
-	//Welcome to
-	//Door System
-	//0123456789012345
-	{" KEY INPUT CODE "},
-	{"CODE VALUE : xx "},
-};
-
 
 const char LCD_MAIN0[][COLUMN_MAX] = {
 	//0   1   2   3   4   5    6   7   8   9   0   1   2   3   4   5
@@ -267,10 +251,10 @@ const char DISP_MODE_FAULT_SSRERROR[][COLUMN_MAX]={
 	{" No Error       "},
 	{"OVER Temperarue "},
 	{"SCR or no load  "},
-	{"Over Voltage    "},
-	{"Low Voltage     "},
-	{"Abnormal Input  "},
-	{"Input Disconnect"},
+	{"SSR Comm'       "},
+	{"Motor Error     "},
+	{"Sensor1 Error   "},
+	{"Sensor2 Error   "},
 };
 
 const char ERRMSG_LIST_EEP[][COLUMN_MAX]={

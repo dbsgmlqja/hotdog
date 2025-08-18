@@ -18,7 +18,7 @@ void getPidControl(_PIDS *pid)
     pid->prev_error = error;
 	// 음수 출력이면 0으로 처리
 	if(num < 2)pid->value = 0;	
-    if (num > pid->basicLevel) {
+    else if (num > pid->basicLevel) {
         pid->value = pid->basicLevel;
     }
 	else pid->value = num;

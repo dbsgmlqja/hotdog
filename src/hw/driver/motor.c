@@ -60,31 +60,37 @@ void mototInit(void)
 void gMotorCheck(void)
 {
 	short TargetSpeed;
+	static uint8_t pErrCnt = 0;
 	if(gError.All)return;
 	switch(gMotorStatus)
 	{
 		case MAX_ZONE:
 			if(millis() - gMotorTime > 3000)
 			{
-				TargetSpeed = (gIParameter.Freq * 45) * 0.7;
+				TargetSpeed = (gIParameter.Freq * 45) * 0.5;
 				if(gMotorSpeed < TargetSpeed)
 				{
 					if(gError.bit.Motor == 0)
 					{
-						gMotorStatus = MOTOR_OFF;
-						ssrControl(SSR_SSR, OFF);
-						P24RELAY = 0;
-						gError.bit.Motor = 1;
-						buzzer_start();
-						pStoreErrorMessage(Error_Motor);
+						if(++pErrCnt > 2)
+						{
+							gMotorStatus = MOTOR_OFF;
+							ssrControl(SSR_SSR, OFF);
+							P24RELAY = 0;
+							gError.bit.Motor = 1;
+							buzzer_start();
+							pStoreErrorMessage(Error_Motor);
+						}
 					}
 				}
+				else pErrCnt = 0;
+				gMotorTime = millis();
 			}
 			break;
 		case MOTOR_OFF:
 			if(millis() - gMotorTime > 3000)
 			{
-				if(gMotorSpeed > 100)
+				if(gMotorSpeed > 500)
 				{
 					if(gError.bit.Motor == 0)
 					{
@@ -95,6 +101,7 @@ void gMotorCheck(void)
 						pStoreErrorMessage(Error_Motor);
 					}
 				}
+				gMotorTime = millis();
 			}
 			break;
 	}

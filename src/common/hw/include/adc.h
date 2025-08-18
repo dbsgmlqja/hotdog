@@ -8,5 +8,4 @@ void adcInit(void);
 void adcRead(void);
 void adc0Read(void);
 uint16_t adcReadCH(uint8_t ch);
-uint8_t adcCheck(void);
 #endif

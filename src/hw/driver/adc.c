@@ -108,18 +108,6 @@ short adcReadVoltage(uint8_t ch)
 	return ret;
 }
 
-uint8_t adcCheck(void)
-{
-	uint16_t data;
-	uint8_t status = 0;
-	
-	data = gStatus.KSensor_Top.Temp;
-	if(data > 23600){
-		status = STATUS_ERR;
-	}
-	if(status == STATUS_INIT)status = STATUS_IDLE;
-	return status;
-}
 #ifdef _USE_HW_CLI
 void cliAdc(cli_args_t *args)
 {

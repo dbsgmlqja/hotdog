@@ -46,6 +46,7 @@ void hwInit(void)
 	ssrControl(SSR_SSR, ON);
 	delay(2000);
 	pLcd_Init();
+	delay(100);
 	pLcd_UpdateDisplay();
 	delay(500);
 	gDisplay.Request = DISPLAY_REQUEST_ON;

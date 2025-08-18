@@ -6,6 +6,7 @@ void ssrInit(void);
 void ssrOn(void);
 void ssrOff(void);
 uint8_t ssrUpdate(void);
+void gSetSetpoint(uint16_t value);
 void pidPrameterReset(void);
 void getSSRData(uint16_t *data);
 #endif

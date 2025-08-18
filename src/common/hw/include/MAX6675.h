@@ -8,9 +8,12 @@ typedef struct{
 	uint16_t Rec[5];
 	uint16_t prev_temp;
 }_TempArr;
+
 void MAX6675_Init(void);
 void readTemperature(void);
 int pidControl(void);
 void gSetStatus(void);
 void pSetTemperature(void);
+short getTopTemperature(void);
+short getTemperature(uint8_t no);
 #endif

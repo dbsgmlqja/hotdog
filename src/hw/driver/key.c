@@ -6,10 +6,10 @@
 #include "gpio.h"
 #include "ssr.h"
 #if(CUSTOMER == AJUN)
-#define REVERSE_KEY_IN 	((*(RB_BTF*)&PCIN).p1)
-#define CONVAYOR_KEY_IN ((*(RB_BTF*)&PCIN).p2)
+//#define REVERSE_KEY_IN 	((*(RB_BTF*)&PCIN).p1)
+#define CONVAYOR_KEY_IN ((*(RB_BTF*)&PCIN).p1)
 #define EMG_KEY_IN 		((*(RB_BTF*)&PCIN).p3)
-#define HEATER_KEY_IN	((*(RB_BTF*)&PDIN).p1)
+#define HEATER_KEY_IN	((*(RB_BTF*)&PDIN).p2)
 #else
 #define REVERSE_KEY_IN 	((*(RB_BTF*)&PCIN).p1)
 #define CONVAYOR_KEY_IN ((*(RB_BTF*)&PCIN).p2)
@@ -20,7 +20,7 @@ extern void buzzer_start(void);
 extern void buzzer_stop(void);
 extern void pLcd_UpdateDisplay(void);
 extern void pBeep(uint8_t Cnt, uint8_t sl);
-extern uint8_t adcCheck(void);
+extern short getTemperature(uint8_t no);
 //extern uint16_t EEP_ParaTBL[][3];
 
 extern uint16_t EEP_HEAT_ParaTBL[][3];
@@ -236,6 +236,7 @@ void gHeaterKeyScan(void)
 {
 	static uint8_t HeaterKeyOn = 0;
 	uint16_t pVar1;
+	short value;
 	if(keyObjGetPressed(&btn_heater, 60) == true)
 	{
 		if(btn_heater.state == 2)
@@ -248,7 +249,8 @@ void gHeaterKeyScan(void)
 				{
 					if(gStatus.status == STATUS_INIT){
 						pVar1 = gStatus.Comp - 500;
-						if(pVar1 > gStatus.KSensor_Bottom.Temp)	gStatus.status = STATUS_IDLE;
+						value = getTemperature(1);
+						if(pVar1 > value)	gStatus.status = STATUS_IDLE;
 						else gStatus.status = STATUS_READY;
 						pidPrameterReset();
 						
@@ -441,6 +443,7 @@ void pLKey_Menu(void)
 			break;
 		case LCD_MAIN_MENU:
 			gDispMode = LCD_MAIN_INIT;
+			gDispSub = LCD_MAIN_STATUS_0;
 			gDisplay.Request = DISPLAY_REQUEST_ON;
 			gDisplay.Lines = TOP_LINE | BTM_LINE;
 			break;
@@ -600,7 +603,7 @@ void pLKey_Set(void)
 		
 		pn_EEP_WriteBytes(0x10, (uint8_t *)&gDispParameter.Value,/* LCD_SUB_INV_END*/2);
 		gStatus.Comp = gParameter.Temperature;
-		
+		gSetSetpoint(gStatus.Comp);
 		gDisplay.Request = DISPLAY_REQUEST_ON;
 		gDispMode = LCD_MAIN_HEAT_SET;
 		gDisplay.Lines = TOP_LINE | BTM_LINE;
@@ -674,6 +677,7 @@ void pLKey_Set(void)
 				for(i=0;i!=10;i++){
 					gMonitorError[i] = 0;
 					pn_EepromWriteByte(0x90+i,gMonitorError[i]);
+					delay(5);
 				}
 				pBeep(1, 0);
 				gDisplay.Request = DISPLAY_REQUEST_ON;

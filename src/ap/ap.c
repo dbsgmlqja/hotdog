@@ -77,9 +77,6 @@ void apMain(void)
 	{
 	    /* WDT reset */
 		clear_WDT();			/* reset WDT binary counter */
-#if(_USE_TEMP_SENSOR == PT100)
-		updateSpi();
-#endif
 	
 		adc0Read();
 		pLocKeyRead();

@@ -17,9 +17,9 @@
 #ifndef OFF
 #define OFF 0
 #endif
-#define TELECS (1)
+#define TELECS  (1)
 #define AJUN 	(0)
-#define CUSTOMER TELECS
+#define CUSTOMER AJUN
 /**************************************************************/
 /*  Fixed Parameter List                                      */
 /**************************************************************/
@@ -181,28 +181,15 @@ typedef struct{
 	uint16_t Temp2;
 }_AD;
 typedef struct{
-	uint8_t SensorErr 	: 1;
-	uint8_t rechTarget	: 1;
-	uint16_t RunTime;
-	short Temp;
-	uint16_t Temp2;
-	uint16_t Prev_Temp;
-	uint32_t pre_time;
-}_KSensor;
-typedef struct{
 	uint8_t OldStart;
 	uint8_t Start;
 	uint8_t mainLoop;
 	uint8_t status;
+	uint8_t reachTarget;
 	uint8_t oldstatus;
 	uint16_t OpTime;
-	uint16_t RunTime;
 	uint16_t Comp;
-	uint16_t Temp1;
-	uint16_t Temp2;
 	uint32_t pre_time;
-	_KSensor KSensor_Top;
-	_KSensor KSensor_Bottom;
 	
 }_Status;
 typedef struct{
@@ -304,14 +291,6 @@ typedef struct{
 	uint32_t pre_time;
 }_ModBus;
 typedef struct{
-	uint8_t var8_1;
-	uint8_t var8_2;
-	uint8_t var8_3;
-	uint16_t var16_1;
-	uint16_t var16_2;
-	uint16_t var16_3;
-}_DebugVar;
-typedef struct{
 	uint8_t NewCode;
 	uint8_t OldCode;
 	uint8_t ErrorMode;
@@ -343,6 +322,7 @@ typedef struct{
 	uint16_t outVoltage;
 	uint16_t temperature;
 }_SSR;
+
 EXT _Error gError;
 EXT _Switch gSwitch;
 EXT _InverterError gInverterError;
@@ -350,7 +330,6 @@ EXT _InverterStatus gInverterStatus;
 EXT _ModBus gModBus;
 EXT _Key gKey;
 EXT USART_User_InitTypeDef cm3;
-EXT _Status Status;
 EXT _Status gStatus;
 EXT _Parameter gParameter;
 EXT _IParameter gIParameter;
@@ -358,7 +337,6 @@ EXT _Para gDispParameter;
 EXT _Disp gDisplay;
 EXT _Buzzer gBuzzer;
 EXT _SSR SSR;
-EXT _DebugVar gDebugVar;
 //EXT _Status Status;
 /*===================================================================*/
 /* uint8_t Variable													 */

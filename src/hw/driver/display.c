@@ -4,7 +4,7 @@
 #include "strings.h"
 #include "uart.h"
 #include "FlashOption.h"
-
+extern short getTemperature(uint8_t no);
 enum{
 	FORMAT_xxx,
 	FORMAT_xxxx, //@150508 by Bang
@@ -457,12 +457,12 @@ void pLcd_LoadString(uint8_t Line)
 			else
 			{
 				Ptr = (char *)&LCD_BOTTOM_RESET0[0];
-				Ptr += 11;
+				for(i=0;i!=16;i++)Arr[i] = *Ptr++;
 				for(i=1;i!=5;i++)
 				{
-					*Ptr++ = Versions[i];
+					Arr[i+11] = Versions[i];
 				}
-				Ptr = (int8_t *)&LCD_RESET0[1][0];
+				Ptr = (int8_t *)&Arr[0];
 			}
 			break;
 
@@ -587,97 +587,7 @@ void pLcd_LoadString(uint8_t Line)
 			if(gError.All > 0)break;
 			if(SSR.error) break;
 			if(Debug == 1){
-				int TempEncoder;
-				if(Line == 0){
-					TempEncoder = gWorkFreq;
-					if(TempEncoder >= 0){
-						gLCD_Line[0] = '+';
-					}
-					else{
-						gLCD_Line[0] = '-';
-						TempEncoder = (TempEncoder ^ 0xffffffff) + 1;
-					}
-					gLCD_Line[1] = TempEncoder / 1000000 + 0x30;
-					TempEncoder = TempEncoder % 1000000;
-					gLCD_Line[2] = TempEncoder / 100000 + 0x30;
-					TempEncoder = TempEncoder % 100000;
-					gLCD_Line[3] = TempEncoder / 10000 + 0x30;
-					TempEncoder = TempEncoder % 10000;
-					gLCD_Line[4] = TempEncoder / 1000 + 0x30;
-					TempEncoder = TempEncoder % 1000;
-					gLCD_Line[5] = TempEncoder / 100 + 0x30;
-					TempEncoder = TempEncoder % 100;
-					gLCD_Line[6] = TempEncoder / 10 + 0x30;
-					TempEncoder = TempEncoder % 10;
-					gLCD_Line[7] = TempEncoder + 0x30;
-					/* Encoder Display */
-				//	gLCD_Line[7] = ' ';
-					TempEncoder = gWorkFreq;
-					if(TempEncoder >= 0){
-						gLCD_Line[8] = '+';
-					}
-					else{
-						gLCD_Line[8] = '-';
-						TempEncoder = (TempEncoder ^ 0xffffffff) + 1;
-					}
-					gLCD_Line[9] = TempEncoder / 1000000 + 0x30;
-					TempEncoder = TempEncoder % 1000000;
-					gLCD_Line[10] = TempEncoder / 100000 + 0x30;
-					TempEncoder = TempEncoder % 100000;
-					gLCD_Line[11] = TempEncoder / 10000 + 0x30;
-					TempEncoder = TempEncoder % 10000;
-					gLCD_Line[12] = TempEncoder / 1000 + 0x30;
-					TempEncoder = TempEncoder % 1000;
-					gLCD_Line[13] = TempEncoder / 100 + 0x30;
-					TempEncoder = TempEncoder % 100;
-					gLCD_Line[14] = TempEncoder / 10 + 0x30;
-					TempEncoder = TempEncoder % 10;
-					gLCD_Line[15] = TempEncoder + 0x30;
-				}
-				else{
-					TempEncoder = gWorkFreq;
-					if(TempEncoder >= 0){
-						gLCD_Line[0] = '+';
-					}
-					else{
-						gLCD_Line[0] = '-';
-						TempEncoder = (TempEncoder ^ 0xffffffff) + 1;
-					}
-					gLCD_Line[1] = TempEncoder / 1000000 + 0x30;
-					TempEncoder = TempEncoder % 1000000;
-					gLCD_Line[2] = TempEncoder / 100000 + 0x30;
-					TempEncoder = TempEncoder % 100000;
-					gLCD_Line[3] = TempEncoder / 10000 + 0x30;
-					TempEncoder = TempEncoder % 10000;
-					gLCD_Line[4] = TempEncoder / 1000 + 0x30;
-					TempEncoder = TempEncoder % 1000;
-					gLCD_Line[5] = TempEncoder / 100 + 0x30;
-					TempEncoder = TempEncoder % 100;
-					gLCD_Line[6] = TempEncoder / 10 + 0x30;
-					TempEncoder = TempEncoder % 10;
-					gLCD_Line[7] = TempEncoder + 0x30;
-					TempEncoder = gWorkFreq;
-					if(TempEncoder >= 0){
-						gLCD_Line[8] = '+';
-					}
-					else{
-						gLCD_Line[8] = '-';
-						TempEncoder = (TempEncoder ^ 0xffffffff) + 1;
-					}
-					gLCD_Line[9] = TempEncoder / 1000000 + 0x30;
-					TempEncoder = TempEncoder % 1000000;
-					gLCD_Line[10] = TempEncoder / 100000 + 0x30;
-					TempEncoder = TempEncoder % 100000;
-					gLCD_Line[11] = TempEncoder / 10000 + 0x30;
-					TempEncoder = TempEncoder % 10000;
-					gLCD_Line[12] = TempEncoder / 1000 + 0x30;
-					TempEncoder = TempEncoder % 1000;
-					gLCD_Line[13] = TempEncoder / 100 + 0x30;
-					TempEncoder = TempEncoder % 100;
-					gLCD_Line[14] = TempEncoder / 10 + 0x30;
-					TempEncoder = TempEncoder % 10;
-					gLCD_Line[15] = TempEncoder + 0x30;
-				}
+				
 				break;
 			}
 
@@ -697,7 +607,7 @@ void pLcd_LoadString(uint8_t Line)
 						pTemp = gMotorSpeed * 10 / 721
 							;
 						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp, (char *)&Arr[11]);
-						//SSR1, SSR2 µ¿ÀÛ Ç¥½Ã
+						//SSR1, SSR2 ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½
 						if((SSR.output == 1) && (SSR.outVoltage > 0))Arr[7] = '*';
 						else Arr[7] = ' ';
 						Ptr = (int8_t *)&Arr[0];
@@ -724,21 +634,23 @@ void pLcd_LoadString(uint8_t Line)
 				/*uint8_t Ratio_Voltage,i;
 				uint16_t Data,Value;
 				uint8_t *Ptr;*/
+				short value;
 
 				switch(gDispSub)
 				{
 					case LCD_MAIN_STATUS_0:		/* Heater Information */
-						
-						if(gStatus.KSensor_Top.Temp >= 0)pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.KSensor_Top.Temp/100, (char *)&gLCD_Line[2]);
+						value = getTemperature(0);
+						if(value >= 0)pLcd_DisplayShort_Format(FORMAT_xxx, value/100, (char *)&gLCD_Line[2]);
 						else
 						{
 							gLCD_Line[3] = '-';
-							pLcd_DisplayShort_Format(FORMAT_xxx, (gStatus.KSensor_Top.Temp*-1)/100, (char *)&gLCD_Line[2]);
+							pLcd_DisplayShort_Format(FORMAT_xxx, (value*-1)/100, (char *)&gLCD_Line[2]);
 						}
-						if(gStatus.KSensor_Bottom.Temp >= 0)	pLcd_DisplayShort_Format(FORMAT_xxx, gStatus.KSensor_Bottom.Temp/100, (char *)&gLCD_Line[11]);
+						value = getTemperature(1);
+						if(value >= 0)	pLcd_DisplayShort_Format(FORMAT_xxx, value/100, (char *)&gLCD_Line[11]);
 						else{
 							gLCD_Line[10] = '-';
-							pLcd_DisplayShort_Format(FORMAT_xxx, (gStatus.KSensor_Bottom.Temp*-1)/100, (char *)&gLCD_Line[11]);
+							pLcd_DisplayShort_Format(FORMAT_xxx, (value*-1)/100, (char *)&gLCD_Line[11]);
 						}
 						
 						break;

@@ -6,7 +6,7 @@
 	MaxFileId="119"
 	ProjectInitializing="1"
 	ProjId="1"
-	TimeStamp="0x6815ab42"
+	TimeStamp="0x6822a064"
 	BuiltInCCName="CC103S.EXE"
 	BuiltInAsmName="AS103S.EXE"
 	BuiltInLinkName="LD103S.EXE"
@@ -616,46 +616,6 @@ ODB_OCD_TYPE     : 1;"
 				LineEnd=""
 				FileType="h"
 			/>
-			<110
-				FolderID="26"
-				BldTarget="false"
-				ViewFlag=""
-				FileName="hx711.h"
-				FilePath="..\src\common\hw\include\"
-				Encode=""
-				LineEnd=""
-				FileType="h"
-			/>
-			<111
-				FolderID="28"
-				BldTarget="true"
-				ViewFlag=""
-				FileName="hx711.c"
-				FilePath="..\src\hw\driver\"
-				Encode=""
-				LineEnd=""
-				FileType="c"
-			/>
-			<112
-				FolderID="28"
-				BldTarget="true"
-				ViewFlag=""
-				FileName="spi.c"
-				FilePath="..\src\hw\driver\"
-				Encode=""
-				LineEnd=""
-				FileType="c"
-			/>
-			<113
-				FolderID="26"
-				BldTarget="false"
-				ViewFlag=""
-				FileName="spi.h"
-				FilePath="..\src\common\hw\include\"
-				Encode=""
-				LineEnd=""
-				FileType="h"
-			/>
 			<114
 				FolderID="28"
 				BldTarget="true"
@@ -717,7 +677,7 @@ ODB_OCD_TYPE     : 1;"
 		<MakeFileList
 			MaxId="1"
 			CurMakefileId="1"
-			CurMakefileKey="127330300"
+			CurMakefileKey="116908238"
 			TargetType="ODB"
 			CpuType="103DF05K"
 			CoreType="103S"
@@ -768,8 +728,6 @@ display.c
 LCD_CTRL.c
 gpio.c
 ssr.c
-hx711.c
-spi.c
 motor.c
 modbus.c
 Pid.c
