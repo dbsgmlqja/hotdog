@@ -8,7 +8,6 @@
 #define ADC_MAX_CH 4
 #ifdef _USE_HW_CLI
 static void cliAdc(cli_args_t *args);
-static uint8_t adc_ch;
 typedef struct{
 	uint8_t Cnt;
 	uint16_t Temp;

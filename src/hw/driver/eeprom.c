@@ -3,11 +3,12 @@
 #include "eeprom.h"
 #include "led.h"
 #include "uart.h"
+#include "key.h"
 #include "cli.h"
 #ifdef _USE_HW_CLI
 void cliEeprom(cli_args_t *args);
 #endif
-#define EEP_ID 0xDD
+#define EEP_ID 0xDE
 #define EEPROM_MAX_SIZE   2048
 #define PAGE_SIZE	16
 #define COUNTER_ADDR 0x60
@@ -16,19 +17,21 @@ void cliEeprom(cli_args_t *args);
 #define FAULT_ADDR 0x90
 static uint8_t gTest;
 static uint8_t is_init = 0;
+static uint8_t pMonitorError[10];
+static _Para pDispParameter;
+static uint16_t pFW_PWM = 0;
 extern uint16_t gGetPwmValue(void);
 extern void directionControl(uint8_t state);
 const uint16_t EEP_HEAT_ParaTBL[][3]={ 
 	{10000,	18000,	16500},		/* P0	FP0	TEMP1*/
 };
 const uint16_t EEP_Inverter_ParaTBL[][3]={ 
-	{30,	100,	80},			/* P0	FP0	Foward Frequency */
+	{18,	60,	30},			/* P0	FP0	Foward Frequency */
 	{ 0,	  1,	 1},
 };
 const uint8_t EEP_ERASE_DATA[16] = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
-extern void pKey_StopAction(void);
 uint8_t eepromInit(void)
 {
 #ifdef _USE_HW_CLI
@@ -134,22 +137,26 @@ void pStoreErrorMessage(uint8_t ErrorMsg)
 	
 	//Search Blank byte
 	for(i=0;i!=10;i++){
-		if(gMonitorError[i] == 0) break;
+		if(pMonitorError[i] == 0) break;
 	}
 	//Push Error Message
 	if(i == 10){
 		for(i=0;i!=10-1;i++){
-			gMonitorError[i] = gMonitorError[i+1];
+			pMonitorError[i] = pMonitorError[i+1];
 		}
-		gMonitorError[9] = ErrorMsg;
+		pMonitorError[9] = ErrorMsg;
 	}
 	else{
-		gMonitorError[i] = ErrorMsg;
+		pMonitorError[i] = ErrorMsg;
 	}
 
 	//Save EEPROM
-	i2cWriteBytes(DEVICE_ADDR, 0x90,(uint8_t *)gMonitorError, 10,10);
+	i2cWriteBytes(DEVICE_ADDR, 0x90,(uint8_t *)pMonitorError, 10,10);
 	
+}
+uint8_t getMonitorError(uint8_t no)
+{
+	return pMonitorError[no];
 }
 void pn_EEP_Load(void)
 {
@@ -172,7 +179,7 @@ void pn_EEP_Load(void)
 			gBakeryCount = 0;
 			ret = i2cWriteBytes(DEVICE_ADDR, COUNTER_ADDR, (uint8_t *)&gBakeryCount, 4, 10);
 		}
-		i2cReadBytes(DEVICE_ADDR, FAULT_ADDR, (uint8_t *)&gMonitorError, 16, 10);
+		i2cReadBytes(DEVICE_ADDR, FAULT_ADDR, (uint8_t *)&pMonitorError, 10, 10);
 		pn_EEP_Read_Parameters();
 
 	}
@@ -189,7 +196,7 @@ void pn_EEP_Load(void)
 		data32 = 0;
 		i2cWriteBytes(DEVICE_ADDR, COUNTER_ADDR, (uint8_t *)&data32, 4, 10);
 		//Fault
-		i2cWriteBytes(DEVICE_ADDR, FAULT_ADDR, (uint8_t *)&gMonitorError[0], 16, 10);
+		i2cWriteBytes(DEVICE_ADDR, FAULT_ADDR, (uint8_t *)&pMonitorError[0], 10, 10);
 		//Parameter
 		
 		Ptr = (uint16_t *)&gParameter;
@@ -246,24 +253,35 @@ void pn_EEP_Read_Parameters(void)
 		*Ptr++;
 	}
 }
+void gEraseFault(void)
+{
+	uint8_t i;
+	for(i=0;i!=10;i++){
+		pMonitorError[i] = 0;
+		pn_EepromWriteByte(0x90+i,pMonitorError[i]);
+	}
+}
 void pn_Load_Parameters(void)
 {
 	uint8_t index;
 	uint16_t *Ptr;
 	
 	Ptr = (uint16_t *)&gParameter;
-	gDispParameter.Value = *Ptr;
+	pDispParameter.Value = *Ptr;
 	
-	gDispParameter.Min = EEP_HEAT_ParaTBL[index][0];
-	gDispParameter.Max = EEP_HEAT_ParaTBL[index][1];
-	
+	pDispParameter.Min = EEP_HEAT_ParaTBL[index][0];
+	pDispParameter.Max = EEP_HEAT_ParaTBL[index][1];
+	setDispParameter(&pDispParameter);
 	gStatus.Comp = gParameter.Temperature;
 	
-	gFW_PWM = (4500 * gIParameter.Freq / 100);
+	pFW_PWM = (4500 * gIParameter.Freq / 63);
 	gMotorDirection = (uint8_t)gIParameter.Dir;
 	directionControl(gMotorDirection);
 }
-
+uint16_t getFWPwm(void)
+{
+	return pFW_PWM;
+}
 void pn_EEP_Init_Parameters(void){
 	
 
@@ -278,8 +296,8 @@ void pn_EEP_SaveCheck(void)
 	{
 		//TDDO gEEP_time check
 		if(pre_time - gEEP_time > 2000){
-			gParameter.Temperature = gStatus.Comp;
-			i2cWriteBytes(DEVICE_ADDR, PARAMETER_ADDR, (uint8_t *)&gParameter, EEP_END *2, 10);
+		//	gParameter.Temperature = gStatus.Comp;
+		//	i2cWriteBytes(DEVICE_ADDR, PARAMETER_ADDR, (uint8_t *)&gParameter, EEP_END *2, 10);
 			gEEP_save = 0;
 		}
 	}

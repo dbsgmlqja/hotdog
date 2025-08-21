@@ -15,7 +15,7 @@ typedef struct
   uint8_t   on_state;
   uint8_t   off_state;
 } led_tbl_t;
-led_tbl_t led_tbl[LED_MAX_CH] =
+static led_tbl_t led_tbl[LED_MAX_CH] =
 {
     {0, 1}, // LED1
     {1, 0}, // LED2

@@ -12,6 +12,12 @@ typedef struct
   uint32_t pre_time;
 } key_obj_t;
 
+typedef struct{
+	uint8_t prev_sub;
+	uint16_t Value;
+	uint16_t Max;
+	uint16_t Min;
+}_Para;
 void keyInit(void);
 void keyObjCreate(key_obj_t *p_obj, uint8_t ch, uint32_t repeat_time);
 uint8_t keyObjGetPressed(key_obj_t *p_obj, uint32_t pressed_time);
@@ -23,7 +29,8 @@ void gKeyScan(void);
 void pLocKeyRead(void);
 void pLocKeyProcess(void);
 void pLocKeyRepeatProcess(void);
-
+void setDispParameter(_Para *para);
+void getDispParameter(_Para *para);
 enum{
 	LKEY_MENU=1,
 	LKEY_DOWN,

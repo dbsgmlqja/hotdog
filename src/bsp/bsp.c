@@ -1,6 +1,7 @@
 #include "bsp.h"
 static volatile uint32_t systick_ms = 0;
 extern void swtimerISR(void);
+extern void p1msTimer(void);
 void SysTick_Handler(void)
 {
   	systick_ms++;

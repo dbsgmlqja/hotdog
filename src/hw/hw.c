@@ -33,7 +33,6 @@ void hwInit(void)
 	}
 	
 	tm16stop();
-	pRead_FlashVersion((int8_t *)&Versions[0]);
 	
 	ledInit();
 //	timerInit();

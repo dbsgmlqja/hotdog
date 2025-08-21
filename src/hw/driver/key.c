@@ -38,6 +38,7 @@ key_obj_t btn_heater;
 key_obj_t btn_motor;
 key_obj_t btn_motor2;
 key_obj_t btn_am;
+static _Para gDispParameter;
 #if(CUSTOMER == AJUN)
 const key_tbl_t key_TBL[3] = {
 	{&PCIN, 0x02, 0x00},	//convayor
@@ -189,9 +190,7 @@ void gEmgKeyScan(void)
 				if(gStatus.status > STATUS_INIT){
 					gStatus.status = STATUS_INIT;
 					gStatus.Start = 0;
-					SSR.output = 0;
-					SSR.outVoltage = 0;
-					
+					gResetSSR();
 					gSetCommand(0x0002, 0, 1);
 					gModBus.mode = MODBUS_MODE_COMMAND;
 					pBeep(3, 0);
@@ -429,7 +428,8 @@ void pLocKeyProcess(void)
 }
 void pLKey_Menu(void)
 {
-	
+	/*if(gStatus.status > STATUS_INIT)return;
+	if(gMotorStatus > MOTOR_OFF)return;*/
 	
 	switch(gDispMode)
 	{
@@ -468,8 +468,9 @@ void pLKey_Menu(void)
 
 void pLKey_Set(void)
 {
-	uint8_t i;
 	uint16_t *Ptr16;
+	/*if(gStatus.status > STATUS_INIT)return;
+	if(gMotorStatus > MOTOR_OFF)return;*/
 	if(gDispMode == LCD_MAIN_INIT)
 	{
 		if(gError.bit.EmergencyOn == 0)
@@ -487,10 +488,6 @@ void pLKey_Set(void)
 				return;
 			}
 			
-			if(SSR.error)
-			{
-				//TODO
-			}
 		}
 	}
 	if(gDispMode == LCD_MAIN_INIT){
@@ -674,11 +671,12 @@ void pLKey_Set(void)
 				break;
 						
 			case LCD_SUB_FAULT_CLEAR:
-				for(i=0;i!=10;i++){
+				/*for(i=0;i!=10;i++){
 					gMonitorError[i] = 0;
 					pn_EepromWriteByte(0x90+i,gMonitorError[i]);
 					delay(5);
-				}
+				}*/
+				gEraseFault();
 				pBeep(1, 0);
 				gDisplay.Request = DISPLAY_REQUEST_ON;
 				gDispMode = LCD_MAIN_MENU;
@@ -699,6 +697,8 @@ void pLKey_Set(void)
 }
 void pLKey_Up(void)
 {
+	/*if(gStatus.status > STATUS_INIT)return;
+	if(gMotorStatus > MOTOR_OFF)return;*/
 	switch(gDispMode)
 	{
 		case LCD_MAIN_INIT:
@@ -852,6 +852,8 @@ void pLKey_Up(void)
 }
 void pLKey_Down(void)
 {
+	/*if(gStatus.status > STATUS_INIT)return;
+	if(gMotorStatus > MOTOR_OFF)return;*/
 	switch(gDispMode)
 	{
 		case LCD_MAIN_INIT:
@@ -991,4 +993,18 @@ void pLKey_Down(void)
 			pBeep(3, 0);
 			break;
 	}
+}
+void setDispParameter(_Para *para)
+{
+	gDispParameter.prev_sub = para->prev_sub;
+	gDispParameter.Value = para->Value;
+	gDispParameter.Max = para->Max;
+	gDispParameter.Min = para->Min;
+}
+void getDispParameter(_Para *para)
+{
+	para->prev_sub = gDispParameter.prev_sub;
+	para->Value = gDispParameter.Value;
+	para->Max = gDispParameter.Max;
+	para->Min = gDispParameter.Min;
 }

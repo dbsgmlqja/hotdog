@@ -32,7 +32,7 @@ const char LCD_LOAD[][COLUMN_MAX]={
 
 const char LCD_MAIN0[][COLUMN_MAX] = {
 	//0   1   2   3   4   5    6   7   8   9   0   1   2   3   4   5
-	{'S',' ',' ',' ',' ',0xDF,'C',' ',' ','R',' ',' ',' ',' ',' ',' '},
+	{'S',' ',' ',' ',' ',0xDF,'C',' ',' ','M','R',' ',' ',' ',' ',' '},
 	{"                "},
 	{"SSR1 : xxx.xV[ ]"},
 };
@@ -144,7 +144,7 @@ const char UNIT_HEAT[][6]={
 };
 const char UNIT[][6]={
 //0123456789012345
-	"[%]  ",	/*ACC TIME*/
+	"[rpm]",	/*ACC TIME*/
 	"[%]  ",	/*DEC TIME*/
 	"     ",	/*TORQUE*/
 };

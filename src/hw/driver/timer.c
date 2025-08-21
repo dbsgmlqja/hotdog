@@ -2,6 +2,7 @@
 #include "timer.h"
 #include "motor.h"
 static uint16_t IntTimer;
+extern uint16_t getFWPwm(void);
 void timerInit(void)
 {
 	TM16MD1 &= ~0xc000;
@@ -119,25 +120,26 @@ static pAccTime = 20;
 void pMotorMakeFreq(void)
 {
 	uint16_t pTemp;
+	uint16_t pSetPWM;
 	if(gMotorStatus == MOTOR_OFF)
 	{
 		PWMCMP1A = 0;
 		gResetMotorPid();
 		return;
 	}
-	gSetPWM = gFW_PWM;
+	pSetPWM = getFWPwm();
 	switch(gMotorStatus)
 	{
 		case MAX_ZONE:
 			/*pTemp = PWMCMP1A;
-			if(pTemp < gSetPWM)*/gWorkPWM = gSetPWM;
+			if(pTemp < gSetPWM)*/gWorkPWM = pSetPWM;
 			break;
 
 		case ACC_ZONE:	
 			++gFreqCounter;
-			pTemp = (gSetPWM * gFreqCounter)/pAccTime;
-			if(pTemp >= gSetPWM){	
-				gWorkPWM = gSetPWM;
+			pTemp = (pSetPWM * gFreqCounter)/pAccTime;
+			if(pTemp >= pSetPWM){	
+				gWorkPWM = pSetPWM;
 				gFreqCounter = 0;
 				gMotorStatus = MAX_ZONE;
 			}
@@ -145,7 +147,7 @@ void pMotorMakeFreq(void)
 			if(pAccTime <= gFreqCounter)
 			{
 				gFreqCounter = 0;
-				pTemp = gSetPWM;
+				pTemp = pSetPWM;
 				gMotorStatus = MAX_ZONE;
 			}
 			

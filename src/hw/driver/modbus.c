@@ -3,6 +3,7 @@
 #include "modbus.h"
 #include "uart.h"
 #include "buzzer.h"
+#include "ssr.h"
 #include "gpio.h"
 #define E485 ((*(RB_BTF*)&P3OUT).p1)
 #define MAX_MODBUS_CH 1
@@ -22,6 +23,7 @@ typedef struct{
 	USART_User_InitTypeDef cm3;
 }_modbus_t;
 static _modbus_t modbusTBL;
+
 const uint8_t auchCRCH[]  =  {
 	0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81,
 	0x40, 0x01, 0xC0, 0x80, 0x41, 0x00, 0xC1, 0x81, 0x40, 0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0,
@@ -115,6 +117,8 @@ void pRbFlush(void);
 void UART3_IRQHandler(void)
 {
 	uint8_t RxBuffer,pMode;
+	uint8_t SSROutput;
+	uint16_t SSRVoltage;
 	static uint8_t n;
 	
 	
@@ -201,18 +205,21 @@ void UART3_IRQHandler(void)
 							
 							if((modbusTBL.monitor[0] & 0xf000) == 0x3000)
 							{
-								SSR.voltage = (modbusTBL.cm3.rb[3] << 8) | modbusTBL.cm3.rb[4];
-								SSR.output = modbusTBL.cm3.rb[8];
+								SSRVoltage = (modbusTBL.cm3.rb[3] << 8) | modbusTBL.cm3.rb[4];
+								setSSRVoltage(SSRVoltage);
 							}
 							else{
-								SSR.outVoltage = (modbusTBL.cm3.rb[3] << 8) | modbusTBL.cm3.rb[4];
-								SSR.output = modbusTBL.cm3.rb[8];
+								SSRVoltage = (modbusTBL.cm3.rb[3] << 8) | modbusTBL.cm3.rb[4];
+								setSSROutVoltage(SSRVoltage);
 							}
-							
+							SSROutput = modbusTBL.cm3.rb[8];
+							setSSROutput(SSROutput);
 							break;
 						case MODBUS_MODE_ERROR:
-							SSR.error = modbusTBL.cm3.rb[4];
-							SSR.temperature = (modbusTBL.cm3.rb[5] << 8) | modbusTBL.cm3.rb[6];
+							SSROutput = modbusTBL.cm3.rb[4];
+							setSSRError(SSROutput);
+							SSRVoltage = (modbusTBL.cm3.rb[5] << 8) | modbusTBL.cm3.rb[6];
+							setSSRTemperature(SSRVoltage);
 							break;
 					}
 					modbusTBL.cm3.commError = 0x00;

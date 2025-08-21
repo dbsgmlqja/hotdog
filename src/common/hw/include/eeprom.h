@@ -41,5 +41,7 @@ void pn_EEP_SaveCheck(void);
 void pn_EEP_Write_Parameter(void);
 uint8_t pn_EepromPageWrite(uint16_t reg_addr, uint8_t *p_data, uint32_t length, uint32_t timeout);
 uint8_t pn_EEP_WriteBytes(uint16_t addr, uint8_t *p_data, uint32_t length);
+void gEraseFault(void);
+uint16_t getFWPwm(void);
 #endif
 #endif

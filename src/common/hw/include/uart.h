@@ -3,6 +3,17 @@
 
 #define UART_MAX_CH         HW_UART_MAX_CH
 
+typedef struct{
+	volatile uint8_t rfg;
+	volatile uint8_t tb[50],rb[50];
+	volatile uint8_t rc,tc,tcMax;
+	uint8_t dc, hi, low;
+	uint8_t rxTmr;
+	uint8_t deviceError;
+	uint8_t commError;
+	uint32_t rxTime;
+	uint32_t txTime;
+}USART_User_InitTypeDef;
 
 void uartInit(void);
 uint32_t uartAvailable(uint8_t ch);

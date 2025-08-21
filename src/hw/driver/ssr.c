@@ -8,7 +8,8 @@
 #define FAN_OUT ((*(RB_BTF*)&P8OUT).p3)
 
 static _PIDS SSR_PID;
-static pTemperature;
+static _SSR SSR;
+static short pTemperature;
 extern void buzzer_start(void);
 extern void buzzer_stop(void);
 extern void pStoreErrorMessage(uint8_t Msg);
@@ -120,7 +121,49 @@ void pidPrameterReset(void)
 	SSR_PID.integral = 0;
 	SSR_PID.prev_error = 0;
 }
+void gResetSSR(void)
+{
+	SSR.output = 0;
+	SSR.outVoltage = 0;					
+}
+uint8_t getSSRError(void)
+{
+	return SSR.error;
+}
 
+uint8_t getSSROutput(void)
+{
+	return SSR.output;
+}
+uint16_t getSSRVoltage(void)
+{
+	return SSR.outVoltage;
+}
+uint16_t getSSRTemperature(void)
+{
+	return SSR.temperature;
+}
+void setSSRVoltage(uint16_t data)
+{
+	SSR.voltage = data;
+}
+void setSSROutVoltage(uint16_t data)
+{
+	SSR.outVoltage = data;
+}
+void setSSRTemperature(uint16_t data)
+{
+	SSR.temperature = data;
+}
+void setSSRError(uint8_t data)
+{
+	SSR.error = data;
+}
+
+void setSSROutput(uint8_t data)
+{
+	SSR.output = data;
+}
 void getSSRData(uint16_t *data)
 {
 	data[0] = pTemperature;

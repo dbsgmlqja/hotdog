@@ -18,11 +18,6 @@ static uint16_t pData[4];
 void apMain(void)
 {
 	uint32_t pre_time,pre_time2;
-	uint8_t check = 0;
-	static pNo = 0;
-	float pTemperature;
-	float R;
-  	float T;
 	//Hardware check and setting
 	// 0. Inverter Set
 	// 1. SSR1 output check
@@ -52,7 +47,6 @@ void apMain(void)
 	modbusTransmit();
 	gModBus.mode = 0;
 	delay(50);
-	if(SSR.voltage < 100)check = 1;
 	
 	
 	gStatus.status = STATUS_INIT;

@@ -94,11 +94,11 @@ enum{
 //	LCD_MAIN_HEAT_SET_WARMUP,
 //	LCD_MAIN_HEAT_SET_WARMUP_SUB,
 	LCD_MAIN_INV_SET_SUB,
-	LCD_MAIN_FAULT_SUB,
+	LCD_MAIN_INIT,
 	LCD_MAIN_FACTORY_SUB,     /*@1504223 By Bang*/
 	LCD_SYS_INIT,
-
-	LCD_MAIN_INIT,
+	
+	LCD_MAIN_FAULT_SUB,
 	LCD_POWER_FAIL,
 	LCD_MAIN_DISP_END
 };
@@ -192,12 +192,6 @@ typedef struct{
 	uint32_t pre_time;
 	
 }_Status;
-typedef struct{
-	uint8_t prev_sub;
-	uint16_t Value;
-	uint16_t Max;
-	uint16_t Min;
-}_Para;
 typedef union{
 	struct{
 		uint16_t stop	: 1;
@@ -255,31 +249,11 @@ typedef union{
 	uint16_t All;
 }_Error;
 typedef struct{
-	uint32_t pre_time;
 	uint8_t Request;
 	uint8_t Lines;
-
-	uint8_t Status : 3;
-	uint8_t OpMode : 2;
-	uint8_t Connect : 1;
+	uint8_t Connect;
+	uint32_t pre_time;
 }_Disp;
-typedef struct{
-	volatile uint8_t rfg;
-	volatile uint8_t tb[50],rb[50];
-	volatile uint8_t rc,tc,tcMax;
-	uint8_t dc, hi, low;
-	uint8_t rxTmr;
-	uint8_t deviceError;
-	uint8_t commError;
-	uint32_t rxTime;
-	uint32_t txTime;
-}USART_User_InitTypeDef;
-typedef struct{
-	
-	uint8_t Enable;
-	uint32_t startTime;
-	uint8_t State;
-}_Buzzer;
 typedef struct{
 	uint8_t p500msFlag;
 	uint8_t no;
@@ -315,40 +289,27 @@ typedef struct{
 	uint16_t Freq;
 	uint16_t Dir;
 }_IParameter;
-typedef struct{
-	uint8_t error;
-	uint8_t output;
-	uint16_t voltage;
-	uint16_t outVoltage;
-	uint16_t temperature;
-}_SSR;
 
 EXT _Error gError;
 EXT _Switch gSwitch;
+EXT _IParameter gIParameter;
 EXT _InverterError gInverterError;
 EXT _InverterStatus gInverterStatus;
 EXT _ModBus gModBus;
 EXT _Key gKey;
-EXT USART_User_InitTypeDef cm3;
 EXT _Status gStatus;
 EXT _Parameter gParameter;
-EXT _IParameter gIParameter;
-EXT _Para gDispParameter;
 EXT _Disp gDisplay;
-EXT _Buzzer gBuzzer;
-EXT _SSR SSR;
 //EXT _Status Status;
 /*===================================================================*/
 /* uint8_t Variable													 */
 /*===================================================================*/
 EXT uint8_t IIC_TX_Complete;
-EXT int8_t Versions[8];
-EXT uint8_t gMonitorError[16];
 EXT uint8_t gRoast_No;
 EXT uint8_t gEEP_save;
 EXT uint8_t gLED_Timer,gEMG_Timer,gKeyRepeatTimer,gCurrent_Timer,g10ms_Timer;
 EXT uint8_t gLCD_Refresh_Timer,gLCD_Mode_Backup,gLCD_Update_Req;
-EXT uint8_t gLCD_Line[16];
+EXT uint8_t Dummy1,Dummy2;
 EXT uint8_t gDispMode;
 EXT uint8_t gDispSub;
 EXT uint8_t gMotorDirection;
@@ -358,16 +319,18 @@ EXT uint8_t gKeyScanFlag;
 EXT uint16_t gKey_AD0;
 EXT uint8_t gFan;
 EXT uint8_t MotorDirection;
-EXT uint8_t gMotorStatus,gMotorFDirection;
+EXT uint8_t Dummy3,Dummy4;
+EXT uint8_t gMotorStatus;
+EXT uint8_t gMotorFDirection;
 
+EXT uint8_t gLCD_Line[16];
 //EEPROM
 EXT uint8_t gEEP_InitMode;
 /*===================================================================*/
 /* uint16_t Variable												 */
 /*===================================================================*/
-EXT uint16_t gWorkFreq,gSSR1output, gSSR2output;
 EXT uint16_t gSaveDisplayTimer;
-EXT uint16_t gWorkPWM, gSetPWM,gNowPWM,gFW_PWM;
+EXT uint16_t gWorkPWM,gNowPWM/*,gFW_PWM*/;
 EXT uint16_t gFreqCounter;
 EXT short gMotorSpeed;
 /*===================================================================*/

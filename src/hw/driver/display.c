@@ -3,8 +3,12 @@
 #include "LCD_CTRL.h"
 #include "strings.h"
 #include "uart.h"
+#include "ssr.h"
+#include "key.h"
 #include "FlashOption.h"
+static _Para dDispParameter;
 extern short getTemperature(uint8_t no);
+extern uint8_t getMonitorError(uint8_t no);
 enum{
 	FORMAT_xxx,
 	FORMAT_xxxx, //@150508 by Bang
@@ -444,9 +448,14 @@ void pLcd_LoadString(uint8_t Line)
 	uint8_t i;
 	int8_t *Ptr;
 	int8_t Arr[17];
+	uint8_t ssrError;
+	int8_t Arr2[9];
 	uint8_t Debug = 0;
 	uint16_t pTemp;
 	
+	// 1. 안전한 작업을 위한 17바이트 임시 로컬 버퍼 선언 (null 문자 포함)
+	uint8_t temp_lcd_line[17] = {0,};
+	ssrError = getSSRError();
 	switch(gDispMode)
 	{
 		case LCD_SYS_INIT:
@@ -458,9 +467,10 @@ void pLcd_LoadString(uint8_t Line)
 			{
 				Ptr = (char *)&LCD_BOTTOM_RESET0[0];
 				for(i=0;i!=16;i++)Arr[i] = *Ptr++;
+				pRead_FlashVersion((int8_t *)&Arr2[0]);
 				for(i=1;i!=5;i++)
 				{
-					Arr[i+11] = Versions[i];
+					Arr[i+11] = Arr2[i];
 				}
 				Ptr = (int8_t *)&Arr[0];
 			}
@@ -495,12 +505,12 @@ void pLcd_LoadString(uint8_t Line)
 				Ptr = (char *)&DISP_MODE_FAULT_SSRHWERROR[Line][0];
 			}
 			
-			else if(SSR.error)
+			else if(ssrError)
 			{
 				if(Line == 0)Ptr = (char *)&DISP_MODE_FAULT_SSRERRORTOP[0];
 				else
 				{
-					Ptr = (char *)&DISP_MODE_FAULT_SSRERROR[SSR.error][0];
+					Ptr = (char *)&DISP_MODE_FAULT_SSRERROR[ssrError][0];
 				}
 			}
 			else{
@@ -526,13 +536,6 @@ void pLcd_LoadString(uint8_t Line)
 			}
 			break;
 		
-/*		case LCD_MAIN_HEAT_SET_WARMUP:
-			if(Line == 0)	Ptr = (char *)&HEAT_MODE_SUB_TOP[1][0];
-			else	{
-				Ptr = (char *)&WARMUP_MODE_SUB[gDispSub][0];
-
-			}
-			break;*/
 		case LCD_MAIN_INV_SET:
 			if(Line == 0)	Ptr = (char *)&MAIN_MENU_TOP[gDispMode][0];
 			else	{
@@ -559,59 +562,135 @@ void pLcd_LoadString(uint8_t Line)
 			if(Line == 0)	Ptr = (char *)&HEAT_MODE_SUB_TOP[0][0];
 			else			Ptr = (char *)&BLANK[0];
 			break;
-/*		
-		case LCD_MAIN_HEAT_SET_WARMUP_SUB:
-			if(Line == 0)	Ptr = (char *)&HEAT_WARMUP_SUB_TOP[gDispParameter.prev_sub][0];
-			else			Ptr = (char *)&BLANK[0];
-			break;*/
 		case LCD_MAIN_INV_SET_SUB:
 			if(Line == 0)	Ptr = (char *)&INV_MODE_SUB_TOP[gDispSub][0];
 			else			Ptr = (char *)&BLANK[0];
 			break;
 		case LCD_MAIN_FAULT_SUB:
 			if(Line == 0)	Ptr = (char *)&FAULT_MODE_TOP[gDispSub][0];
-			else			Ptr = (char *)&ERRMSG_LIST_EEP[gMonitorError[gDispSub]];
+			else{
+							i = getMonitorError(gDispSub);
+							Ptr = (char *)&ERRMSG_LIST_EEP[i];
+			}
 			break;
 		
 		default:
+			// Ptr이 초기화되지 않는 경우를 방지하기 위해 default 케이스 추가
+			Ptr = (char *)&BLANK[0];
 			break;
 	}
-	for(i=0;i!=16;i++){
-		gLCD_Line[i] = *Ptr++;
-	}
 
+	// 2. 모든 문자열 작업을 gLCD_Line 대신 temp_lcd_line 에서 수행
+	for(i=0;i!=16;i++){
+		temp_lcd_line[i] = *Ptr++;
+	}
+	
+	getDispParameter(&dDispParameter);
 	/* Sub Data */
 	switch(gDispMode)
 	{
 		case LCD_MAIN_INIT:
 			if(gError.All > 0)break;
-			if(SSR.error) break;
+			if(ssrError) break;
 			if(Debug == 1){
-				
+				int TempEncoder;
+				if(Line == 0){
+					TempEncoder = gWorkPWM;
+					if(TempEncoder >= 0){
+						temp_lcd_line[0] = '+';
+					}
+					else{
+						temp_lcd_line[0] = '-';
+						TempEncoder = (TempEncoder ^ 0xffffffff) + 1;
+					}
+					temp_lcd_line[1] = TempEncoder / 1000000 + 0x30;
+					TempEncoder = TempEncoder % 1000000;
+					temp_lcd_line[2] = TempEncoder / 100000 + 0x30;
+					TempEncoder = TempEncoder % 100000;
+					temp_lcd_line[3] = TempEncoder / 10000 + 0x30;
+					TempEncoder = TempEncoder % 10000;
+					temp_lcd_line[4] = TempEncoder / 1000 + 0x30;
+					TempEncoder = TempEncoder % 1000;
+					temp_lcd_line[5] = TempEncoder / 100 + 0x30;
+					TempEncoder = TempEncoder % 100;
+					temp_lcd_line[6] = TempEncoder / 10 + 0x30;
+					TempEncoder = TempEncoder % 10;
+					temp_lcd_line[7] = TempEncoder + 0x30;
+					/* Encoder Display */
+					TempEncoder = gWorkPWM;
+					if(TempEncoder >= 0){
+						temp_lcd_line[8] = '+';
+					}
+					else{
+						temp_lcd_line[8] = '-';
+						TempEncoder = (TempEncoder ^ 0xffffffff) + 1;
+					}
+					temp_lcd_line[9] = TempEncoder / 1000000 + 0x30;
+					TempEncoder = TempEncoder % 1000000;
+					temp_lcd_line[10] = TempEncoder / 100000 + 0x30;
+					TempEncoder = TempEncoder % 100000;
+					temp_lcd_line[11] = TempEncoder / 10000 + 0x30;
+					TempEncoder = TempEncoder % 10000;
+					temp_lcd_line[12] = TempEncoder / 1000 + 0x30;
+					TempEncoder = TempEncoder % 1000;
+					temp_lcd_line[13] = TempEncoder / 100 + 0x30;
+					TempEncoder = TempEncoder % 100;
+					temp_lcd_line[14] = TempEncoder / 10 + 0x30;
+					TempEncoder = TempEncoder % 10;
+					temp_lcd_line[15] = TempEncoder + 0x30;
+				}
+				else{
+					TempEncoder = gWorkPWM;
+					if(TempEncoder >= 0){
+						temp_lcd_line[0] = '+';
+					}
+					else{
+						temp_lcd_line[0] = '-';
+						TempEncoder = (TempEncoder ^ 0xffffffff) + 1;
+					}
+					temp_lcd_line[1] = TempEncoder / 1000000 + 0x30;
+					TempEncoder = TempEncoder % 1000000;
+					temp_lcd_line[2] = TempEncoder / 100000 + 0x30;
+					TempEncoder = TempEncoder % 100000;
+					temp_lcd_line[3] = TempEncoder / 10000 + 0x30;
+					TempEncoder = TempEncoder % 10000;
+					temp_lcd_line[4] = TempEncoder / 1000 + 0x30;
+					TempEncoder = TempEncoder % 1000;
+					temp_lcd_line[5] = TempEncoder / 100 + 0x30;
+					TempEncoder = TempEncoder % 100;
+					temp_lcd_line[6] = TempEncoder / 10 + 0x30;
+					TempEncoder = TempEncoder % 10;
+					temp_lcd_line[7] = TempEncoder + 0x30;
+					TempEncoder = gWorkPWM;
+					if(TempEncoder >= 0){
+						temp_lcd_line[8] = '+';
+					}
+					else{
+						temp_lcd_line[8] = '-';
+						TempEncoder = (TempEncoder ^ 0xffffffff) + 1;
+					}
+					temp_lcd_line[9] = TempEncoder / 1000000 + 0x30;
+					TempEncoder = TempEncoder % 1000000;
+					temp_lcd_line[10] = TempEncoder / 100000 + 0x30;
+					TempEncoder = TempEncoder % 100000;
+					temp_lcd_line[11] = TempEncoder / 10000 + 0x30;
+					TempEncoder = TempEncoder % 10000;
+					temp_lcd_line[12] = TempEncoder / 1000 + 0x30;
+					TempEncoder = TempEncoder % 1000;
+					temp_lcd_line[13] = TempEncoder / 100 + 0x30;
+					TempEncoder = TempEncoder % 100;
+					temp_lcd_line[14] = TempEncoder / 10 + 0x30;
+					TempEncoder = TempEncoder % 10;
+					temp_lcd_line[15] = TempEncoder + 0x30;
+				}
 				break;
 			}
 
 			if(Line == 0){
+				uint8_t output;
+				uint16_t voltage;
 				switch(gDispSub)
 				{
-					case LCD_MAIN_STATUS_0:
-						/*if((gStatus.status > STATUS_INIT) && (gStatus.warmupComplete == 0))
-						{
-							for(i=0;i!=16;i++)Arr[i] = LCD_MAIN1[0][i];
-						}
-						else
-						{*/
-							for(i=0;i!=16;i++)Arr[i] = LCD_MAIN0[0][i];
-							pLcd_DisplayShort_Format(FORMAT_xxx, gParameter.Temperature/100, (char *)&Arr[2]);
-						//}
-						pTemp = gMotorSpeed * 10 / 721
-							;
-						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp, (char *)&Arr[11]);
-						//SSR1, SSR2 ���� ǥ��
-						if((SSR.output == 1) && (SSR.outVoltage > 0))Arr[7] = '*';
-						else Arr[7] = ' ';
-						Ptr = (int8_t *)&Arr[0];
-						break;
 					case LCD_MAIN_STATUS_1:
 						if(gMotorStatus == MOTOR_OFF)i = 1;
 						else i = 0;
@@ -620,107 +699,110 @@ void pLcd_LoadString(uint8_t Line)
 						break;
 					case LCD_MAIN_STATUS_2:
 						for(i=0;i!=16;i++)Arr[i] = SCR_L3MODE[3][i];
-						pTemp = SSR.temperature;
+						pTemp = getSSRTemperature();
 						pLcd_DisplayShort_Format(FORMAT_xxx, pTemp, (char *)&Arr[7]);
 						if(gFan == 1)Arr[14] = '*';
 						else Arr[14] = ' ';
 						Ptr = (int8_t *)&Arr[0];
 						break;
+					/*case LCD_MAIN_STATUS_0:*/
+					default:
+						for(i=0;i!=16;i++)Arr[i] = LCD_MAIN0[0][i];
+						pLcd_DisplayShort_Format(FORMAT_xxx, gParameter.Temperature/100, (char *)&Arr[2]);
+						pTemp = gMotorSpeed * 10 / 721;
+						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp, (char *)&Arr[11]);
+						output = getSSROutput();
+						voltage = getSSRVoltage();
+						if((output == 1) && (voltage > 0))Arr[7] = '*';
+						else Arr[7] = ' ';
+						Ptr = (int8_t *)&Arr[0];
+						break;
+					
 				}
 				
-				for(i=0;i!=16;i++)gLCD_Line[i] = *Ptr++;
+				for(i=0;i!=16;i++)temp_lcd_line[i] = *Ptr++;
 			}
 			else{
-				/*uint8_t Ratio_Voltage,i;
-				uint16_t Data,Value;
-				uint8_t *Ptr;*/
 				short value;
-
 				switch(gDispSub)
 				{
-					case LCD_MAIN_STATUS_0:		/* Heater Information */
-						value = getTemperature(0);
-						if(value >= 0)pLcd_DisplayShort_Format(FORMAT_xxx, value/100, (char *)&gLCD_Line[2]);
-						else
-						{
-							gLCD_Line[3] = '-';
-							pLcd_DisplayShort_Format(FORMAT_xxx, (value*-1)/100, (char *)&gLCD_Line[2]);
-						}
-						value = getTemperature(1);
-						if(value >= 0)	pLcd_DisplayShort_Format(FORMAT_xxx, value/100, (char *)&gLCD_Line[11]);
-						else{
-							gLCD_Line[10] = '-';
-							pLcd_DisplayShort_Format(FORMAT_xxx, (value*-1)/100, (char *)&gLCD_Line[11]);
-						}
-						
-						break;
-
-					case LCD_MAIN_STATUS_1:		/* Inverter Information */
+					case LCD_MAIN_STATUS_1:	/* Inverter Information */
 						pTemp = gMotorSpeed * 10 / 721;
-						
-							
-						pLcd_DisplayShort_Format(FORMAT10_xxxPx,pTemp,(char *)&gLCD_Line[8]);
+						pLcd_DisplayShort_Format(FORMAT10_xxxPx,pTemp,(char *)&temp_lcd_line[8]);
 						break;
 
 					case LCD_MAIN_STATUS_2:	
-						if(SSR.output == 0)pTemp = 0;
-						else pTemp = SSR.outVoltage*10;
+						i = getSSROutput();
+						value = getSSRVoltage();
+						if(i == 0)pTemp = 0;
+						else pTemp = value*10;
 						
-						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp,(char *)&gLCD_Line[7]);
-						if(gStatus.status > STATUS_INIT)gLCD_Line[14] = '*';
-						else gLCD_Line[14] = ' ';
+						pLcd_DisplayShort_Format(FORMAT10_xxxPx, pTemp,(char *)&temp_lcd_line[7]);
+						if(gStatus.status > STATUS_INIT)temp_lcd_line[14] = '*';
+						else temp_lcd_line[14] = ' ';
 							
+						break;
+					default:
+					/*case LCD_MAIN_STATUS_0:	 Heater Information */
+						value = getTemperature(0);
+						if(value >= 0)pLcd_DisplayShort_Format(FORMAT_xxx, value/100, (char *)&temp_lcd_line[2]);
+						else
+						{
+							temp_lcd_line[3] = '-';
+							pLcd_DisplayShort_Format(FORMAT_xxx, (value*-1)/100, (char *)&temp_lcd_line[2]);
+						}
+						value = getTemperature(1);
+						if(value >= 0)	pLcd_DisplayShort_Format(FORMAT_xxx, value/100, (char *)&temp_lcd_line[11]);
+						else{
+							temp_lcd_line[10] = '-';
+							pLcd_DisplayShort_Format(FORMAT_xxx, (value*-1)/100, (char *)&temp_lcd_line[11]);
+						}
+						
 						break;
 				}
 			}
 			break;
 
-		case LCD_MAIN_FACTORY: //@150423 by Bang
-			
+		case LCD_MAIN_FACTORY:
 			break;
 		
-		
-
 		case LCD_MAIN_HEAT_SET_TOP_SUB:
 			if(Line == 1){
-				pLcd_DisplayShort_Format(FORMAT10_xxxPxx,gDispParameter.Value,(char *)&gLCD_Line[4]);
-				for(i=0;i!=5;i++)	gLCD_Line[10+i]=UNIT_HEAT[gDispSub][i];
+				pLcd_DisplayShort_Format(FORMAT10_xxxPxx,dDispParameter.Value,(char *)&temp_lcd_line[4]);
+				for(i=0;i!=5;i++)	temp_lcd_line[10+i]=UNIT_HEAT[gDispSub][i];
 				break;
 			}
 			break;
-/*		case LCD_MAIN_HEAT_SET_WARMUP_SUB:
-			if(Line == 1){
-				if(gDispParameter.prev_sub == 0)pLcd_DisplayShort_Format(FORMAT_xxx,gDispParameter.Value,(char *)&gLCD_Line[4]);
-				else pLcd_DisplayShort_Format(FORMAT10_xxxPxx,gDispParameter.Value,(char *)&gLCD_Line[4]);
-				for(i=0;i!=5;i++)	gLCD_Line[10+i]=UNIT_HEAT[gDispParameter.prev_sub + 5][i];
-				break;
-			}
-			break;*/
 		case LCD_MAIN_INV_SET_SUB:
 			if(Line == 1){
 				if(gDispSub == LCD_SUB_INV_DIR)
 				{
-					if(gDispParameter.Value == 0)
+					if(dDispParameter.Value == 0)
 					{
-						gLCD_Line[5] = 'C';
-						gLCD_Line[6] = 'W';
+						temp_lcd_line[5] = 'C';
+						temp_lcd_line[6] = 'W';
 					}
 					else
 					{
-						gLCD_Line[4] = 'C';
-						gLCD_Line[5] = 'C';
-						gLCD_Line[6] = 'W';
+						temp_lcd_line[4] = 'C';
+						temp_lcd_line[5] = 'C';
+						temp_lcd_line[6] = 'W';
 					}
 				}
 				else
 				{
-					pLcd_DisplayShort_Format(FORMAT_xxx, gDispParameter.Value, (char *)&gLCD_Line[4]);
-				//	pLcd_DisplayShort_Format(FORMAT10_xxxPxx,gDispParameter.Value,(char *)&gLCD_Line[4]);
-					for(i=0;i!=5;i++)	gLCD_Line[10+i]=UNIT[gDispSub][i];
+					pLcd_DisplayShort_Format(FORMAT_xxPx, dDispParameter.Value, (char *)&temp_lcd_line[4]);
+					for(i=0;i!=5;i++)	temp_lcd_line[10+i]=UNIT[gDispSub][i];
 				}
 				break;
 			}
 			break;
+	}
+
+	// 3. 마지막에 임시버퍼의 내용을 전역변수로 안전하게 복사
+	for(i=0; i<16; i++)
+	{
+	    gLCD_Line[i] = temp_lcd_line[i];
 	}
 }
 
@@ -748,6 +830,3 @@ void pLcd_UpdateDisplay(void)
 		else pLCD_Connect_Check();
 	}
 }
-
-
-
