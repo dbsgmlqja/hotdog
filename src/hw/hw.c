@@ -1,6 +1,4 @@
-#define _HW_MAIN_
 #include "global.h"
-#undef _HW_MAIN_
 #include "hw.h"
 extern void enable_irq(void);		/* startup.asm */
 extern void disable_irq(void);		/* startup.asm */

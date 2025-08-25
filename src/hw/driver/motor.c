@@ -60,6 +60,7 @@ void mototInit(void)
 void gMotorCheck(void)
 {
 	short TargetSpeed;
+	static uint32_t pErrorCount = 0;
 	static uint8_t pErrCnt = 0;
 	if(gError.All)return;
 	switch(gMotorStatus)
@@ -78,10 +79,15 @@ void gMotorCheck(void)
 							ssrControl(SSR_SSR, OFF);
 							P24RELAY = 0;
 							gError.bit.Motor = 1;
+							mArr[1] = gMotorSpeed;
+							mArr[0] = TargetSpeed;
+							mArr[2] = gIParameter.Freq;
+							mArr[3] = MOTOR_PID.value;
 							buzzer_start();
 							pStoreErrorMessage(Error_Motor);
 						}
 					}
+					pErrorCount++;
 				}
 				else pErrCnt = 0;
 				gMotorTime = millis();

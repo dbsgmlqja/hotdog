@@ -270,7 +270,7 @@ void gSetStatus(void)
 	{
 		case STATUS_IDLE:
 			
-			comp = gParameter.Temperature - 500;
+			comp = gParameter.Temperature - READY_TEMPERATURE;
 
 			if(pTopTemperature > comp)pTemp = 1;
 			if(pBottomTemperature > comp)pTemp &= 1;
@@ -290,7 +290,7 @@ void gSetStatus(void)
 				pStoreErrorMessage(Error_Over_Temp);
 				return;
 			}
-			comp = gParameter.Temperature - 500;
+			comp = gParameter.Temperature - READY_TEMPERATURE;
 //			if(gStatus.KSensor_Top.Temp < comp)pTemp = 1;
 			if(pBottomTemperature < comp)pTemp = 1;
 			if(pTemp){

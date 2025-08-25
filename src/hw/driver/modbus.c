@@ -123,7 +123,6 @@ void UART3_IRQHandler(void)
 	
 	
 	RxBuffer = SC3RB;
-	gModBus.rxTmr[gModBus.no] = 10;
 	switch(modbusTBL.cm3.rc){
 		case 0:
 			if(RxBuffer == modbusTBL.cm3.tb[0])modbusTBL.cm3.rb[modbusTBL.cm3.rc++] = RxBuffer;

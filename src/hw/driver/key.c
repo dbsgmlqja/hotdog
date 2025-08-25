@@ -247,7 +247,7 @@ void gHeaterKeyScan(void)
 				if(gStatus.status != STATUS_ERR)
 				{
 					if(gStatus.status == STATUS_INIT){
-						pVar1 = gStatus.Comp - 500;
+						pVar1 = gStatus.Comp - READY_TEMPERATURE;
 						value = getTemperature(1);
 						if(pVar1 > value)	gStatus.status = STATUS_IDLE;
 						else gStatus.status = STATUS_READY;

@@ -1,4 +1,6 @@
+#define _HW_MAIN_
 #include "global.h"
+#undef _HW_MAIN_
 #include "ap.h"
 #include "swtimer.h"
 

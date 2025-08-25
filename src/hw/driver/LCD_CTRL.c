@@ -104,9 +104,10 @@ void pLcd_DataOut(uint8_t Data){
 
 void pLcd_Init(void){
 	
+	P0DIR |= 0x0F;
 	PDDIR |= 0xC0;
 	PDOUT &= ~0xC0;
-	P0DIR |= 0x0F;
+	
 	/*delay(30);
 	pLcd_COMMAND(0x03); // function set
 	delay(30);

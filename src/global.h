@@ -13,7 +13,7 @@
 #ifndef ON
 #define ON 1
 #endif
-
+#define READY_TEMPERATURE (200)
 #ifndef OFF
 #define OFF 0
 #endif
@@ -249,6 +249,7 @@ typedef union{
 	uint16_t All;
 }_Error;
 typedef struct{
+	
 	uint8_t Request;
 	uint8_t Lines;
 	uint8_t Connect;
@@ -260,8 +261,6 @@ typedef struct{
 	uint8_t mode;
 	uint8_t rxMode;
 	uint8_t status;
-	uint8_t comm[3];
-	uint8_t rxTmr[3];
 	uint32_t pre_time;
 }_ModBus;
 typedef struct{
@@ -332,7 +331,10 @@ EXT uint8_t gEEP_InitMode;
 EXT uint16_t gSaveDisplayTimer;
 EXT uint16_t gWorkPWM,gNowPWM/*,gFW_PWM*/;
 EXT uint16_t gFreqCounter;
+EXT uint16_t Dummy5;
 EXT short gMotorSpeed;
+EXT uint16_t Dummy6;
+EXT uint16_t mArr[4];
 /*===================================================================*/
 /* uint32_t Variable												 */
 /*===================================================================*/

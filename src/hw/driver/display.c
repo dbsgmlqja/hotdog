@@ -233,20 +233,13 @@ void pLcd_DisplayShort_Format(uint8_t Format,uint16_t Val,char *Ptr)
 			break;
 		//@150508 by Bang
 		case FORMAT_xxxx:
-			Data = Value/10000 + 0x30;
+			Data = Value % 	10000;
+			Data = Value/1000 + 0x30;
 			if(Data == 0x30) *Ptr++ = 0x20;
 			else{
 				IsZero = 0;
 				*Ptr++ = Data;
 			}
-			Value %= 10000;
-			Data = Value/1000 + 0x30;
-			if(Data == 0x30){
-				if(IsZero) *Ptr++ = ' ';
-				else *Ptr++ = Data;
-				
-			}
-			else *Ptr++ = Data;
 			Value %= 1000;
 			Data = Value/100 + 0x30;
 			if(Data == 0x30){
@@ -486,7 +479,17 @@ void pLcd_LoadString(uint8_t Line)
 			}
 			else if(gError.bit.Motor)
 			{
-				Ptr = (char *)&DISP_MODE_FAULT_MOTORERROR[Line][0];
+				if(Line == 0)Ptr = (char *)&DISP_MODE_FAULT_MOTORERROR[Line][0];
+				else
+				{
+					for(i=0;i!=16;i++)Arr[i] = ' ';
+					pLcd_DisplayShort_Format(FORMAT_xxxx, mArr[0], (char *)&Arr[0]);
+					pLcd_DisplayShort_Format(FORMAT_xxxx, mArr[1], (char *)&Arr[4]);
+					pLcd_DisplayByte_Format(FORMAT_xxx, mArr[2], (char *)&Arr[8]);
+					pLcd_DisplayShort_Format(FORMAT_xxxx, mArr[3], (char *)&Arr[12]);
+					
+					Ptr = (char *)&Arr[0];
+				}
 			}
 			else if(gError.bit.TopSensor)
 			{
