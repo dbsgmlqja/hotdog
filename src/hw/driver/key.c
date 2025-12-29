@@ -253,7 +253,6 @@ void gHeaterKeyScan(void)
 						else gStatus.status = STATUS_READY;
 						pidPrameterReset();
 						
-						gModBus.no = MODBUS_SSR_TOP;
 						if((gModBus.status > MODBUS_READY) && (gModBus.rxMode == 0xFF)) gModBus.rxMode = gModBus.mode;
 						gModBus.mode = MODBUS_MODE_COMMAND;
 						gSetCommand(0x0002, 1, 1);//gSetCommand(MODBUS_SSR_TOP, 0x0002, 1, 1);
@@ -475,7 +474,11 @@ void pLKey_Set(void)
 	{
 		if(gError.bit.EmergencyOn == 0)
 		{
-			if(gError.bit.ssrCommError == 1)
+			if(gError.bit.BottomSensor == 1)
+			{
+				gError.bit.BottomSensor = 0;
+			}
+			else if(gError.bit.ssrCommError == 1)
 			{
 				if(modbusConnectCheck() == 0)
 				{
@@ -487,7 +490,6 @@ void pLKey_Set(void)
 				
 				return;
 			}
-			
 		}
 	}
 	if(gDispMode == LCD_MAIN_INIT){

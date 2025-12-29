@@ -19,6 +19,8 @@ void timerInit(void)
 }
 void p1msHandlingTimer(void)
 {
+	
+	if(gModBus.rxTimer > 0)gModBus.rxTimer--;
 	/*uint8_t i;
 	if(gModBus.rxTmr[MODBUS_INVERTER] > 1)
 	{

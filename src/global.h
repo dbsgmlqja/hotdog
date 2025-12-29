@@ -261,6 +261,7 @@ typedef struct{
 	uint8_t mode;
 	uint8_t rxMode;
 	uint8_t status;
+	uint8_t rxTimer;
 	uint32_t pre_time;
 }_ModBus;
 typedef struct{

@@ -114,15 +114,16 @@ void CRC16(uint8_t *puchMsg, uint8_t usDataLen)
 	modbusTBL.cm3.low = uchCRCLo;
 }
 void pRbFlush(void);
-void UART3_IRQHandler(void)
+void UART3_IRQHandler(void)	//MODBUS Communication
 {
 	uint8_t RxBuffer,pMode;
 	uint8_t SSROutput;
 	uint16_t SSRVoltage;
 	static uint8_t n;
 	
-	
+	if(gModBus.rxTimer == 0)modbusTBL.cm3.rc = 0;
 	RxBuffer = SC3RB;
+	gModBus.rxTimer = 10;
 	switch(modbusTBL.cm3.rc){
 		case 0:
 			if(RxBuffer == modbusTBL.cm3.tb[0])modbusTBL.cm3.rb[modbusTBL.cm3.rc++] = RxBuffer;
@@ -254,12 +255,7 @@ void modbusTransmit(void)
 	if(gModBus.p500msFlag == 0) return;
 	if(gError.bit.EmergencyOn)return;
 	gModBus.p500msFlag = 0;
-	if(gModBus.mode == MODBUS_MODE_COMMAND)
-	{
-		if(modbusTBL.command[2] == 1){
-			gModBus.no = i;
-		}
-	}
+	
 	switch(gModBus.mode)
 	{
 		case MODBUS_MODE_COMMAND:
@@ -329,12 +325,9 @@ void modbusTransmit(void)
 	}
 	else
 	{
-		if(++gModBus.no >= MAX_MODBUS_CH){
-			gModBus.no = MODBUS_INVERTER;
-			if(++gModBus.mode >= MODBUS_MODE_END)
-			{
-				gModBus.mode = MODBUS_MODE_COMMAND;
-			}
+		if(++gModBus.mode >= MODBUS_MODE_END)
+		{
+			gModBus.mode = MODBUS_MODE_COMMAND;
 		}
 	}
 }

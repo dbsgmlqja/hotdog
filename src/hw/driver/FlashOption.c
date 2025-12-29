@@ -21,7 +21,7 @@ const unsigned char ROM_FlashOption[4][8]=
 {
 	{'2','0','2','5','0','8','2','2'},		//for Dates. 8bytes
 	{'H','1','0','0','0','S','0','2'},		//for ModelName. 8bytes
-	{'V','1','.','0','2','H','0','1'},		//for Version 8bytes
+	{'V','1','.','0','1','H','0','1'},		//for Version 8bytes
 	{'*','T','E','L','E','C','S','*'}		//for Security Codes 8bytes
 };
 #pragma _section C
