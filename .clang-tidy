@@ -1,0 +1,14 @@
+# 임베디드 펌웨어 기준. 레지스터 매크로(고정 주소 역참조)와 프로젝트 관례 때문에 소음이 큰 검사는 끈다.
+# (전체 27개 파일 측정: 켜 둔 규칙 기준 약 50건, 아래 -로 끈 규칙까지 합치면 1000건 이상)
+Checks: >
+  -*,
+  bugprone-*,
+  clang-analyzer-*,
+  misc-redundant-expression,
+  misc-unused-parameters,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  -bugprone-reserved-identifier,
+  -bugprone-switch-missing-default-case,
+  -clang-analyzer-core.FixedAddressDereference
+HeaderFilterRegex: '.*[/\\]src[/\\].*'

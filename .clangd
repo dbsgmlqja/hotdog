@@ -1,0 +1,12 @@
+# clangd 설정. 컴파일 플래그는 build/compile_commands.json(tools/gen_compile_commands.py가 생성)에서 가져온다.
+CompileFlags:
+  CompilationDatabase: build
+---
+# 빌드에 포함되지 않는 파일(tools/project.json의 not_built)은 진단을 끈다.
+# 예: bsp/cmsis/vector.c 는 vect.c 와 irq_vct_tbl 이 중복 정의된다.
+If:
+  PathMatch:
+    - .*/src/bsp/cmsis/vector\.c
+    - .*/src/hw/driver/(int|hx711|sic2c|spi|sw_timer|FND)\.c
+Diagnostics:
+  Suppress: "*"
