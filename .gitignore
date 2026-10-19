@@ -1,0 +1,29 @@
+# VSCode 빌드 산출물
+/build/
+__pycache__/
+
+# 컴파일러/링커 산출물 (DF/ 와 build/ 양쪽)
+*.ro
+*.x
+*.lst
+
+# DFBuilder5가 만드는 로그와 캐시
+ErrorLog.log
+*.map.log
+*.dfscd5
+*.mak.backup
+
+# 링커 맵: 빌드할 때마다 수만 줄이 바뀌어서(임시 파일 이름 등) 추적하지 않는다. 로컬에는 남는다.
+# ROM/RAM 변화는 tools/memreport.py 로 본다.
+DF/BAKERY_DF05.map
+
+# DFBuilder5 사용자별/PC별 설정 (디버그 세션, 프로젝트 그룹, 작업 환경 저장)
+*.dft5
+*.dfgrp5
+*.dfgrp5set
+
+# 아래 파일은 일부러 무시하지 않았다. 필요 여부를 정해서 add 하거나 무시하세요.
+#   DF/BAKERY_DF05.mak  DFB5가 만든 빌드 정의 (DFMake 빌드에 필요, 경로에 PC 정보 포함)
+#   DF/*.pathmacro      PC 경로 매크로 (절대경로 포함)
+#   DF/pice103.env, DF/IOB_*.iobset  디버거(타깃) 설정
+#   OUTPUT/Hotdog.hex   빌드 결과물

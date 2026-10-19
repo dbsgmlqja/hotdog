@@ -1,0 +1,108 @@
+{
+  "_comment": "DFBuilder5(DF/BAKERY_DF05.mak) 빌드 설정을 옮겨 적은 파일. VSCode 빌드/IntelliSense/정적분석의 단일 출처. 경로는 저장소 루트 기준 상대경로이고, ${CC_ROOT}는 DFBuilder5\\BuiltInCC\\CC103S\\5_4R4, ${CC_INCLUDE}는 ${CC_ROOT}\\INCLUDE로 치환한다.",
+  "name": "Hotdog",
+  "cpu": "MN103DF05K",
+  "compiler": {
+    "series": "CC103S",
+    "version": "5_4R4",
+    "dfb_root_default": "C:\\Program Files (x86)\\Nuvoton\\DFBuilder5"
+  },
+  "output": {
+    "build_dir": "build",
+    "ex": "BAKERY_DF05.x",
+    "hex": "OUTPUT/Hotdog.hex",
+    "map": "BAKERY_DF05.map"
+  },
+  "dfb5": {
+    "_comment": "tools/dfb5.py 가 쓴다. group 은 DFB5 사용자 설정(창 배치, 디버그 설정)을 그대로 쓰려고 평소 여는 그룹 파일을 가리킨다(PC마다 다르고 git에서 제외됨). 없으면 project 로 연다.",
+    "project": "DF/DF05_Hotdog.dfp5",
+    "group": "DF/ProjectGroup5.dfgrp5",
+    "makefile": "DF/BAKERY_DF05.mak",
+    "load_timeout_sec": 120
+  },
+  "c_flags": ["-c", "-fenable-asm", "-fc9x-comment", "-fpack-struct", "-fchar-bfield", "-e", "-g", "-mmulq", "-mdivs"],
+  "asm_flags": ["-l", "-g", "-e"],
+  "link_flags": ["-g", "-m", "-ms", "-e"],
+  "link_sections": ["-T@CODE=40000000", "-T@DATA=00000000", "-T.rodata_FlashOption=4003BFE0"],
+  "xcv_flags": ["-i"],
+  "library": "${CC_ROOT}/LIB/CC103S.L",
+  "include_dirs": [
+    "src",
+    "src/ap",
+    "src/hw",
+    "src/common",
+    "${CC_INCLUDE}",
+    "src/bsp",
+    "src/bsp/cmsis",
+    "src/common/hw/include",
+    "src/hw/driver"
+  ],
+  "asm_include_dirs": [
+    "src",
+    "src/ap",
+    "src/hw",
+    "src/common",
+    "src/bsp",
+    "src/bsp/cmsis",
+    "src/common/hw/include",
+    "src/bsp/startup"
+  ],
+  "sources": [
+    "src/main.c",
+    "src/ap/ap.c",
+    "src/bsp/startup/startup.as",
+    "src/bsp/bsp.c",
+    "src/hw/hw.c",
+    "src/bsp/cmsis/int.c",
+    "src/hw/driver/led.c",
+    "src/hw/driver/i2c.c",
+    "src/hw/driver/timer.c",
+    "src/hw/driver/uart.c",
+    "src/hw/driver/vect.c",
+    "src/hw/driver/minit.c",
+    "src/hw/driver/adc.c",
+    "src/hw/driver/key.c",
+    "src/common/qbuffer.c",
+    "src/hw/driver/cli.c",
+    "src/hw/driver/FlashOption.c",
+    "src/hw/driver/eeprom.c",
+    "src/hw/driver/swtimer.c",
+    "src/hw/driver/buzzer.c",
+    "src/hw/driver/MAX6675.c",
+    "src/hw/driver/display.c",
+    "src/hw/driver/LCD_CTRL.c",
+    "src/hw/driver/gpio.c",
+    "src/hw/driver/ssr.c",
+    "src/hw/driver/motor.c",
+    "src/hw/driver/modbus.c",
+    "src/hw/driver/Pid.c"
+  ],
+  "link_order": [
+    "startup", "vect", "main", "ap", "bsp", "hw", "led", "i2c", "timer", "uart", "minit", "adc", "key",
+    "qbuffer", "cli", "FlashOption", "eeprom", "swtimer", "buzzer", "MAX6675", "display", "LCD_CTRL",
+    "gpio", "ssr", "motor", "modbus", "Pid"
+  ],
+  "link_notes": "int.c는 .mak에서 컴파일되지만 링크 목록에는 없다(DFBuilder5 동작 그대로 유지). 링크 순서도 컴파일 순서와 다르다.",
+  "not_built": [
+    "src/bsp/cmsis/vector.c",
+    "src/hw/driver/int.c",
+    "src/hw/driver/hx711.c",
+    "src/hw/driver/sic2c.c",
+    "src/hw/driver/spi.c",
+    "src/hw/driver/sw_timer.c",
+    "src/hw/driver/FND.c"
+  ],
+  "clang": {
+    "_comment": "IntelliSense/정적분석 전용. 실제 빌드는 cc103s가 한다. i386은 int/long/포인터가 32비트라서 AM32R-4와 맞다.",
+    "flags": [
+      "--target=i386-unknown-none-elf",
+      "-std=gnu99",
+      "-ffreestanding",
+      "-fpack-struct=1",
+      "-D__CC103__",
+      "-Wno-unknown-pragmas",
+      "-Wno-implicit-int",
+      "-nostdinc"
+    ]
+  }
+}
