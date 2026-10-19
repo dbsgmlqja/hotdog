@@ -13,6 +13,10 @@ ErrorLog.log
 *.dfscd5
 *.mak.backup
 
+# 링커 맵: 빌드할 때마다 수만 줄이 바뀌어서(임시 파일 이름 등) 추적하지 않는다. 로컬에는 남는다.
+# ROM/RAM 변화는 tools/memreport.py 로 본다.
+DF/BAKERY_DF05.map
+
 # DFBuilder5 사용자별/PC별 설정 (디버그 세션, 프로젝트 그룹, 작업 환경 저장)
 *.dft5
 *.dfgrp5

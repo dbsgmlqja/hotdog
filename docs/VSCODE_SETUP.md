@@ -49,6 +49,7 @@ tests/run_tests.py            호스트(PC) 유닛테스트 실행기 (tests/hos
 
 - **DFB5와 병행한다.** `DF/` 폴더는 DFB5 전용으로 두고, VSCode 산출물은 `build/`에 만든다. 소스를 추가하거나 지울 때는 DFB5 프로젝트와 `tools/project.json` 양쪽을 맞춘다(`check_sync.py`로 확인).
 - **`DF05_Hotdog.dfp5`의 hex 출력 경로를 고쳤다(2026-10-19).** 예전에는 `FLAGS_XCV`가 존재하지 않는 `C:\Users\HUIBEOM\Documents\fw\HOTDOG\OUTPUT\Hotdog.hex`를 가리켜서 DFB5 Make가 마지막 `XCV103` 단계에서 실패했다(F5001). 지금은 프로젝트 기준 상대경로 `..\OUTPUT\Hotdog.hex`다. `.dfp5`와 `DF/BAKERY_DF05.mak`에서 각각 한 줄만 바꿨고, 수정 전 파일은 `build/dfb5_reference/*.before_xcv_fix`에 있다. `.dfp5`에는 `WAFFLE_temp` 경로와 `FND.c` 같은 옛 항목이 아직 남아 있지만 DFB5가 걸러내고 있어서 그대로 두었다.
+- **`DF/BAKERY_DF05.map`은 git에서 추적하지 않는다.** 빌드할 때마다 컴파일러 임시 파일 이름 등으로 2만 6천 줄이 바뀌어서 diff가 항상 지저분했다. 파일은 로컬에 그대로 있고, ROM/RAM 변화는 `tools/memreport.py`로 본다.
 - **`int.c`는 컴파일되지만 링크되지 않는다.** DFB5의 `.mak`이 그렇게 되어 있어서 그대로 따랐다. 링크 순서도 컴파일 순서와 다르다.
 - **빌드에 포함되지 않는 파일**이 있다: `bsp/cmsis/vector.c`(vect.c와 심볼 중복), `hw/driver/{int,hx711,sic2c,spi,sw_timer,FND}.c`. clangd 진단을 꺼 두었다.
 - **파일 인코딩이 섞여 있다.** ASCII 61개, cp949 8개(buzzer, MAX6675, minit, Pid, swtimer, sw_timer, vect, vector), UTF-8 2개(display.c, modbus.c). 한글 주석이 있는 파일을 저장하기 전에 상태표시줄의 인코딩이 맞는지 확인한다. 도구가 cp949 파일을 UTF-8로 읽으면 깨진다.
