@@ -758,7 +758,7 @@ Pid.c
 				FlagContinueOnError="False"
 				FlagUseXCV="True"
 				FlagUseCRCCalc="False"
-				FLAGS_XCV="-i -o&quot;D:\Firmware\DF05K\HOTDOG\OUTPUT\Hotdog.hex&quot; "
+				FLAGS_XCV="-i -o&quot;..\OUTPUT\Hotdog.hex&quot; "
 				FILE_EMPTY="false"
 				MaxFileId="95"
 			>

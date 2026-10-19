@@ -1,0 +1,28 @@
+{
+  // 소스 인코딩이 섞여 있다(ASCII 61개, cp949 8개, UTF-8 2개: display.c, modbus.c). 전역 cp949로 고정하면 UTF-8 파일이 깨진다.
+  // 기본은 utf8로 두고 자동 판별을 켠다. 한글 주석이 있는 파일은 저장 전에 상태표시줄의 인코딩을 확인할 것.
+  "files.encoding": "utf8",
+  "files.autoGuessEncoding": true,
+
+  // DFBuilder5 설치 경로. tools/*.py 호출 때 --dfb-root 로 넘긴다(다른 PC면 여기만 바꾸면 된다).
+  "hotdog.dfbRoot": "C:\\Program Files (x86)\\Nuvoton\\DFBuilder5",
+
+  // clangd는 build/compile_commands.json 을 쓴다. 없으면 'HOTDOG: compile_commands 생성' 태스크를 먼저 실행.
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}/build",
+    "--background-index",
+    "--header-insertion=never",
+    "--clang-tidy"
+  ],
+
+  "search.exclude": {
+    "build": true,
+    "**/*.ro": true,
+    "**/*.x": true,
+    "**/*.map": true
+  },
+  "files.watcherExclude": {
+    "**/build/**": true,
+    "**/DF/*.ro": true
+  }
+}
